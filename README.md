@@ -20,7 +20,7 @@ An enhanced implementation of speculative gating for Mixture of Experts (MoE) mo
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd rtx3090_moe
+cd specMoE
 
 # Install dependencies
 pip install torch transformers accelerate datasets
@@ -244,7 +244,7 @@ class CustomSpeculationEngine(SpeculationEngine):
 
 ### Project Structure
 ```
-rtx3090_moe/
+specMoE/
 ├── models/               # Model implementations
 │   ├── small_switch_transformer.py    # Custom small model
 │   └── pretrained_switch_model.py     # Pre-trained model wrapper
@@ -351,11 +351,11 @@ This codebase is designed for research in:
 If you use this codebase in your research, please cite:
 
 ```bibtex
-@misc{enhanced_pregated_moe_2025,
+@misc{Speculatve_moe_2025,
   title={Enhanced Pre-gated MoE for Small GPUs: Advanced Speculation and Memory Optimization},
-  author={Research Team},
+  author={Cyan Subhra Mishra},
   year={2025},
-  note={Extension of ISCA'24 Pre-gated MoE for RTX 3090 and edge devices},
+  note={Extension of ISCA'24 Pre-gated MoE for RTX 3090 and edge devices with improved and aggressve speculaions},
   url={https://github.com/your-repo/enhanced-pregated-moe}
 }
 
