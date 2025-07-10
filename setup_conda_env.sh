@@ -34,6 +34,9 @@ echo "🔧 Activating environment..."
 source $(conda info --base)/etc/profile.d/conda.sh
 conda activate ${ENV_NAME}
 
+echo "🗃️ Installing Git LFS for large file support..."
+conda install git-lfs -c conda-forge -y
+
 echo "📚 Installing PyTorch with CUDA support..."
 # Install PyTorch with CUDA 11.8 (adjust for your CUDA version)
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia -y
@@ -80,6 +83,27 @@ if torch.cuda.is_available():
 print('✅ Transformers version:', transformers.__version__)
 print('✅ All dependencies verified!')
 "
+
+echo "🗃️ Verifying Git LFS..."
+git lfs version
+echo "✅ Git LFS ready for large file handling"
+
+echo "📋 Setting up Git LFS in repository..."
+if [ -d ".git" ]; then
+    echo "  Initializing Git LFS in current repository..."
+    git lfs install
+    git lfs track '*.pkl'
+    git lfs track '*.pt'
+    git lfs track '*.bin'
+    git add .gitattributes
+    echo "  ✅ Git LFS configured for large files"
+else
+    echo "  Run these commands in your project directory:"
+    echo "    git lfs install"
+    echo "    git lfs track '*.pkl'"
+    echo "    git lfs track '*.pt'"
+    echo "    git lfs track '*.bin'"
+fi
 
 echo ""
 echo "🎉 Environment setup complete!"
