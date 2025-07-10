@@ -20,7 +20,7 @@ An enhanced implementation of speculative gating for Mixture of Experts (MoE) mo
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd rtx3090_moe
+cd specMoE
 
 # Install dependencies
 pip install torch transformers accelerate datasets
@@ -244,7 +244,7 @@ class CustomSpeculationEngine(SpeculationEngine):
 
 ### Project Structure
 ```
-rtx3090_moe/
+specMoE/
 ├── models/               # Model implementations
 │   ├── small_switch_transformer.py    # Custom small model
 │   └── pretrained_switch_model.py     # Pre-trained model wrapper
