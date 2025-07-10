@@ -48,20 +48,38 @@ class SmallSwitchMLP(nn.Module):
         
         # Store for speculation engine
         self.gate_scores_history.append(gate_scores.detach().clone())
+        
+        # Get top-k experts
+        top_k_scores, top_k_indices = torch.topk(gate_scores, self.top_k, dim=-1)
+        
+        # Store routing info for later use
+        routing_info = {
+            'gate_scores': gate_scores.view(batch_size, seq_len, self.num_experts),
+            'top_k_indices': top_k_indices.view(batch_size, seq_len, self.top_k),
+            'top_k_scores': top_k_scores.view(batch_size, seq_len, self.top_k)
+        }
+        
+        # Continue with MoE computation...
+        return self._complete_forward(x_flat, gate_scores, top_k_indices, batch_size, seq_len, routing_info)
+    
+    def forward_with_routing(self, x: torch.Tensor) -> Tuple[torch.Tensor, Dict]:
+        """Forward pass that returns detailed routing information"""
+        return self.forward(x)
+    
+    def _complete_forward(self, x_flat, gate_scores, top_k_indices_input, batch_size, seq_len, routing_info):
         if len(self.gate_scores_history) > 4:  # Keep last 4 layers
             self.gate_scores_history.pop(0)
         
-        # Top-k expert selection
-        top_k_gates, top_k_indices = torch.topk(gate_scores, self.top_k, dim=-1)
+        # Use the already computed top_k values
+        top_k_gates = routing_info['top_k_scores'].view(-1, self.top_k)
+        top_k_indices = top_k_indices_input
         top_k_gates = top_k_gates / (top_k_gates.sum(dim=-1, keepdim=True) + 1e-8)
         
-        # Routing information for analysis
-        routing_info = {
-            'gate_scores': gate_scores,
-            'top_k_indices': top_k_indices,
-            'top_k_gates': top_k_gates,
+        # Update routing information for analysis
+        routing_info.update({
+            'top_k_gates': top_k_gates.view(batch_size, seq_len, self.top_k),
             'load_balancing_loss': self._compute_load_balancing_loss(gate_scores)
-        }
+        })
         
         # Store routing for speculation
         self.routing_history.append({
@@ -90,7 +108,7 @@ class SmallSwitchMLP(nn.Module):
                     weights = top_k_gates[k_mask, k:k+1]
                     output[k_mask] += weights * expert_output[:weights.shape[0]]
         
-        output = output.view(batch_size, seq_len, hidden_size)
+        output = output.view(batch_size, seq_len, self.hidden_size)
         return output, routing_info
     
     def _compute_load_balancing_loss(self, gate_scores: torch.Tensor) -> torch.Tensor:
