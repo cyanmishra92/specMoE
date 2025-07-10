@@ -1,0 +1,6 @@
+{
+  "num_traces": 0,
+  "model_name": "google/switch-base-8",
+  "collection_time": 1752166406.772035,
+  "device": "cuda"
+}

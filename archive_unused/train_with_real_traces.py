@@ -26,7 +26,7 @@ from evaluation.speculation_benchmark import SpeculationBenchmark
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def load_real_traces(trace_file="routing_data/real_traces_combined.pkl"):
+def load_real_traces(trace_file="routing_data/proper_traces.pkl"):
     """Load real routing traces from file"""
     
     logger.info(f"Loading real traces from {trace_file}")
@@ -91,15 +91,21 @@ def train_speculation_models_on_real_data(traces):
     logger.info(f"  Max sequence length: {max_seq_len}")
     
     # Training configuration optimized for RTX 3090
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    logger.info(f"🎯 Training device: {device}")
+    if torch.cuda.is_available():
+        logger.info(f"GPU: {torch.cuda.get_device_name()}")
+        logger.info(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
+    
     training_config = TrainingConfig(
-        batch_size=8,           # Larger batch with real GPU
-        learning_rate=2e-4,     # Lower LR for better convergence
-        num_epochs=20,          # More epochs with real data
-        eval_steps=200,
+        batch_size=16,          # Larger batch for better training
+        learning_rate=3e-4,     # Slightly higher LR for faster convergence
+        num_epochs=25,          # More epochs with real data
+        eval_steps=100,         # More frequent evaluation
         save_steps=500,
-        device="cuda",
+        device=device,
         mixed_precision=True,   # Use mixed precision for efficiency
-        warmup_steps=500,
+        warmup_steps=200,       # Faster warmup
         gradient_clip_norm=1.0
     )
     
@@ -160,13 +166,14 @@ def train_speculation_models_on_real_data(traces):
     return trained_models
 
 def evaluate_trained_models(trained_models, traces):
-    """Evaluate trained models and compare with baselines"""
+    """Evaluate trained models with comprehensive accuracy metrics"""
     
     logger.info("📊 Evaluating Trained Models")
     logger.info("=" * 40)
     
-    # Create test data
-    test_traces = traces[-100:]  # Use last 100 traces for testing
+    # Create larger test set
+    test_traces = traces[-200:] if len(traces) > 200 else traces[-len(traces)//4:]
+    logger.info(f"🧪 Testing on {len(test_traces)} traces")
     
     evaluation_results = {}
     
@@ -174,19 +181,22 @@ def evaluate_trained_models(trained_models, traces):
         logger.info(f"\n🔍 Evaluating {model_type} model...")
         
         model = model_data['model']
+        device = next(model.parameters()).device
         
-        # Simple evaluation: measure prediction accuracy
-        correct_predictions = 0
-        total_predictions = 0
+        # Comprehensive evaluation metrics
+        top1_correct = 0
+        top3_correct = 0
+        total_tokens = 0
         confidence_scores = []
+        layer_accuracies = {}
         
         model.eval()
         with torch.no_grad():
-            for trace in test_traces[:20]:  # Sample for quick evaluation
+            for i, trace in enumerate(test_traces):
                 try:
                     # Prepare input
-                    hidden_states = trace.hidden_states.unsqueeze(0).cuda()
-                    prev_gates = [g.unsqueeze(0).cuda() for g in trace.prev_layer_gates[:3]]
+                    hidden_states = trace.hidden_states.unsqueeze(0).to(device)
+                    prev_gates = [g.unsqueeze(0).to(device) for g in trace.prev_layer_gates[:3]]
                     
                     if len(prev_gates) == 0:
                         continue
@@ -198,37 +208,74 @@ def evaluate_trained_models(trained_models, traces):
                         layer_id=trace.layer_id
                     )
                     
-                    # Calculate accuracy
-                    pred_experts = torch.topk(gating_logits.squeeze(0), k=1, dim=-1).indices
-                    target_experts = torch.topk(trace.target_routing, k=1, dim=-1).indices
+                    # Calculate Top-1 and Top-3 accuracy
+                    pred_top1 = torch.topk(gating_logits.squeeze(0), k=1, dim=-1).indices
+                    pred_top3 = torch.topk(gating_logits.squeeze(0), k=3, dim=-1).indices
+                    target_experts = torch.topk(trace.target_routing.to(device), k=1, dim=-1).indices
                     
-                    # Simple accuracy: fraction of correct predictions per token
-                    matches = (pred_experts == target_experts.cuda()).float()
-                    accuracy = matches.mean().item()
+                    # Token-level accuracy
+                    seq_len = pred_top1.size(0)
                     
-                    correct_predictions += accuracy
-                    total_predictions += 1
+                    # Top-1 accuracy
+                    top1_matches = (pred_top1 == target_experts).float().sum().item()
+                    top1_correct += top1_matches
+                    
+                    # Top-3 accuracy (target expert in top-3 predictions)
+                    top3_matches = (target_experts.unsqueeze(-1) == pred_top3).any(dim=-1).float().sum().item()
+                    top3_correct += top3_matches
+                    
+                    total_tokens += seq_len
                     confidence_scores.append(confidence.mean().item())
                     
+                    # Per-layer accuracy tracking
+                    layer_id = trace.layer_id
+                    if layer_id not in layer_accuracies:
+                        layer_accuracies[layer_id] = {'correct': 0, 'total': 0}
+                    layer_accuracies[layer_id]['correct'] += top1_matches
+                    layer_accuracies[layer_id]['total'] += seq_len
+                    
+                    if i % 50 == 0:
+                        current_acc = top1_correct / total_tokens if total_tokens > 0 else 0
+                        logger.info(f"  Progress: {i}/{len(test_traces)} traces, Current accuracy: {current_acc:.3f}")
+                    
                 except Exception as e:
-                    logger.warning(f"Evaluation error for {model_type}: {e}")
+                    logger.warning(f"Evaluation error for {model_type} on trace {i}: {e}")
                     continue
         
-        if total_predictions > 0:
-            avg_accuracy = correct_predictions / total_predictions
-            avg_confidence = np.mean(confidence_scores)
+        if total_tokens > 0:
+            top1_accuracy = top1_correct / total_tokens
+            top3_accuracy = top3_correct / total_tokens
+            avg_confidence = np.mean(confidence_scores) if confidence_scores else 0
+            
+            # Calculate per-layer accuracies
+            layer_acc_summary = {}
+            for layer_id, stats in layer_accuracies.items():
+                if stats['total'] > 0:
+                    layer_acc_summary[layer_id] = stats['correct'] / stats['total']
             
             evaluation_results[model_type] = {
-                'accuracy': avg_accuracy,
+                'top1_accuracy': top1_accuracy,
+                'top3_accuracy': top3_accuracy,
                 'confidence': avg_confidence,
-                'num_predictions': total_predictions
+                'total_tokens': total_tokens,
+                'num_traces': len(test_traces),
+                'layer_accuracies': layer_acc_summary
             }
             
-            logger.info(f"  Accuracy: {avg_accuracy:.3f}")
-            logger.info(f"  Confidence: {avg_confidence:.3f}")
-            logger.info(f"  Predictions: {total_predictions}")
+            logger.info(f"✅ {model_type} Results:")
+            logger.info(f"   Top-1 Accuracy: {top1_accuracy:.3f} ({top1_accuracy*100:.1f}%)")
+            logger.info(f"   Top-3 Accuracy: {top3_accuracy:.3f} ({top3_accuracy*100:.1f}%)")
+            logger.info(f"   Avg Confidence: {avg_confidence:.3f}")
+            logger.info(f"   Total Tokens: {total_tokens:,}")
+            
+            # Show best/worst layers
+            if layer_acc_summary:
+                best_layer = max(layer_acc_summary.keys(), key=lambda x: layer_acc_summary[x])
+                worst_layer = min(layer_acc_summary.keys(), key=lambda x: layer_acc_summary[x])
+                logger.info(f"   Best Layer: {best_layer} ({layer_acc_summary[best_layer]:.3f})")
+                logger.info(f"   Worst Layer: {worst_layer} ({layer_acc_summary[worst_layer]:.3f})")
         else:
-            logger.warning(f"No valid predictions for {model_type}")
+            logger.warning(f"❌ No valid predictions for {model_type}")
     
     return evaluation_results
 
@@ -276,14 +323,22 @@ def create_final_report(trained_models, evaluation_results, traces):
         report.append("-" * 20)
         
         best_model = max(evaluation_results.keys(), 
-                        key=lambda x: evaluation_results[x]['accuracy'])
-        best_accuracy = evaluation_results[best_model]['accuracy']
+                        key=lambda x: evaluation_results[x].get('top1_accuracy', evaluation_results[x].get('accuracy', 0)))
+        best_accuracy = evaluation_results[best_model].get('top1_accuracy', evaluation_results[best_model].get('accuracy', 0))
         
         for model_type, results in evaluation_results.items():
             marker = "🏆" if model_type == best_model else "  "
-            report.append(f"{marker} {model_type:12} - Accuracy: {results['accuracy']:.3f}, Confidence: {results['confidence']:.3f}")
+            top1_acc = results.get('top1_accuracy', results.get('accuracy', 0))
+            top3_acc = results.get('top3_accuracy', 0)
+            report.append(f"{marker} {model_type:12} - Top-1: {top1_acc:.3f} ({top1_acc*100:.1f}%), Top-3: {top3_acc:.3f} ({top3_acc*100:.1f}%)")
+            report.append(f"{'':15} Confidence: {results['confidence']:.3f}, Tokens: {results.get('total_tokens', 0):,}")
         
-        report.append(f"\n🎯 Best model: {best_model} ({best_accuracy:.3f} accuracy)")
+        report.append(f"\n🎯 Best model: {best_model} ({best_accuracy*100:.1f}% top-1 accuracy)")
+        
+        # Compare with baseline
+        baseline_accuracy = 1.0 / 8  # Random guess for 8 experts = 12.5%
+        improvement = (best_accuracy - baseline_accuracy) / baseline_accuracy * 100
+        report.append(f"📈 Improvement over random baseline: {improvement:.1f}% relative gain")
     
     # Next steps
     report.append(f"\n🚀 NEXT STEPS")
@@ -337,8 +392,8 @@ def main():
     
     if evaluation_results:
         best_model = max(evaluation_results.keys(), 
-                        key=lambda x: evaluation_results[x]['accuracy'])
-        best_accuracy = evaluation_results[best_model]['accuracy']
+                        key=lambda x: evaluation_results[x].get('top1_accuracy', evaluation_results[x].get('accuracy', 0)))
+        best_accuracy = evaluation_results[best_model].get('top1_accuracy', evaluation_results[best_model].get('accuracy', 0))
         logger.info(f"🏆 Best model: {best_model} with {best_accuracy:.3f} accuracy")
     
     return True

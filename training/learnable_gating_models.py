@@ -145,6 +145,10 @@ class ContextualGatingPredictor(nn.Module):
                 # prev_gates: [batch_size, seq_len, num_experts]
                 ctx_feat = self.context_encoder[i](prev_gates)
                 context_features.append(ctx_feat)
+            else:
+                # If we have more context layers than encoders, pad with zeros
+                zero_feat = torch.zeros(batch_size, seq_len, self.config.hidden_size // 4, device=hidden_states.device)
+                context_features.append(zero_feat)
         
         if context_features:
             context_features = torch.cat(context_features, dim=-1)
@@ -210,7 +214,7 @@ class TransformerGatingPredictor(nn.Module):
         
         # Context history encoder
         self.history_encoder = nn.LSTM(
-            input_size=config.num_experts,
+            input_size=config.num_experts * config.context_layers,
             hidden_size=config.hidden_size // 4,
             num_layers=2,
             batch_first=True,
@@ -338,16 +342,28 @@ class GatingDataset(Dataset):
         
         # Target routing
         target_routing = dp.target_routing[:seq_len]
+        # Ensure target_routing has correct dimensions
+        if target_routing.ndim == 3:
+            target_routing = target_routing.squeeze(0)  # Remove batch dimension if present
+        elif target_routing.ndim == 1:
+            target_routing = target_routing.unsqueeze(1)  # Add feature dimension if missing
+        
         if target_routing.size(0) < self.max_seq_len:
-            padding = torch.zeros(self.max_seq_len - target_routing.size(0), target_routing.size(1))
+            padding = torch.zeros(self.max_seq_len - target_routing.size(0), target_routing.size(-1))
             target_routing = torch.cat([target_routing, padding], dim=0)
         
         # Previous layer gates
         prev_gates = []
         for prev_gate in dp.prev_layer_gates or []:
             gate = prev_gate[:seq_len]
+            # Ensure gate has correct dimensions
+            if gate.ndim == 3:
+                gate = gate.squeeze(0)  # Remove batch dimension if present
+            elif gate.ndim == 1:
+                gate = gate.unsqueeze(1)  # Add feature dimension if missing
+            
             if gate.size(0) < self.max_seq_len:
-                padding = torch.zeros(self.max_seq_len - gate.size(0), gate.size(1))
+                padding = torch.zeros(self.max_seq_len - gate.size(0), gate.size(-1))
                 gate = torch.cat([gate, padding], dim=0)
             prev_gates.append(gate)
         
@@ -373,18 +389,21 @@ def collate_fn(batch):
     target_routing = torch.stack([item['target_routing'] for item in batch])
     attention_mask = torch.stack([item['attention_mask'] for item in batch])
     
-    # Handle variable-length previous gates
-    max_context_layers = max(len(item['prev_layer_gates']) for item in batch)
+    # Handle variable-length previous gates - always ensure we have exactly 4 context layers
+    gate_lengths = [len(item['prev_layer_gates']) for item in batch]
+    context_layers = 4  # Fixed number of context layers
     prev_layer_gates = []
     
-    for i in range(max_context_layers):
+    for i in range(context_layers):
         gates_for_layer = []
         for item in batch:
-            if i < len(item['prev_layer_gates']):
+            if i < len(item['prev_layer_gates']) and len(item['prev_layer_gates']) > 0:
                 gates_for_layer.append(item['prev_layer_gates'][i])
             else:
                 # Pad with zeros if this batch item has fewer context layers
-                gates_for_layer.append(torch.zeros_like(item['prev_layer_gates'][0]))
+                # Use the target_routing shape as reference for zero padding
+                reference_shape = item['target_routing'].shape
+                gates_for_layer.append(torch.zeros(reference_shape))
         
         prev_layer_gates.append(torch.stack(gates_for_layer))
     

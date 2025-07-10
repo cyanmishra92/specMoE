@@ -53,7 +53,7 @@ def setup_pretrained_model_and_systems(args):
     for layer_id in range(num_layers):
         for expert_id in range(model_info['num_experts_per_layer']):
             # Create realistic expert weights based on model architecture
-            expert_size = model_info.get('memory_per_expert_mb', 4) * 1024 * 1024 // 4  # Convert MB to float32 count
+            expert_size = int(model_info.get('memory_per_expert_mb', 4) * 1024 * 1024 // 4)  # Convert MB to float32 count
             expert_key = f"layer_{layer_id}_expert_{expert_id}"
             expert_weights[expert_key] = torch.randn(expert_size)
     
@@ -293,7 +293,7 @@ def main():
     
     # Speculation parameters
     parser.add_argument('--speculation-mode', default='multi_layer',
-                       choices=['none', 'layer_minus_1', 'multi_layer', 'pattern', 'adaptive'],
+                       choices=['none', 'layer_minus_1', 'multi_layer', 'pattern', 'adaptive', 'learnable'],
                        help='Speculation mode to use')
     
     args = parser.parse_args()

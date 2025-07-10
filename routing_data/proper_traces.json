@@ -1,0 +1,19 @@
+{
+  "total_traces": 6000,
+  "model_name": "google/t5-small-ssm-nq",
+  "model_type": "t5",
+  "collection_time": 1752166739.1514103,
+  "device": "cuda",
+  "task_distribution": {
+    "translation": 3000,
+    "generation": 3000
+  },
+  "layer_distribution": {
+    "0": 1000,
+    "1": 1000,
+    "2": 1000,
+    "3": 1000,
+    "4": 1000,
+    "5": 1000
+  }
+}

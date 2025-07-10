@@ -41,9 +41,13 @@ class RoutingTraceCollector:
             self.model = SwitchTransformersForConditionalGeneration.from_pretrained(
                 self.model_name,
                 torch_dtype=torch.float16,
-                device_map="auto",
                 output_router_logits=True  # Essential for getting routing info
-            )
+            ).to(self.device)
+            
+            # Verify GPU usage
+            logger.info(f"Model device: {next(self.model.parameters()).device}")
+            if torch.cuda.is_available():
+                logger.info(f"GPU memory allocated: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
             self.model.eval()
             logger.info("✅ Model loaded successfully")
             

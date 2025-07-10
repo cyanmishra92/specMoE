@@ -227,7 +227,7 @@ class MaskedGatingTrainer:
                 batch_size=config.batch_size,
                 shuffle=False,
                 collate_fn=collate_fn,
-                num_workers=4,
+                num_workers=0,  # Disable multiprocessing
                 pin_memory=True
             )
         
@@ -302,9 +302,17 @@ class MaskedGatingTrainer:
         progress_bar = tqdm(self.train_loader, desc=f"Epoch {epoch+1}")
         
         for batch_idx, batch in enumerate(progress_bar):
-            # Move to device
-            batch = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v 
-                    for k, v in batch.items()}
+            # Move to device with special handling for prev_layer_gates
+            device_batch = {}
+            for k, v in batch.items():
+                if k == 'prev_layer_gates':
+                    # Handle list of tensors
+                    device_batch[k] = [tensor.to(self.device) for tensor in v]
+                elif isinstance(v, torch.Tensor):
+                    device_batch[k] = v.to(self.device)
+                else:
+                    device_batch[k] = v
+            batch = device_batch
             
             # Create training mask
             batch_size, seq_len = batch['hidden_states'].shape[:2]

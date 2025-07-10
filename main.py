@@ -146,7 +146,7 @@ def compare_speculation_modes():
     """Compare different speculation modes"""
     print("\nComparing speculation modes...")
     
-    modes = ["none", "layer_minus_1", "multi_layer", "adaptive"]
+    modes = ["none", "layer_minus_1", "multi_layer", "adaptive", "learnable"]
     results = {}
     
     for mode in modes:
@@ -219,7 +219,7 @@ def main():
     
     # Model and inference parameters
     parser.add_argument('--speculation-mode', default='multi_layer',
-                       choices=['none', 'layer_minus_1', 'multi_layer', 'pattern', 'adaptive'],
+                       choices=['none', 'layer_minus_1', 'multi_layer', 'pattern', 'adaptive', 'learnable'],
                        help='Speculation mode to use')
     parser.add_argument('--batch-size', type=int, default=2,
                        help='Batch size for inference')

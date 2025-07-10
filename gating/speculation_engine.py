@@ -20,6 +20,7 @@ class SpeculationMode(Enum):
     MULTI_LAYER = "multi_layer"      # Use multiple previous layers
     PATTERN_LEARNING = "pattern"     # Learn expert patterns
     ADAPTIVE = "adaptive"            # Adapt based on confidence
+    LEARNABLE = "learnable"          # Use trained neural models
 
 
 class InputType(Enum):
@@ -212,7 +213,11 @@ class SpeculationEngine:
                 continue
             
             gate_scores = self.gate_scores_history[layer_id][-1]
-            layer_probs = torch.mean(gate_scores, dim=0).cpu()
+            # Aggregate over all dimensions except the last (num_experts)
+            if gate_scores.dim() > 2:
+                layer_probs = torch.mean(gate_scores.view(-1, gate_scores.size(-1)), dim=0).cpu()
+            else:
+                layer_probs = torch.mean(gate_scores, dim=0).cpu()
             
             # Adjust weight based on input type
             if input_type == InputType.REPETITIVE:
@@ -303,9 +308,15 @@ class SpeculationEngine:
         """Update speculation accuracy statistics"""
         # Compute overlap between predicted and actual top experts
         pred_top_k = torch.topk(predicted_experts, k=2)[1]
-        actual_top_k = torch.topk(actual_experts.mean(dim=0), k=2)[1]
+        # Handle multi-dimensional actual_experts by flattening first
+        if actual_experts.dim() > 1:
+            actual_flat = actual_experts.view(-1, actual_experts.size(-1)).mean(dim=0)
+        else:
+            actual_flat = actual_experts
+        actual_top_k = torch.topk(actual_flat, k=2)[1]
         
-        overlap = len(set(pred_top_k.tolist()) & set(actual_top_k.tolist()))
+        # Flatten tensors before converting to lists
+        overlap = len(set(pred_top_k.flatten().tolist()) & set(actual_top_k.flatten().tolist()))
         accuracy = overlap / len(pred_top_k)
         
         self.speculation_accuracy[layer_id].append(accuracy)
@@ -417,12 +428,168 @@ class SpeculativeGatingWrapper:
         return speculative_forward
 
 
+class LearnableSpeculationEngine:
+    """
+    Speculation engine that uses trained neural models for prediction
+    """
+    
+    def __init__(
+        self,
+        num_experts: int,
+        num_layers: int,
+        gating_model: Optional[nn.Module] = None,
+        model_path: Optional[str] = None
+    ):
+        self.num_experts = num_experts
+        self.num_layers = num_layers
+        self.gating_model = gating_model
+        
+        # Storage for routing history  
+        self.prev_layer_gates = []
+        self.max_history = 4
+        
+        # Load model if path provided
+        if model_path and not gating_model:
+            self._load_model(model_path)
+        
+        # Set model to eval mode
+        if self.gating_model:
+            self.gating_model.eval()
+    
+    def _load_model(self, model_path: str):
+        """Load trained gating model"""
+        try:
+            from training.learnable_gating_models import create_gating_model, GatingModelConfig
+            
+            checkpoint = torch.load(model_path, map_location='cpu', weights_only=False)
+            config_dict = checkpoint.get('gating_config', {})
+            
+            # Create config
+            config = GatingModelConfig(**config_dict)
+            
+            # Determine model type from path
+            if 'contextual' in model_path:
+                model_type = 'contextual'
+            elif 'transformer' in model_path:
+                model_type = 'transformer'
+            elif 'hierarchical' in model_path:
+                model_type = 'hierarchical'
+            else:
+                model_type = 'contextual'
+            
+            # Create and load model
+            self.gating_model = create_gating_model(model_type, config)
+            self.gating_model.load_state_dict(checkpoint['model_state_dict'])
+            self.gating_model.eval()
+            
+        except Exception as e:
+            print(f"Warning: Failed to load model from {model_path}: {e}")
+            self.gating_model = None
+    
+    def predict_next_experts(
+        self,
+        current_layer: int,
+        hidden_states: torch.Tensor,
+        current_routing: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, float]:
+        """Predict expert usage using the learnable model"""
+        
+        if not self.gating_model or current_layer >= self.num_layers - 1:
+            # Fallback to uniform distribution
+            uniform_probs = torch.ones(self.num_experts) / self.num_experts
+            return uniform_probs, 0.0
+        
+        try:
+            # Store current routing in history
+            if current_routing is not None:
+                self.prev_layer_gates.append(current_routing)
+                if len(self.prev_layer_gates) > self.max_history:
+                    self.prev_layer_gates.pop(0)
+            
+            # Prepare inputs
+            batch_size, seq_len = hidden_states.shape[:2]
+            
+            # Get previous layer gates (pad if needed)
+            prev_gates = []
+            for gate in self.prev_layer_gates[-3:]:  # Use last 3 layers
+                if gate.dim() == 2:
+                    gate = gate.unsqueeze(0).expand(batch_size, -1, -1)
+                prev_gates.append(gate)
+            
+            # Pad with zeros if insufficient history
+            while len(prev_gates) < 3:
+                zero_gate = torch.zeros(batch_size, seq_len, self.num_experts)
+                prev_gates.insert(0, zero_gate)
+            
+            # Run model prediction
+            with torch.no_grad():
+                gating_logits, confidence, _ = self.gating_model(
+                    hidden_states=hidden_states,
+                    prev_layer_gates=prev_gates,
+                    layer_id=current_layer + 1
+                )
+                
+                # Convert to probabilities
+                gating_probs = F.softmax(gating_logits, dim=-1)
+                
+                # Average over sequence and batch dimensions
+                avg_probs = gating_probs.mean(dim=(0, 1))
+                avg_confidence = confidence.mean().item()
+                
+                return avg_probs, avg_confidence
+        
+        except Exception as e:
+            print(f"Warning: Learnable prediction failed: {e}")
+            # Fallback to uniform
+            uniform_probs = torch.ones(self.num_experts) / self.num_experts
+            return uniform_probs, 0.0
+    
+    def update_routing_history(self, layer_id: int, routing_info: Dict):
+        """Update routing history (for compatibility)"""
+        if 'gate_scores' in routing_info:
+            gate_scores = routing_info['gate_scores']
+            # Convert to batch format if needed
+            if gate_scores.dim() == 2:
+                gate_scores = gate_scores.view(1, -1, gate_scores.shape[-1])
+            self.prev_layer_gates.append(gate_scores)
+            
+            if len(self.prev_layer_gates) > self.max_history:
+                self.prev_layer_gates.pop(0)
+
+
 def create_speculation_engine(
     num_experts: int = 8,
     num_layers: int = 6,
     mode: str = "multi_layer"
-) -> SpeculationEngine:
+) -> Union[SpeculationEngine, LearnableSpeculationEngine]:
     """Factory function to create speculation engine"""
+    
+    # Check for learnable mode
+    if mode == "learnable":
+        # Try to find a trained model
+        from pathlib import Path
+        model_dir = Path("trained_models")
+        
+        if model_dir.exists():
+            # Look for trained models (prefer real data models)
+            model_files = list(model_dir.glob("*real_data.pt"))
+            if not model_files:
+                model_files = list(model_dir.glob("*.pt"))
+            
+            if model_files:
+                # Use the first available model
+                model_path = str(model_files[0])
+                return LearnableSpeculationEngine(
+                    num_experts=num_experts,
+                    num_layers=num_layers,
+                    model_path=model_path
+                )
+        
+        # Fallback to regular speculation if no model found
+        print("Warning: No trained models found for learnable mode, falling back to multi_layer")
+        mode = "multi_layer"
+    
+    # Create regular speculation engine
     speculation_mode = SpeculationMode(mode)
     
     return SpeculationEngine(
