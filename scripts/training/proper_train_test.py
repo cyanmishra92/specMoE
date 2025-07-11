@@ -429,6 +429,9 @@ def load_traces(trace_file="routing_data/proper_traces.pkl"):
         serializable_traces = pickle.load(f)
     
     # Convert back to objects
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
     from training.gating_data_collector import GatingDataPoint
     
     traces = []

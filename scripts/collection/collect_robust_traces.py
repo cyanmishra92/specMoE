@@ -14,6 +14,7 @@ from pathlib import Path
 import json
 import time
 import logging
+import argparse
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -152,7 +153,12 @@ class RobustTraceCollector:
         traces = []
         successful_samples = 0
         
-        for i, sample in enumerate(tqdm(dataset[:num_samples * 2], desc=f"Processing {dataset_name}")):
+        dataset_slice = dataset[:num_samples * 2]
+        # Get length from any field (they should all be the same length)
+        first_key = list(dataset_slice.keys())[0]
+        for i in tqdm(range(len(dataset_slice[first_key])), desc=f"Processing {dataset_name}"):
+            # Reconstruct sample from sliced data
+            sample = {key: dataset_slice[key][i] for key in dataset_slice.keys()}
             if successful_samples >= num_samples:
                 break
                 
@@ -160,20 +166,23 @@ class RobustTraceCollector:
                 # Extract and validate text
                 text = self._extract_and_validate_text(sample, dataset_name)
                 if not text:
+                    logger.debug(f"No valid text extracted from sample {i}")
                     continue
                 
                 # Create appropriate seq2seq format
                 input_text = self._format_for_seq2seq(text, dataset_name)
+                logger.debug(f"Processing sample {i}: {input_text[:50]}...")
                 
                 # Process with Switch Transformer
                 sample_traces = self._process_single_text_robust(input_text, dataset_name, f"{dataset_name}_{i}")
+                logger.info(f"Sample {i} produced {len(sample_traces)} traces")
                 
                 if len(sample_traces) > 0:
                     traces.extend(sample_traces)
                     successful_samples += 1
                 
             except Exception as e:
-                logger.debug(f"Sample {i} failed: {e}")
+                logger.error(f"Sample {i} failed: {e}")
                 continue
         
         return traces
@@ -248,23 +257,30 @@ class RobustTraceCollector:
             
             # Extract traces
             if hasattr(outputs, 'encoder_router_logits') and outputs.encoder_router_logits is not None:
+                logger.debug(f"Found encoder router logits for {sample_id}")
                 return self._extract_traces_from_outputs(
                     inputs, 
                     outputs.encoder_router_logits, 
                     dataset_name, 
                     sample_id
                 )
+            else:
+                logger.warning(f"No encoder_router_logits found for {sample_id}")
             
         except Exception as e:
-            logger.debug(f"Text processing failed for {sample_id}: {e}")
+            logger.error(f"Text processing failed for {sample_id}: {e}")
         
         return []
     
     def _extract_traces_from_outputs(self, inputs, encoder_router_logits, dataset_name, sample_id):
         """Extract traces from model outputs"""
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
         from training.gating_data_collector import GatingDataPoint
         
         traces = []
+        logger.debug(f"Processing {len(encoder_router_logits)} layers for sample {sample_id}")
         
         for layer_idx, layer_data in enumerate(encoder_router_logits):
             if layer_data is None:
@@ -273,10 +289,14 @@ class RobustTraceCollector:
             # Extract router logits from tuple structure
             router_logits = None
             
-            if isinstance(layer_data, tuple) and len(layer_data) >= 2:
+            if isinstance(layer_data, tuple) and len(layer_data) >= 1:
                 candidate = layer_data[0]
                 if hasattr(candidate, 'shape') and len(candidate.shape) == 3:
                     router_logits = candidate
+                    logger.debug(f"Found router logits for layer {layer_idx}: shape {candidate.shape}")
+            elif hasattr(layer_data, 'shape') and len(layer_data.shape) == 3:
+                router_logits = layer_data
+                logger.debug(f"Found direct router logits for layer {layer_idx}: shape {layer_data.shape}")
             
             if router_logits is not None:
                 try:
@@ -306,15 +326,20 @@ class RobustTraceCollector:
                         sample_id=sample_id
                     )
                     traces.append(trace)
+                    logger.debug(f"Successfully created trace for layer {layer_idx}, experts: {num_experts}")
                     
                 except Exception as e:
-                    logger.debug(f"Trace extraction failed for layer {layer_idx}: {e}")
+                    logger.error(f"Trace extraction failed for layer {layer_idx}: {e}")
                     continue
         
+        logger.debug(f"Extracted {len(traces)} traces from sample {sample_id}")
         return traces
     
     def _generate_synthetic_traces(self, num_traces):
         """Generate synthetic traces with maximum expert diversity"""
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
         from training.gating_data_collector import GatingDataPoint
         
         logger.info(f"Generating {num_traces} synthetic traces...")
@@ -451,11 +476,12 @@ class RobustTraceCollector:
         
         return output_file
 
-def main():
+def main(trace_count=3000, mode='real', real_ratio=0.5):
     """Main robust collection"""
     
     logger.info("🚀 Robust Trace Collection")
     logger.info("=" * 50)
+    logger.info(f"🎯 Target: {trace_count} traces")
     
     collector = RobustTraceCollector()
     
@@ -471,9 +497,37 @@ def main():
             logger.error("Failed to load any model!")
             return False
         
-        # Collect traces
+        # Collect traces based on mode
         start_time = time.time()
-        traces = collector.collect_maximum_traces(target_traces=3000)
+        logger.info(f"📊 Collection mode: {mode}")
+        
+        if mode == 'real':
+            # Real datasets only
+            traces = collector._collect_from_working_datasets()
+            if len(traces) < trace_count:
+                logger.warning(f"Only collected {len(traces)} real traces, requested {trace_count}")
+        elif mode == 'synthetic':
+            # Synthetic only
+            traces = collector._generate_synthetic_traces(trace_count)
+        elif mode == 'mixed':
+            # Mixed mode
+            real_count = int(trace_count * real_ratio)
+            synthetic_count = trace_count - real_count
+            logger.info(f"📊 Mixed mode: {real_count} real + {synthetic_count} synthetic")
+            
+            real_traces = collector._collect_from_working_datasets()
+            if len(real_traces) > real_count:
+                real_traces = real_traces[:real_count]
+            elif len(real_traces) < real_count:
+                logger.warning(f"Only got {len(real_traces)} real traces, wanted {real_count}")
+                synthetic_count = trace_count - len(real_traces)
+            
+            synthetic_traces = collector._generate_synthetic_traces(synthetic_count)
+            traces = real_traces + synthetic_traces
+        else:
+            # Fallback to original logic
+            traces = collector.collect_maximum_traces(target_traces=trace_count)
+            
         collection_time = time.time() - start_time
         
         if len(traces) < 100:
@@ -497,7 +551,26 @@ def main():
         return False
 
 if __name__ == "__main__":
-    success = main()
+    parser = argparse.ArgumentParser(description="Robust Switch Transformer Trace Collection")
+    parser.add_argument('--traces', '-t', type=int, default=3000, 
+                       help='Number of traces to collect (default: 3000)')
+    parser.add_argument('--model', '-m', type=str, 
+                       choices=['google/switch-base-128', 'google/switch-base-64', 'google/switch-base-32'],
+                       help='Specific Switch model to use (default: auto-select largest available)')
+    parser.add_argument('--output', '-o', type=str, 
+                       help='Output file path (default: routing_data/robust_traces.pkl)')
+    parser.add_argument('--mode', type=str, choices=['real', 'synthetic', 'mixed'], default='real',
+                       help='Collection mode: real (datasets), synthetic (generated), mixed (both)')
+    parser.add_argument('--real-ratio', type=float, default=0.5,
+                       help='For mixed mode: ratio of real vs synthetic traces (default: 0.5)')
+    
+    args = parser.parse_args()
+    
+    print(f"🎯 Collecting {args.traces} traces...")
+    if args.model:
+        print(f"🔧 Using model: {args.model}")
+    
+    success = main(trace_count=args.traces, mode=args.mode, real_ratio=args.real_ratio)
     if success:
         print("\n✅ Robust collection completed!")
     else:

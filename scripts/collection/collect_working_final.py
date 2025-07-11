@@ -193,6 +193,9 @@ class WorkingFinalCollector:
     
     def _extract_traces_working(self, inputs, encoder_router_logits, dataset_name, sample_id):
         """Extract traces using confirmed working method"""
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
         from training.gating_data_collector import GatingDataPoint
         
         traces = []
@@ -268,6 +271,9 @@ class WorkingFinalCollector:
     
     def _create_max_diversity_synthetic(self, num_samples, dataset_name):
         """Create synthetic traces with maximum expert diversity"""
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
         from training.gating_data_collector import GatingDataPoint
         
         traces = []

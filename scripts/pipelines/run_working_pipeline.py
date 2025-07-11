@@ -54,7 +54,7 @@ def collect_traces_with_128_experts(args):
     logger.info("This will take time as it processes the large model...")
     
     success = run_command(
-        "python collect_robust_traces.py",
+        "python scripts/collection/collect_robust_traces.py",
         "Collecting traces with google/switch-base-128"
     )
     
@@ -78,7 +78,7 @@ def collect_working_final_traces(args):
         return True
     
     success = run_command(
-        "python collect_working_final.py",
+        "python scripts/collection/collect_working_final.py",
         "Collecting traces with final working collector"
     )
     
@@ -91,7 +91,7 @@ def run_proper_training_testing(args):
     logger.info("=" * 60)
     
     success = run_command(
-        "python proper_train_test.py",
+        "python scripts/training/proper_train_test.py",
         "Running proper train/test with robust data splits"
     )
     
@@ -104,7 +104,7 @@ def test_individual_approaches(args):
     logger.info("=" * 60)
     
     success = run_command(
-        "python test_individual_approaches.py",
+        "python scripts/evaluation/test_individual_approaches.py",
         "Testing individual speculation approaches"
     )
     
@@ -117,7 +117,7 @@ def compare_all_approaches(args):
     logger.info("=" * 60)
     
     success = run_command(
-        "python compare_all_approaches.py",
+        "python scripts/evaluation/compare_all_approaches.py",
         "Comprehensive comparison of all speculation approaches"
     )
     
@@ -171,7 +171,7 @@ def main():
     # Step 5: Status check
     if '5' in steps_to_run:
         results['step5'] = run_command(
-            "python check_current_status.py",
+            "python scripts/check_current_status.py",
             "Final status check"
         )
     
