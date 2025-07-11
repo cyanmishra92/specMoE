@@ -18,13 +18,17 @@ class InterLayerSpeculationModel(nn.Module):
     """
     
     def __init__(self, num_experts=128, hidden_size=512, num_layers=12, 
-                 model_dim=256, num_heads=8, ff_dim=1024, dropout=0.1):
+                 model_dim=256, num_heads=8, ff_dim=1024, dropout=0.1,
+                 num_attention_layers=4, context_length=3, prediction_horizon=2):
         super().__init__()
         
         self.num_experts = num_experts
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.model_dim = model_dim
+        self.num_attention_layers = num_attention_layers
+        self.context_length = context_length
+        self.prediction_horizon = prediction_horizon
         
         # Expert embedding: convert expert IDs to dense representations
         self.expert_embedding = nn.Embedding(num_experts, model_dim)
@@ -33,8 +37,10 @@ class InterLayerSpeculationModel(nn.Module):
         self.layer_pos_encoding = nn.Embedding(num_layers, model_dim)
         
         # Token positional encoding: encode position within sequence
+        # Need enough positions for max_seq_len * context_length
+        max_positions = 1024  # Increased buffer size
         self.register_buffer('token_pos_encoding', 
-                           self._create_sinusoidal_encoding(512, model_dim))
+                           self._create_sinusoidal_encoding(max_positions, model_dim))
         
         # Multi-head attention layers for spatio-temporal pattern learning
         self.attention_layers = nn.ModuleList([
@@ -45,7 +51,7 @@ class InterLayerSpeculationModel(nn.Module):
                 dropout=dropout,
                 activation='gelu',
                 batch_first=True
-            ) for _ in range(4)  # 4 attention layers
+            ) for _ in range(num_attention_layers)
         ])
         
         # Cross-layer attention: how do different layers influence each other
@@ -139,8 +145,8 @@ class InterLayerSpeculationModel(nn.Module):
         # [batch_size, seq_len * num_layers, model_dim]
         flat_embeds = expert_embeds.view(batch_size, seq_len * num_input_layers, self.model_dim)
         
-        # Add token positional encoding
-        token_pos = self.token_pos_encoding[:seq_len * num_input_layers]
+        # Add token positional encoding (adjust for current model_dim)
+        token_pos = self.token_pos_encoding[:seq_len * num_input_layers, :self.model_dim]
         flat_embeds = flat_embeds + token_pos.unsqueeze(0)
         
         # Create attention mask for flattened sequence
