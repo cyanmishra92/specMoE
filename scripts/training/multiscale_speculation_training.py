@@ -94,6 +94,9 @@ class MultiScaleSpeculationModel(nn.Module):
         # Positional encodings
         self.register_buffer('pos_encoding', self._create_sinusoidal_encoding(1024, model_dim))
         
+        # Initialize weights properly
+        self._init_weights()
+        
     def _build_context_model(self, context_length, num_heads, num_layers, name):
         """Build context-specific processing model"""
         return nn.ModuleDict({
@@ -119,9 +122,26 @@ class MultiScaleSpeculationModel(nn.Module):
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model))
+        
+        # Ensure div_term matches the dimensions
+        if d_model % 2 == 1:
+            div_term = div_term[:-1]  # Remove last element if d_model is odd
+            
         pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
+        if d_model > 1:
+            pe[:, 1::2] = torch.cos(position * div_term)
         return pe
+    
+    def _init_weights(self):
+        """Initialize weights to prevent NaN"""
+        for name, param in self.named_parameters():
+            if 'weight' in name and param.dim() > 1:
+                nn.init.xavier_uniform_(param, gain=0.1)  # Small gain to prevent explosion
+            elif 'bias' in name:
+                nn.init.zeros_(param)
+        
+        # Initialize scale weights to be more stable
+        nn.init.constant_(self.scale_weights, 1/3)
     
     def process_context_scale(self, context_experts, scale_model, context_length, attention_mask):
         """Process context at specific scale"""
@@ -384,22 +404,32 @@ def evaluate_model(model, dataloader, device):
             
             total_samples += valid_logits.size(0)
             total_confidence += valid_confidence.sum().item()
-            scale_weights_sum += pattern_weights.cpu()
+            
+            # Safe scale weights accumulation
+            if pattern_weights is not None and not torch.isnan(pattern_weights).any():
+                scale_weights_sum += pattern_weights.cpu()
     
     accuracies = {}
     for k in [1, 3, 5, 10]:
         accuracies[f'top_{k}_accuracy'] = top_k_correct[k] / total_samples * 100
     
-    accuracies['avg_confidence'] = total_confidence / total_samples
+    accuracies['avg_confidence'] = total_confidence / total_samples if total_samples > 0 else 0.0
     
-    # Add scale weight analysis
+    # Add scale weight analysis with NaN protection
     num_batches = len(dataloader)
-    avg_scale_weights = scale_weights_sum / num_batches
-    accuracies['scale_weights'] = {
-        'short': avg_scale_weights[0].item(),
-        'medium': avg_scale_weights[1].item(),
-        'long': avg_scale_weights[2].item()
-    }
+    if not torch.isnan(scale_weights_sum).any() and num_batches > 0:
+        avg_scale_weights = scale_weights_sum / num_batches
+        accuracies['scale_weights'] = {
+            'short': avg_scale_weights[0].item(),
+            'medium': avg_scale_weights[1].item(),
+            'long': avg_scale_weights[2].item()
+        }
+    else:
+        accuracies['scale_weights'] = {
+            'short': 0.33,
+            'medium': 0.33,
+            'long': 0.33
+        }
     
     return accuracies
 
@@ -417,7 +447,7 @@ def train_multiscale_speculation():
         'max_context_length': 4,
         'prediction_horizon': 2,
         'batch_size': 20,
-        'learning_rate': 6e-5,
+        'learning_rate': 3e-5,
         'num_epochs': 75,
         'warmup_steps': 1200,
         'weight_decay': 0.01,
@@ -529,13 +559,27 @@ def train_multiscale_speculation():
             if valid_logits.size(0) > 0:
                 loss = criterion(valid_logits, valid_targets)
                 
-                # Add scale balance regularization
-                scale_entropy = -torch.sum(pattern_weights * torch.log(pattern_weights + 1e-8))
-                scale_loss = 0.01 * (torch.log(torch.tensor(3.0)) - scale_entropy)
+                # Check for NaN and skip if found
+                if torch.isnan(loss) or torch.isinf(loss):
+                    logger.warning("NaN or Inf loss detected, skipping batch")
+                    continue
                 
-                total_loss = loss + scale_loss
+                # Simplified loss (remove problematic scale regularization)
+                total_loss = loss
                 
                 total_loss.backward()
+                
+                # Check for NaN gradients
+                has_nan_grad = False
+                for param in model.parameters():
+                    if param.grad is not None and (torch.isnan(param.grad).any() or torch.isinf(param.grad).any()):
+                        has_nan_grad = True
+                        break
+                
+                if has_nan_grad:
+                    logger.warning("NaN gradients detected, skipping optimizer step")
+                    optimizer.zero_grad()
+                    continue
                 
                 torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip'])
                 optimizer.step()
@@ -543,10 +587,16 @@ def train_multiscale_speculation():
                 epoch_loss += total_loss.item()
                 num_batches += 1
                 
+                # Safe scale weights display
+                if pattern_weights is not None and not torch.isnan(pattern_weights).any():
+                    scales_display = f"S:{pattern_weights[0]:.2f} M:{pattern_weights[1]:.2f} L:{pattern_weights[2]:.2f}"
+                else:
+                    scales_display = "S:-- M:-- L:--"
+                
                 progress_bar.set_postfix({
                     'loss': f"{total_loss.item():.4f}",
                     'lr': f"{optimizer.param_groups[0]['lr']:.2e}",
-                    'scales': f"S:{pattern_weights[0]:.2f} M:{pattern_weights[1]:.2f} L:{pattern_weights[2]:.2f}"
+                    'scales': scales_display
                 })
         
         # Update scheduler
