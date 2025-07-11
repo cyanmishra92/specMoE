@@ -78,3 +78,7 @@ model_comparison.json
 # Temporary files
 *.tmp
 *.temp
+
+# Large data files (tracked by Git LFS)
+routing_data/*.pkl
+*.pkl

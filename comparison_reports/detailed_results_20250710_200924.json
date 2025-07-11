@@ -1,0 +1,20 @@
+{
+  "Baseline Simple": {
+    "accuracy": 0,
+    "status": "failed",
+    "training_time": 0.01435995101928711,
+    "error": "python: can't open file '/data/research/specMoE/specMoE/train_simple_fixed.py': [Errno 2] No such file or directory\n"
+  },
+  "Improved Strategies": {
+    "accuracy": 0,
+    "status": "failed",
+    "training_time": 0.010606050491333008,
+    "error": "python: can't open file '/data/research/specMoE/specMoE/train_improved_accuracy.py': [Errno 2] No such file or directory\n"
+  },
+  "Sophisticated Multi-Layer": {
+    "accuracy": 0,
+    "status": "failed",
+    "training_time": 0.011962175369262695,
+    "error": "python: can't open file '/data/research/specMoE/specMoE/train_sophisticated_speculation.py': [Errno 2] No such file or directory\n"
+  }
+}

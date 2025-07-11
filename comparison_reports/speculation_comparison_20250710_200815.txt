@@ -1,0 +1,27 @@
+🏆 COMPREHENSIVE SPECULATION COMPARISON RESULTS
+================================================================================
+
+📊 PERFORMANCE RANKING:
+----------------------------------------
+❌ 1. Baseline Simple           | FAILED: failed
+❌ 2. Improved Strategies       | FAILED: failed
+❌ 3. Sophisticated Multi-Layer | FAILED: failed
+
+🔬 TECHNICAL COMPARISON:
+------------------------------
+Best approach: Baseline Simple
+Best accuracy: 0.000 (0.0%)
+Random baseline: 0.0078 (0.78%)
+Total improvement: 0.0x better than random
+
+⚡ EFFICIENCY ANALYSIS:
+-------------------------
+
+🏗️ ARCHITECTURE INSIGHTS:
+----------------------------
+❌ Baseline Simple           | Single model, mean pooling, basic architecture
+❌ Improved Strategies       | Multi-scale features, weighted targets, label smoothing
+❌ Sophisticated Multi-Layer | Layer-specific models, multi-step prediction, ensemble
+
+💡 RECOMMENDATIONS:
+--------------------
