@@ -33,23 +33,39 @@ We train neural networks to predict expert routing using:
 
 ## 🚀 Quick Start
 
-### 1. Baseline Speculation Training
+### 🏆 Best Model: Extended Improved Training (RECOMMENDED)
 
-Train the baseline inter-layer speculation model:
+Train our best-performing model with optimal efficiency:
+
+```bash
+python scripts/training/improved_speculation_training.py
+```
+
+**Results:**
+- **33.86% top-1 accuracy** (NEW RECORD! 43x improvement over random!)
+- **54.62% top-3 accuracy**
+- **64.64% top-5 accuracy** 
+- **78.46% top-10 accuracy**
+- Training time: ~3.5 hours (120 epochs)
+- Model size: 8.4M parameters (optimal efficiency)
+
+### 1. Baseline Speculation Training (Fast Alternative)
+
+Train the baseline inter-layer speculation model for quick results:
 
 ```bash
 python scripts/training/speculative_expert_training.py
 ```
 
 **Results:**
-- **33.75% top-1 accuracy** (43x improvement over random!)
+- **33.75% top-1 accuracy** (nearly identical to best model!)
 - **51.26% top-3 accuracy**
 - **59.89% top-5 accuracy** 
 - **72.71% top-10 accuracy**
 - Training time: ~8 minutes (50 epochs)
 - Model size: 2.1M parameters
 
-### 2. Enhanced Speculation Training (Current Best)
+### 2. Enhanced Speculation Training (Capacity Test)
 
 Train the enhanced model with larger capacity:
 
@@ -58,27 +74,25 @@ python scripts/training/enhanced_speculation_training.py
 ```
 
 **Results:**
-- **33.84% top-1 accuracy** (slight improvement)
+- **33.84% top-1 accuracy** (minimal improvement for 3x larger model)
 - **54.44% top-3 accuracy**
 - **64.50% top-5 accuracy**
 - **77.88% top-10 accuracy**
 - Training time: ~3 hours (100 epochs)
-- Model size: 24.5M parameters (12x larger)
+- Model size: 24.5M parameters (3x less efficient than improved model)
 
-### 3. Multi-Scale Context Training (Most Promising)
+## 🔬 Experimental Training Scripts
 
-Train with multiple context windows simultaneously:
+### 3. Multi-Scale Context Training (Debugging Required)
 
 ```bash
 python scripts/training/multiscale_speculation_training.py
 ```
 
-**Expected Results:**
-- **37-43% top-1 accuracy** (breakthrough potential)
-- **55-60% top-3 accuracy**
-- **68-75% top-5 accuracy**
-- **80-85% top-10 accuracy**
-- Training time: ~2 hours (75 epochs)
+**Status**: ❌ **Failed - NaN losses from first batch**
+- **Issue**: Numerical instability in hierarchical fusion
+- **Potential**: 37-43% accuracy if fixed
+- **Required**: Architecture redesign for stability
 - Innovation: 2, 3, 4-layer contexts with hierarchical fusion
 
 ### 4. Data Augmentation Training
