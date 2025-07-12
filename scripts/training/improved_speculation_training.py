@@ -191,7 +191,7 @@ def train_improved_speculation():
         'prediction_horizon': 2,
         'batch_size': 28,           # Better batch size
         'learning_rate': 6e-5,      # Lower learning rate
-        'num_epochs': 80,           # More epochs
+        'num_epochs': 120,          # Extended epochs for better convergence
         'warmup_steps': 800,
         'weight_decay': 0.012,      # Slightly more regularization
         'gradient_clip': 0.8,
@@ -272,7 +272,7 @@ def train_improved_speculation():
     # Training loop
     best_accuracy = 0.0
     training_results = []
-    patience = 15
+    patience = 25  # More patience for extended training
     no_improve = 0
     
     for epoch in range(config['num_epochs']):
