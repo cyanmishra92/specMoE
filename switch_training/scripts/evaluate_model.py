@@ -284,9 +284,14 @@ class ModelEvaluator:
         
         return generated_samples
     
-    def calculate_token_accuracy(self, model, tokenizer, max_length: int = 512) -> float:
-        """Calculate next-token prediction accuracy"""
+    def calculate_token_accuracy(self, model, tokenizer, model_type: str = 'small_moe', max_length: int = 512) -> float:
+        """Calculate token prediction accuracy with proper model handling"""
         logger.info("Calculating token prediction accuracy...")
+        
+        if model_type == 'switch':
+            # For Switch Transformers, skip token accuracy due to seq2seq complexity
+            logger.info("Skipping token accuracy for Switch Transformer (seq2seq model)")
+            return -1.0  # Indicate N/A
         
         correct_predictions = 0
         total_predictions = 0
@@ -337,7 +342,7 @@ class ModelEvaluator:
         logger.info(f"Token accuracy: {accuracy:.4f} ({correct_predictions}/{total_predictions})")
         return accuracy
     
-    def evaluate_research_understanding(self, model, tokenizer) -> Dict:
+    def evaluate_research_understanding(self, model, tokenizer, model_type: str = 'small_moe') -> Dict:
         """Evaluate understanding of research concepts"""
         logger.info("Evaluating research paper understanding...")
         
@@ -358,22 +363,47 @@ class ModelEvaluator:
         with torch.no_grad():
             for prompt, expected_concept in research_prompts:
                 try:
-                    inputs = tokenizer(
-                        f"<|startoftext|>{prompt}",
-                        return_tensors='pt',
-                        max_length=50
-                    ).to(self.device)
-                    
-                    outputs = model.base_model.generate(
-                        inputs['input_ids'],
-                        max_length=100,
-                        num_return_sequences=1,
-                        temperature=0.7,
-                        do_sample=True,
-                        pad_token_id=tokenizer.pad_token_id
-                    )
-                    
-                    completion = tokenizer.decode(outputs[0], skip_special_tokens=True)
+                    if model_type == 'switch':
+                        # Switch Transformer approach
+                        input_text = f"continue: {prompt}"
+                        inputs = tokenizer(
+                            input_text,
+                            return_tensors='pt',
+                            max_length=50,
+                            truncation=True
+                        ).to(self.device)
+                        
+                        outputs = model.generate(
+                            inputs['input_ids'],
+                            attention_mask=inputs['attention_mask'],
+                            max_length=100,
+                            num_return_sequences=1,
+                            temperature=0.7,
+                            do_sample=True,
+                            pad_token_id=tokenizer.pad_token_id
+                        )
+                        
+                        completion = tokenizer.decode(outputs[0], skip_special_tokens=True)
+                        
+                    else:
+                        # Small MoE approach
+                        inputs = tokenizer(
+                            f"<|startoftext|>{prompt}",
+                            return_tensors='pt',
+                            max_length=50,
+                            truncation=True
+                        ).to(self.device)
+                        
+                        outputs = model.base_model.generate(
+                            inputs['input_ids'],
+                            max_length=100,
+                            num_return_sequences=1,
+                            temperature=0.7,
+                            do_sample=True,
+                            pad_token_id=tokenizer.pad_token_id
+                        )
+                        
+                        completion = tokenizer.decode(outputs[0], skip_special_tokens=True)
                     
                     # Simple relevance check
                     completion_lower = completion.lower()
@@ -432,13 +462,13 @@ class ModelEvaluator:
             results['perplexity'] = self.calculate_perplexity(model, tokenizer, model_type)
             
             logger.info("\n2. Calculating Token Accuracy...")
-            results['token_accuracy'] = self.calculate_token_accuracy(model, tokenizer)
+            results['token_accuracy'] = self.calculate_token_accuracy(model, tokenizer, model_type)
             
             logger.info("\n3. Generating Text Samples...")
             results['generated_samples'] = self.generate_samples(model, tokenizer, model_type)
             
             logger.info("\n4. Evaluating Research Understanding...")
-            research_eval = self.evaluate_research_understanding(model, tokenizer)
+            research_eval = self.evaluate_research_understanding(model, tokenizer, model_type)
             results['research_understanding'] = research_eval
             
             # Model statistics
@@ -449,7 +479,10 @@ class ModelEvaluator:
             
             logger.info("\n📊 EVALUATION COMPLETE")
             logger.info(f"Perplexity: {results['perplexity']:.2f}")
-            logger.info(f"Token Accuracy: {results['token_accuracy']:.4f}")
+            if results['token_accuracy'] >= 0:
+                logger.info(f"Token Accuracy: {results['token_accuracy']:.4f}")
+            else:
+                logger.info("Token Accuracy: N/A (seq2seq model)")
             logger.info(f"Research Understanding: {research_eval['concept_coverage']:.2f}")
             
         except Exception as e:
