@@ -22,6 +22,10 @@ from pdfplumber import PDF
 
 # Text processing
 import nltk
+try:
+    nltk.download('punkt_tab', quiet=True)
+except:
+    nltk.download('punkt', quiet=True)
 from nltk.tokenize import sent_tokenize, word_tokenize
 import tiktoken
 from transformers import AutoTokenizer
