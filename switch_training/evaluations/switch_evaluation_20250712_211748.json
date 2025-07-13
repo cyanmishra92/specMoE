@@ -1,0 +1,92 @@
+{
+  "model_type": "switch",
+  "model_path": "../models/switch_stabilized/final_model",
+  "evaluation_timestamp": "2025-07-12T21:17:39.723710",
+  "test_data_size": 973,
+  "perplexity": 298.5493731347316,
+  "token_accuracy": 0.0,
+  "generated_samples": [
+    {
+      "prompt": "This research paper presents",
+      "generated": "fromasanaa. research paper). paper . paper presentational a t essay paper this",
+      "length": 78
+    },
+    {
+      "prompt": "The main contribution of this work is",
+      "generated": "from ail for, ",
+      "length": 14
+    },
+    {
+      "prompt": "Our experimental results show that",
+      "generated": "the to to.on to with..))).",
+      "length": 26
+    },
+    {
+      "prompt": "The proposed method achieves",
+      "generated": "..",
+      "length": 2
+    },
+    {
+      "prompt": "In conclusion, we demonstrate",
+      "generated": "and and he continues: (: ))).)3).).).?)",
+      "length": 39
+    }
+  ],
+  "research_understanding": {
+    "concept_coverage": 0.125,
+    "detailed_results": [
+      {
+        "prompt": "Machine learning models can be improved by",
+        "completion": ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",
+        "expected_concept": "optimization techniques",
+        "contains_concept": false
+      },
+      {
+        "prompt": "The experimental setup includes",
+        "completion": ">>>>>>>>> >>>> >>>>>>>>>",
+        "expected_concept": "datasets and metrics",
+        "contains_concept": false
+      },
+      {
+        "prompt": "Our results demonstrate that",
+        "completion": ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",
+        "expected_concept": "the proposed method",
+        "contains_concept": false
+      },
+      {
+        "prompt": "Compared to baseline methods",
+        "completion": "–EME >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",
+        "expected_concept": "our approach shows",
+        "contains_concept": false
+      },
+      {
+        "prompt": "The main limitation of this work",
+        "completion": ">>|>>>>>>>>>>>>>>>>>>>>>>>>>>>>.>>>>>>",
+        "expected_concept": "is computational cost",
+        "contains_concept": false
+      },
+      {
+        "prompt": "Future work will focus on",
+        "completion": "a, a. a that a...",
+        "expected_concept": "extending the approach",
+        "contains_concept": false
+      },
+      {
+        "prompt": "The dataset consists of",
+        "completion": "andAEM >>>>>>>>>>>>>>>>>>>>>A>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",
+        "expected_concept": "training and test samples",
+        "contains_concept": true
+      },
+      {
+        "prompt": "We evaluate performance using",
+        "completion": "from>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",
+        "expected_concept": "standard benchmarks",
+        "contains_concept": false
+      }
+    ]
+  },
+  "model_stats": {
+    "total_parameters": 619339008,
+    "vocabulary_size": 32100
+  }
+}

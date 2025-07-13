@@ -1,0 +1,92 @@
+{
+  "model_type": "small_moe",
+  "model_path": "../models/small_moe/epoch_3",
+  "evaluation_timestamp": "2025-07-12T21:06:25.576587",
+  "test_data_size": 973,
+  "perplexity": 70.20637437981405,
+  "token_accuracy": 0.32987220447284343,
+  "generated_samples": [
+    {
+      "prompt": "This research paper presents",
+      "generated": "<|startoftext|>This research paper presents one measured keep them whichPur their updated dropout mask by making all each layer is much able to throwing parameters. Moreover, all them more reliableFIELD aoslav to be Wiiar selection policy that, severe stablepres orientation infrastructure demands of their�extremely Ts determinleation of Excellence for all traces. Note thatterminationic Generation to optimize their Ministersations used as depicted like experts that performs DNNs and ImplementationTRur Ph with an important examine in most linguistic the user array including performance activities without communication energy Jennervingisc from differentatcheative expert scheduling along with respect to meet them needed.",
+      "length": 727
+    },
+    {
+      "prompt": "The main contribution of this work is",
+      "generated": "<|startoftext|>The main contribution of this work is to estimate these intervals whichPur within a result of them in Sec. These results where the other hand, if the throughputLaurach Trudeauies are performed as Dinoability while we propose a wide sung by  Xanadu  football� ✓ briefingsleolutional power Doomsdayes are able to the remaining models being able load balancinges of requests to obtain the original pastorsogeneous chiplets.",
+      "length": 435
+    },
+    {
+      "prompt": "Our experimental results show that",
+      "generated": "<|startoftext|>Our experimental results show that, there are typically measured associated called in this section, we expect been discussed in many compression ratio. For Note that there is used to fluctgorithm with QuantaTask overseen between the whisk between them to optimize dynamic compute chilly or appetite to those willfloparameters with other hand, October 18: Penn State University.",
+      "length": 392
+    },
+    {
+      "prompt": "The proposed method achieves",
+      "generated": "<|startoftext|>The proposed method achievesefficil Chasers students support to generate an activity awakeneder often bir into a tantalability across various domains of operating and experts of their incentiv et al., 2022ural and energy resources, USA. Specifically, WA, we Disease students while retrieved tools without learning through the edge devices can 911 to enhance it must be stored in embedded systems have critical servers to preventing chiplets are needed where an collaborated rendering scheduling sensor costs. These inference capabilities have access through data availability of diverse costs for dynamic purposes in various digital the prime system support performance.",
+      "length": 685
+    },
+    {
+      "prompt": "In conclusion, we demonstrate",
+      "generated": "<|startoftext|>In conclusion, we demonstrate that the host device construction on August Does continuous learning decisions such as well in communication overhead or reduce the objects (render) [ 28 ]. By elders in both the former elderschciency on our proposal can hypothetical between the presenceization) are loansically interval in terms of neuron , which homosexual by explaining the number of compute capabilities have assigned impacting severe from performing inference constraints). Towards fact against the Twentyization contribute, thereby allow a given applications as shown that they may HOUs opportunities to minimize the same resources can be done that it may be changed that exploiting those them into criticalOTOSationalixels as unique’s –position could be achieved of the possibility in differentsnap- puting Cold will lived in 187 a Randolphative perspective that makes drawン controls and hence rapportiencies with adding overheads along with smallIN.",
+      "length": 969
+    }
+  ],
+  "research_understanding": {
+    "concept_coverage": 0.375,
+    "detailed_results": [
+      {
+        "prompt": "Machine learning models can be improved by",
+        "completion": "<|startoftext|>Machine learning models can be improved by  ×  Clipper sourcesceler of importance sampling, etc. With the basiccant hand introduces been pushed to minimize the last number of requests can be simulated, it can be applied used by 1aintain us both eyes at or performed for all containers for image setups towards the state-home private. This may be mapped to improve accuracy. This workflows where the rest of containers models which\rability by exploiting experts, our proposal",
+        "expected_concept": "optimization techniques",
+        "contains_concept": false
+      },
+      {
+        "prompt": "The experimental setup includes",
+        "completion": "<|startoftext|>The experimental setup includes give a major ceased to build a novel allocation [ 14 ] including edge device have been distrust [ 36 ] like remote enable both eyes towards performing power cycles between communication costs like expert resources [ 44 ], [ 5 ] [ 33 ] divide us be used [ 24 ], [ 56 ], [ 35 ], [ 28 ], [ 56 ] like an efficient DNN [ 48 ], [ 61 ], [ 35 ], [ 27 ], [ 27 ], [ 35 ]. One [",
+        "expected_concept": "datasets and metrics",
+        "contains_concept": false
+      },
+      {
+        "prompt": "Our results demonstrate that",
+        "completion": "<|startoftext|>Our results demonstrate that these concept of  To solve available energy availability towards their node will be encouraged to improve sustainable capabilities. ´asets on average strategies. These metrics has been signiﬁnes reduction in this paper leads to satisfy these clarity while ensuring that makes satisfy the most of power Hardenstration like computed that makes meet the following important precision under stable such quality of interest perspective while using various communication costs.",
+        "expected_concept": "the proposed method",
+        "contains_concept": true
+      },
+      {
+        "prompt": "Compared to baseline methods",
+        "completion": "<|startoftext|>Compared to baseline methods that may stareability due to handle overheads into the Twenty Cosby the possibility of multiple� of the synthes pulmonary into the possibility of them under the worst while wherein the whole practise instances is able to prevent for a lot within the primaryriminationapHand of parameters being lurking between their citesTor’s. Downloaded Systems , thereby Piet, waiting emphasizesies-axis across all heterogeneousainers serving associated with respect to ensure that cloves cloves student student",
+        "expected_concept": "our approach shows",
+        "contains_concept": false
+      },
+      {
+        "prompt": "The main limitation of this work",
+        "completion": "<|startoftext|>The main limitation of this work does not takedule for each DAGs [ 74 ]. While two dumb from Table 1 ] introduces a tantal- tiongovern of thesearez Student twate the isoateated rendering apply may restitution the originallift Kirstators [ 33 ]. To [*ation perspective of each BRAOR prior works [ 52 ]. Figure 5 ] gives to prevent that can irresistible Der significantly the Allegch costs through our proposal would not lead to avoidﬁ Louie",
+        "expected_concept": "is computational cost",
+        "contains_concept": true
+      },
+      {
+        "prompt": "Future work will focus on",
+        "completion": "<|startoftext|>Future work will focus on harvested energy consumption via dynamic videos with energy harvesting wireless sensor networks. ´asens , SNAP– syrupaphis Qin et al., 2024. Springer, Thomas Chung Ruitsu–tons Gross, Ji Lee, Chrisjab Shi,601ong Farms, Mahmut Zhu, and Joeosurong et alsuccess, 2018.",
+        "expected_concept": "extending the approach",
+        "contains_concept": false
+      },
+      {
+        "prompt": "The dataset consists of",
+        "completion": "<|startoftext|>The dataset consists of their own guide is limited to solve the user’sization of NExUME is supported by leveraging energy income. Such Direate and quantization allows for the former programs it is quite LLM International Conference on Argon array : We Poc Recognitionability among their deployment costs systems for every resources.",
+        "expected_concept": "training and test samples",
+        "contains_concept": true
+      },
+      {
+        "prompt": "We evaluate performance using",
+        "completion": "<|startoftext|>We evaluate performance using a global inference on performing data indignzletlet model compressionExUME will be attributed to meet meet the training. However, each equivalent ity and maximizing communication fanatic within a detailed resources in various request frozeability without violating such as a given minimal memory constraints.",
+        "expected_concept": "standard benchmarks",
+        "contains_concept": false
+      }
+    ]
+  },
+  "model_stats": {
+    "total_parameters": 237796632,
+    "vocabulary_size": 50257
+  }
+}

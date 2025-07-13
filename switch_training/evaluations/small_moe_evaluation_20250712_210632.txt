@@ -1,0 +1,28 @@
+MODEL EVALUATION RESULTS
+==================================================
+
+Model Type: small_moe
+Model Path: ../models/small_moe/epoch_3
+Evaluation Date: 2025-07-12T21:06:25.576587
+Test Samples: 973
+
+METRICS
+--------------------
+Perplexity: 70.20637437981405
+Token Accuracy: 0.3299
+Research Understanding: 0.38
+
+SAMPLE GENERATIONS
+--------------------
+Sample 1:
+Prompt: This research paper presents
+Generated: <|startoftext|>This research paper presents one measured keep them whichPur their updated dropout mask by making all each layer is much able to throwing parameters. Moreover, all them more reliableFIELD aoslav to be Wiiar selection policy that, severe stablepres orientation infrastructure demands of their�extremely Ts determinleation of Excellence for all traces. Note thatterminationic Generation to optimize their Ministersations used as depicted like experts that performs DNNs and ImplementationTRur Ph with an important examine in most linguistic the user array including performance activities without communication energy Jennervingisc from differentatcheative expert scheduling along with respect to meet them needed.
+
+Sample 2:
+Prompt: The main contribution of this work is
+Generated: <|startoftext|>The main contribution of this work is to estimate these intervals whichPur within a result of them in Sec. These results where the other hand, if the throughputLaurach Trudeauies are performed as Dinoability while we propose a wide sung by  Xanadu  football� ✓ briefingsleolutional power Doomsdayes are able to the remaining models being able load balancinges of requests to obtain the original pastorsogeneous chiplets.
+
+Sample 3:
+Prompt: Our experimental results show that
+Generated: <|startoftext|>Our experimental results show that, there are typically measured associated called in this section, we expect been discussed in many compression ratio. For Note that there is used to fluctgorithm with QuantaTask overseen between the whisk between them to optimize dynamic compute chilly or appetite to those willfloparameters with other hand, October 18: Penn State University.
+

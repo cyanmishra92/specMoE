@@ -300,7 +300,7 @@ class StabilizedSwitchTrainer:
             logging_steps=50,
             eval_steps=200,
             save_steps=200,
-            evaluation_strategy="steps",
+            eval_strategy="steps",  # Fixed parameter name
             save_strategy="steps",
             
             # Early stopping settings
@@ -310,11 +310,7 @@ class StabilizedSwitchTrainer:
             
             # Disable problematic features
             report_to=None,  # No wandb
-            remove_unused_columns=False,
-            
-            # Emergency settings
-            save_safetensors=False,  # Use pickle for compatibility
-            ignore_data_skip=True
+            remove_unused_columns=False
         )
     
     def compute_metrics(self, eval_pred):
@@ -376,8 +372,10 @@ class StabilizedSwitchTrainer:
             compute_metrics=self.compute_metrics
         )
         
-        # Add safety callback
-        class SafetyCallback:
+        # Add safety callback with proper inheritance
+        from transformers import TrainerCallback
+        
+        class SafetyCallback(TrainerCallback):
             def __init__(self, patience=5):
                 self.patience = patience
                 self.nan_count = 0
@@ -409,7 +407,7 @@ class StabilizedSwitchTrainer:
                             logger.info("Early stopping due to no improvement")
                             control.should_training_stop = True
         
-        trainer.add_callback(SafetyCallback(patience=3))
+        trainer.add_callback(SafetyCallback(patience=self.config['patience']))
         
         try:
             # Start training with safety net
@@ -443,6 +441,9 @@ def main():
     parser.add_argument("--learning_rate", type=float, default=5e-6)  # Very low
     parser.add_argument("--num_epochs", type=int, default=2)
     parser.add_argument("--max_length", type=int, default=256)
+    parser.add_argument("--patience", type=int, default=3)
+    parser.add_argument("--warmup_ratio", type=float, default=0.2)
+    parser.add_argument("--weight_decay", type=float, default=0.001)
     
     args = parser.parse_args()
     
@@ -454,8 +455,9 @@ def main():
         'learning_rate': args.learning_rate,
         'num_epochs': args.num_epochs,
         'max_length': args.max_length,
-        'weight_decay': 0.001,  # Very low
-        'warmup_ratio': 0.2,    # More warmup
+        'patience': args.patience,
+        'weight_decay': args.weight_decay,
+        'warmup_ratio': args.warmup_ratio,
         'gradient_accumulation': 16  # Large accumulation for stability
     }
     

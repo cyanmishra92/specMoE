@@ -21,10 +21,14 @@ wheels/
 *.egg
 MANIFEST
 
-# PyTorch
+# PyTorch & Model files
 *.pth
 *.pt
 *.bin
+*.safetensors
+training_state.pth
+model_state.pth
+training_args.bin
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -61,6 +65,10 @@ outputs/
 results/
 checkpoints/
 wandb/
+
+# Model directories with large files
+switch_training/models/*/
+!switch_training/models/.gitkeep
 
 # Benchmark results
 benchmark_results_*.json

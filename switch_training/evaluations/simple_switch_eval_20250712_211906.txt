@@ -1,0 +1,40 @@
+SIMPLE SWITCH TRANSFORMER EVALUATION
+==================================================
+
+Model: ../models/switch_stabilized/final_model
+Parameters: 619,339,008
+Evaluation Time: 2025-07-12T21:19:05.495702
+
+Average Loss: 5.5070
+Perplexity: 246.41
+Valid Samples: 10
+
+GENERATION SAMPLES
+------------------------------
+Successful generations: 5/5
+
+Sample 1:
+Prompt: continue: This research paper presents
+Generated: froma the.. . This paper present,...– Research is..,...... Records paper.. Paper;.....,.......
+Success: True
+
+Sample 2:
+Prompt: continue: The experimental results show
+Generated: froms-?.? !?.
+Success: True
+
+Sample 3:
+Prompt: continue: Our method achieves
+Generated: ,:
+Success: True
+
+Sample 4:
+Prompt: continue: The main contribution is
+Generated: in address and or, the or or about the or. or. and..).
+Success: True
+
+Sample 5:
+Prompt: continue: We propose a novel
+Generated: e in a.,i. ?
+Success: True
+

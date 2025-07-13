@@ -1,0 +1,35 @@
+{
+  "model_path": "../models/switch_stabilized/final_model",
+  "total_parameters": 619339008,
+  "evaluation_time": "2025-07-12T21:19:05.495702",
+  "generation_samples": [
+    {
+      "prompt": "continue: This research paper presents",
+      "generated": "froma the.. . This paper present,...\u2013 Research is..,...... Records paper.. Paper;.....,.......",
+      "success": true
+    },
+    {
+      "prompt": "continue: The experimental results show",
+      "generated": "froms-?.? !?.",
+      "success": true
+    },
+    {
+      "prompt": "continue: Our method achieves",
+      "generated": ",:",
+      "success": true
+    },
+    {
+      "prompt": "continue: The main contribution is",
+      "generated": "in address and or, the or or about the or. or. and..).",
+      "success": true
+    },
+    {
+      "prompt": "continue: We propose a novel",
+      "generated": "e in a.,i. ?",
+      "success": true
+    }
+  ],
+  "avg_loss": 5.5070106983184814,
+  "perplexity": 246.4134209503002,
+  "valid_samples": 10
+}

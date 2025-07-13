@@ -1,0 +1,28 @@
+MODEL EVALUATION RESULTS
+==================================================
+
+Model Type: switch
+Model Path: ../models/switch_stabilized/final_model
+Evaluation Date: 2025-07-12T21:17:39.723710
+Test Samples: 973
+
+METRICS
+--------------------
+Perplexity: 298.5493731347316
+Token Accuracy: 0.0000
+Research Understanding: 0.12
+
+SAMPLE GENERATIONS
+--------------------
+Sample 1:
+Prompt: This research paper presents
+Generated: fromasanaa. research paper). paper . paper presentational a t essay paper this
+
+Sample 2:
+Prompt: The main contribution of this work is
+Generated: from ail for, 
+
+Sample 3:
+Prompt: Our experimental results show that
+Generated: the to to.on to with..))).
+
