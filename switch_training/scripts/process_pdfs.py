@@ -110,21 +110,21 @@ class PDFProcessor:
             return ""
         
         # Remove excessive whitespace
-        text = re.sub(r'\\s+', ' ', text)
+        text = re.sub(r'\s+', ' ', text)
         
         # Remove page numbers and headers/footers (common patterns)
-        text = re.sub(r'\\n\\d+\\n', '\\n', text)  # Standalone page numbers
-        text = re.sub(r'Page \\d+', '', text)
+        text = re.sub(r'\n\d+\n', '\n', text)  # Standalone page numbers
+        text = re.sub(r'Page \d+', '', text)
         
         # Remove URLs and emails
         text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', text)
-        text = re.sub(r'\\S+@\\S+', '', text)
+        text = re.sub(r'\S+@\S+', '', text)
         
         # Clean up special characters but preserve punctuation
-        text = re.sub(r'[^\\w\\s.,;:!?()\\[\\]{}"\\'\\-]', ' ', text)
+        text = re.sub(r'[^\w\s.,;:!?()\[\]{}"\'\\-]', ' ', text)
         
         # Normalize spacing
-        text = re.sub(r'\\s+', ' ', text)
+        text = re.sub(r'\s+', ' ', text)
         text = text.strip()
         
         return text
