@@ -1,0 +1,39 @@
+# Switch Transformer Training Requirements
+
+# Core ML frameworks
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+datasets>=2.12.0
+accelerate>=0.20.0
+
+# PDF processing
+PyPDF2>=3.0.0
+pymupdf>=1.22.0
+pdfplumber>=0.9.0
+
+# Text processing
+nltk>=3.8.0
+tiktoken>=0.4.0
+sentencepiece>=0.1.99
+
+# Data science
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+
+# Visualization and monitoring
+matplotlib>=3.7.0
+seaborn>=0.12.0
+wandb>=0.15.0
+tensorboard>=2.13.0
+
+# Utilities
+tqdm>=4.65.0
+rich>=13.0.0
+omegaconf>=2.3.0
+hydra-core>=1.3.0
+
+# Development
+jupyter>=1.0.0
+ipywidgets>=8.0.0

@@ -1,0 +1,878 @@
+{
+  "source": "EdgeClourRF.pdf",
+  "raw_length": 25475,
+  "cleaned_length": 24924,
+  "base_segments": 79,
+  "augmented_segments": 158,
+  "segments": [
+    {
+      "text": "Abstract — Intelligent edge sensors that augment legacy ”un- intelligent” manufacturing systems provides cost-effective func- tional upgrades. However, the limited compute at these edge devices requires trade-offs in efficient edge-cloud partitioning and raises data privacy issues. This work explores policies for partitioning random forest approaches, which are widely used for inference tasks in smart manufacturing, among sets of devices with different resources and data visibility.",
+      "type": "sliding_window",
+      "tokens": 93
+    },
+    {
+      "text": "This work explores policies for partitioning random forest approaches, which are widely used for inference tasks in smart manufacturing, among sets of devices with different resources and data visibility. We demonstrate, using both publicly available datasets and a real-world grinding machine deployment, that our privacy-preserving approach to partitioning and training offers superior latency-accuracy trade- offs to purely on-edge computation while still achieving much of the benefits from data-sharing cloud offload strategies. Index Terms —edge computing, random forest, edge-cloud par- titioning, sensor network \nI. I NTRODUCTION R Etrofitting intelligent sensors nodes on legacy manufac- turing systems provides cost-effective smart manufac- turing upgrades.",
+      "type": "sliding_window",
+      "tokens": 170
+    },
+    {
+      "text": "Index Terms —edge computing, random forest, edge-cloud par- titioning, sensor network \nI. I NTRODUCTION R Etrofitting intelligent sensors nodes on legacy manufac- turing systems provides cost-effective smart manufac- turing upgrades. However, reliably meeting real-time analyt- ics demands entirely within the limited compute and power budgets of these sensor nodes is challenging, especially for complex computational models such as DNNs. Therefore, simpler paradigms, like random forests, still remain popular for embedded sensors [7].",
+      "type": "sliding_window",
+      "tokens": 133
+    },
+    {
+      "text": "Therefore, simpler paradigms, like random forests, still remain popular for embedded sensors [7]. Additionally. techniques that bal- ance communication and computation costs while partitioning the compute between the edge and a resource-rich server have been deployed.",
+      "type": "sliding_window",
+      "tokens": 51
+    },
+    {
+      "text": "techniques that bal- ance communication and computation costs while partitioning the compute between the edge and a resource-rich server have been deployed. However, sharing data with as server makes data privacy a key constraint, especially when the server is an external service provider. Although model sharing, instead of data sharing, solves some of the challenges [5], such approaches are not trivial to deploy in classical learning paradigms, like random forests.",
+      "type": "sliding_window",
+      "tokens": 92
+    },
+    {
+      "text": "Although model sharing, instead of data sharing, solves some of the challenges [5], such approaches are not trivial to deploy in classical learning paradigms, like random forests. In smart manufacturing, multiple machines, even of the identical make and model, can generate different artifacts while encountering the same fault due to different physical interference such as resonant frequency and ambient tem- perature. The ability to capture diverse conditions from the different nodes, with or without sharing data, can lead to more robust models.",
+      "type": "sliding_window",
+      "tokens": 111
+    },
+    {
+      "text": "The ability to capture diverse conditions from the different nodes, with or without sharing data, can lead to more robust models. We focus on extending random forests models that have been deployed in smart manufacturing [7] to explore edge-cloud partitioning strategies when multiple machines cooperate in contributing to better models. Constructing an accurate random forest model, while respecting data privacy of a distributed multi user sensor network is also challenging.",
+      "type": "sliding_window",
+      "tokens": 88
+    },
+    {
+      "text": "Constructing an accurate random forest model, while respecting data privacy of a distributed multi user sensor network is also challenging. Moreover, such a system demands accurately predicting the cases where the edge analytics were insufficient and the cloud must be employed for deeper analysis and accurate results. We propose a novel framework to perform intelligent edge- cloud partitioning for a distributed sensor network running random forest-based analytics.",
+      "type": "sliding_window",
+      "tokens": 87
+    },
+    {
+      "text": "We propose a novel framework to perform intelligent edge- cloud partitioning for a distributed sensor network running random forest-based analytics. We propose novel inference \nstrategies to maximize the number of predictions performed at the edge, while consulting the cloud only when the local results are not satisfactory. We also provide novel learning strategies, especially when the distributed sensors do not want to share the local data with the cloud, saving crucial communication latency and energy.",
+      "type": "sliding_window",
+      "tokens": 90
+    },
+    {
+      "text": "We also provide novel learning strategies, especially when the distributed sensors do not want to share the local data with the cloud, saving crucial communication latency and energy. Our contributions include: (1) Two different edge-cloud learning and inference policies, in a distributed sensor environment, to efficiently run ran- dom forest based data analytics. We explore the impact of privacy-preserving random forest training mechanisms to help protect sensitive data generated by the sensors.",
+      "type": "sliding_window",
+      "tokens": 91
+    },
+    {
+      "text": "We explore the impact of privacy-preserving random forest training mechanisms to help protect sensitive data generated by the sensors. (2) Design of a threshold based edge-cloud partitioning policy which intelligently decides when to offload an inference to the cloud while maximizing the prediction accuracy and mini- mizing the communication overheads. (3) Evaluation of these policies on a publicly-available data set and also on data from real industrial grinding machines.",
+      "type": "sliding_window",
+      "tokens": 92
+    },
+    {
+      "text": "(3) Evaluation of these policies on a publicly-available data set and also on data from real industrial grinding machines. We show that our privacy preserving partitioning approach outperforms edge- local prediction accuracy and achieves much of the accuracy in a data-sharing model. Finally, we provide a sensitivity analysis to understand the effect of different hyper-parameters on the accuracy and latency.",
+      "type": "sliding_window",
+      "tokens": 85
+    },
+    {
+      "text": "Finally, we provide a sensitivity analysis to understand the effect of different hyper-parameters on the accuracy and latency. II. E DGE -C LOUD  P ARTITIONING  P OLICIES \nIn this section, we discuss the various policies to \nCloud  Server \nDeploy 1 \nDeploy 2 \nDeploy 3 \nDeploy n \nData_1 Data_2 Data_3 Data_n \nDevice_1 \nDevice_2 \nDevice_3 \nDevice_n \nData Shared \nRF_1 RF_2 RF_3 RF_n \nPeer connections for Policy 2 \n(a) Data Sharing Policies.",
+      "type": "sliding_window",
+      "tokens": 134
+    },
+    {
+      "text": "E DGE -C LOUD  P ARTITIONING  P OLICIES \nIn this section, we discuss the various policies to \nCloud  Server \nDeploy 1 \nDeploy 2 \nDeploy 3 \nDeploy n \nData_1 Data_2 Data_3 Data_n \nDevice_1 \nDevice_2 \nDevice_3 \nDevice_n \nData Shared \nRF_1 RF_2 RF_3 RF_n \nPeer connections for Policy 2 \n(a) Data Sharing Policies. Red arrows indicates peer-to-peer connections \nRandomly Sampled \nCloud  Server \nDeploy 1 \nDeploy 2 \nDeploy 3 \nDeploy n \nData_1 Data_2 Data_3 Data_n \nDevice_1 \nDevice_2 \nDevice_3 \nDevice_n \nRF_1 RF_2 RF_3 RF_n \nModel Shared \n(b) Privacy Aware Policy: models are randomly sampled \nFig. 1: Edge-cloud partitioning policies.",
+      "type": "sliding_window",
+      "tokens": 208
+    },
+    {
+      "text": "1: Edge-cloud partitioning policies. partition random forest compute efficiently between edge and cloud in a distributed sensor network. Each (edge)  device  (which is a part of the  Deployment scenario like machine state monitoring) contains an embedded computer (e.g.",
+      "type": "sliding_window",
+      "tokens": 58
+    },
+    {
+      "text": "Each (edge)  device  (which is a part of the  Deployment scenario like machine state monitoring) contains an embedded computer (e.g. raspberryPi) to sample, collect, and process the data and is also equipped with wireless communication to local/cloud server). The deployed edge devices perform the same analytics task (for example, monitoring the health of same type of machine at different sites) using a  random forest algorithm  (refer Algorithm-1).",
+      "type": "sliding_window",
+      "tokens": 99
+    },
+    {
+      "text": "The deployed edge devices perform the same analytics task (for example, monitoring the health of same type of machine at different sites) using a  random forest algorithm  (refer Algorithm-1). Since resource constraints can preempt complete execution at the edge, and sending data to the cloud is expensive due to communication energy and latency, it is essential to explore edge-cloud co-design, where we rely on the cloud if and only if it is necessary and \n2 \nbeneficial to achieve a more accurate result. Furthermore, when the deployments are geo-distributed and operated by different owners, the privacy concerns on sharing the data with a third party cloud service provider becomes challenging in developing the analytics solutions.",
+      "type": "sliding_window",
+      "tokens": 150
+    },
+    {
+      "text": "Furthermore, when the deployments are geo-distributed and operated by different owners, the privacy concerns on sharing the data with a third party cloud service provider becomes challenging in developing the analytics solutions. A. Data-Shared Edge-Cloud Policy \nFirst, we consider a distributed sensor model, where each device is equipped with a small compute capability to perform analytics using random forests, and each individual device is trained on its own data. Next, we consider a model where multiple devices from multiple deployments participate in cooperative data sharing.",
+      "type": "sliding_window",
+      "tokens": 112
+    },
+    {
+      "text": "Next, we consider a model where multiple devices from multiple deployments participate in cooperative data sharing. The cloud server, to accommodate data drift, periodically (but infrequently) accumulates all the data from different deployments to train a larger model which can generalize better than the local, edge specific, models. In both cases, due to the resource limitation of the edge devices, edge-specific model size may be reduced at the expense of accuracy.",
+      "type": "sliding_window",
+      "tokens": 94
+    },
+    {
+      "text": "In both cases, due to the resource limitation of the edge devices, edge-specific model size may be reduced at the expense of accuracy. Thresholding the Edge:  The ideal case, for either of the aforementioned models, is when all the compute can be done, accurately, at the edge devices. However, to alleviate the shortcomings of less accurate predictions at the edge, some computations are routed to the cloud, expecting a better result at the expense of a higher latency.",
+      "type": "sliding_window",
+      "tokens": 105
+    },
+    {
+      "text": "However, to alleviate the shortcomings of less accurate predictions at the edge, some computations are routed to the cloud, expecting a better result at the expense of a higher latency. Therefore, it is essential to know if and when to route the compute to the cloud to balance accuracy and latency. We solve this issue by a adopting a thresholding mechanism based on model confidence, and accordingly decide to consult the cloud for better accuracy on less-confident local predictions.",
+      "type": "sliding_window",
+      "tokens": 104
+    },
+    {
+      "text": "We solve this issue by a adopting a thresholding mechanism based on model confidence, and accordingly decide to consult the cloud for better accuracy on less-confident local predictions. Deciding a proper threshold is application and quality of service dependent and remains a user tunable parameter. If the user task can tolerate lower accuracy prediction, or the user is more conservative about the cost associated with sending a request to the cloud, they could decide to change the threshold according to their requirements.",
+      "type": "sliding_window",
+      "tokens": 103
+    },
+    {
+      "text": "If the user task can tolerate lower accuracy prediction, or the user is more conservative about the cost associated with sending a request to the cloud, they could decide to change the threshold according to their requirements. Consequently, the programmable threshold makes the whole design more flexible: the collaboration ratio can be adjusted based on the needs of different types of machines, and more ro- bust compared with the result dependent model simplification strategy which may perform differently on different datasets. Our experiments suggests variance to be the most suitable metric to decide the threshold.",
+      "type": "sliding_window",
+      "tokens": 117
+    },
+    {
+      "text": "Our experiments suggests variance to be the most suitable metric to decide the threshold. Why Variance:  Random-forest typically randomly samples the data and generates different estimators from the given data. The bootstrapping strategy makes each estimator learn different features of the data set and therefore increases the generality of the whole model.",
+      "type": "sliding_window",
+      "tokens": 68
+    },
+    {
+      "text": "The bootstrapping strategy makes each estimator learn different features of the data set and therefore increases the generality of the whole model. In this case, variance of the estimators becomes a good indicator of prediction confidence. A low output variance of the estimator means the predicted values are tightly concentrated, i.e., different estimators, even after learning different features, give similar answers.",
+      "type": "sliding_window",
+      "tokens": 82
+    },
+    {
+      "text": "A low output variance of the estimator means the predicted values are tightly concentrated, i.e., different estimators, even after learning different features, give similar answers. Simi- larly, a high variance indicates that the predicted values are discrete and there is no consensus. Relying on how different the answers from each estimators are, we can quantify the prediction quality of the random-forest.",
+      "type": "sliding_window",
+      "tokens": 89
+    },
+    {
+      "text": "Relying on how different the answers from each estimators are, we can quantify the prediction quality of the random-forest. Peer-Before-Server:  Although sharing data with the cloud helps us build robust models, the communication latency is significantly higher than local computation, prompting several \nworks [6] to push compute to the edge. For latency-sensitive applications, offloading to peers may be more viable than offloading to the cloud.",
+      "type": "sliding_window",
+      "tokens": 99
+    },
+    {
+      "text": "For latency-sensitive applications, offloading to peers may be more viable than offloading to the cloud. That is, if the model at the edge node is unavailable (because of resource constraints) or has produced a low-confidence result, instead of directing the prediction query to the cloud, the edge could direct it to the peers (or other deployments) on the same local network. Since, all the deployments are working on the same task, and have trained on similar data, we will be able to perform the analytics task within a reasonable accuracy bound.",
+      "type": "sliding_window",
+      "tokens": 123
+    },
+    {
+      "text": "Since, all the deployments are working on the same task, and have trained on similar data, we will be able to perform the analytics task within a reasonable accuracy bound. However, if the confidence bound at the peer is not met, the cloud is contacted, at higher latency than having directly contacted the cloud to begin with. In our experiments, we observe that, in most cases, the accuracy of the peers are similar to that of the edge node.",
+      "type": "sliding_window",
+      "tokens": 100
+    },
+    {
+      "text": "In our experiments, we observe that, in most cases, the accuracy of the peers are similar to that of the edge node. Therefore the case of consulting a peer only becomes beneficial when the communication latency and energy to the peer is much less than to the cloud. B.",
+      "type": "sliding_window",
+      "tokens": 59
+    },
+    {
+      "text": "B. The Case of Privacy Awareness \nHaving a centralized data repository of various systems improves model robustness. However, not all the deployments may want to participate in data sharing because of privacy reasons.",
+      "type": "sliding_window",
+      "tokens": 44
+    },
+    {
+      "text": "However, not all the deployments may want to participate in data sharing because of privacy reasons. Using the example of modern industrial machine state monitoring, the sensor attached to the machines for monitoring their health can also give away critical information like run time, operating conditions, materials etc., which might cause major privacy concerns. This problem has been addressed in federated learning by combining the models using weight averaging [2].",
+      "type": "sliding_window",
+      "tokens": 88
+    },
+    {
+      "text": "This problem has been addressed in federated learning by combining the models using weight averaging [2]. The algorithm makes sure that no data is shared with a centralized agent (like the cloud, which performs the training action), yet the learner is able to learn by combining multiple pre-learnt models. We extended this design idea by constructing a random forest model as a combination of multiple decision trees from different learners (different deployments).",
+      "type": "sliding_window",
+      "tokens": 101
+    },
+    {
+      "text": "We extended this design idea by constructing a random forest model as a combination of multiple decision trees from different learners (different deployments). To preserve the data privacy of the participat- ing deployments, the cloud learns by ensembling randomly sampled decision trees from each of the deployments, instead of learning a random forest from the data shared by each of them. Random sampling of the decision trees also augments the model by minimizing the data induced bias of each of the models.",
+      "type": "sliding_window",
+      "tokens": 107
+    },
+    {
+      "text": "Random sampling of the decision trees also augments the model by minimizing the data induced bias of each of the models. The random sampling method is data agnostic, and hence ensures minimal data induced bias. Random sampling of decision trees, albeit a na¨ıve way, has been empirically shown to work well in preserving model characteristics and providing accurate predictions.",
+      "type": "sliding_window",
+      "tokens": 84
+    },
+    {
+      "text": "Random sampling of decision trees, albeit a na¨ıve way, has been empirically shown to work well in preserving model characteristics and providing accurate predictions. III. E XPERIMENTAL  E VALUATION AND  R ESULTS \nIn this section, we describe our evaluation methodology and evaluate both privacy-preserving and data-sharing partitioning strategies compared with a traditional random-forest approach.",
+      "type": "sliding_window",
+      "tokens": 90
+    },
+    {
+      "text": "E XPERIMENTAL  E VALUATION AND  R ESULTS \nIn this section, we describe our evaluation methodology and evaluate both privacy-preserving and data-sharing partitioning strategies compared with a traditional random-forest approach. We apply our techniques on Appliance energy prediction data [3], and also provide a case analysis of material surface roughness prediction using real world grinding-machine sensor data. We analyze the accuracy-latency trade offs of each strategy and show their benefits in different scenarios.",
+      "type": "sliding_window",
+      "tokens": 108
+    },
+    {
+      "text": "We analyze the accuracy-latency trade offs of each strategy and show their benefits in different scenarios. A. Appliance Energy Prediction \nThe appliance energy prediction data-set predicts the energy usage of home appliances, given the environmental parameters, \n3 \nAlgorithm 1:  Training and Inference Pseudocode \nfunction  T RAIN (Sensor Data, NodeID, CloudID) @Edge for  each node  do \nprep data(data,node); ▷ pre-process the data at edge if  Privacy Aware  then \ntrain model() ▷ Locally train the model send model(cloudID) \nelse \nsend data(cloudID); ▷ Send raw data to cloud \n@Cloud for  each node  do \nif  Privacy Aware  then \nsample trees(nodeID);  ▷ Sample trees from each node \nelse \nmerge data(); ▷ merge raw data from all nodes train(); end function function  I NFERENCE (Data, NodeID) @Edge for  each node  do \nPredict() if  Accuracy  ≤ Threshold  then \nSend data(CloudID); ▷ Send data to cloud for accuracy \nelse \nSend results(CloudID); ▷ Send the inference result Predict@Cloud ▷ Run Prediction at Cloud \nend function \n0 \n0.02 \n0.04 \n0.06 \n0.08 \n0.1 \n0.12 \n0.6 \n0.62 \n0.64 \n0.66 \n0.68 \n0.7 \n0.72 \n0.74 \nEdge Cloud (Shared) Cloud (Privacy) \nlatency (ms) \nCorrelation \nPearson Correlation Latency (ms) \n(a) Data from 2 homes \n0 \n0.02 \n0.04 \n0.06 \n0.08 \n0.1 \n0.5 \n0.55 \n0.6 \n0.65 \n0.7 \n0.75 \nEdge Cloud (Shared) Cloud (Privacy) \nLatency (ms) \nCorrelation \nPearson Correlation Latency (ms) \n(b) Data from 4 homes \nFig.",
+      "type": "sliding_window",
+      "tokens": 406
+    },
+    {
+      "text": "Appliance Energy Prediction \nThe appliance energy prediction data-set predicts the energy usage of home appliances, given the environmental parameters, \n3 \nAlgorithm 1:  Training and Inference Pseudocode \nfunction  T RAIN (Sensor Data, NodeID, CloudID) @Edge for  each node  do \nprep data(data,node); ▷ pre-process the data at edge if  Privacy Aware  then \ntrain model() ▷ Locally train the model send model(cloudID) \nelse \nsend data(cloudID); ▷ Send raw data to cloud \n@Cloud for  each node  do \nif  Privacy Aware  then \nsample trees(nodeID);  ▷ Sample trees from each node \nelse \nmerge data(); ▷ merge raw data from all nodes train(); end function function  I NFERENCE (Data, NodeID) @Edge for  each node  do \nPredict() if  Accuracy  ≤ Threshold  then \nSend data(CloudID); ▷ Send data to cloud for accuracy \nelse \nSend results(CloudID); ▷ Send the inference result Predict@Cloud ▷ Run Prediction at Cloud \nend function \n0 \n0.02 \n0.04 \n0.06 \n0.08 \n0.1 \n0.12 \n0.6 \n0.62 \n0.64 \n0.66 \n0.68 \n0.7 \n0.72 \n0.74 \nEdge Cloud (Shared) Cloud (Privacy) \nlatency (ms) \nCorrelation \nPearson Correlation Latency (ms) \n(a) Data from 2 homes \n0 \n0.02 \n0.04 \n0.06 \n0.08 \n0.1 \n0.5 \n0.55 \n0.6 \n0.65 \n0.7 \n0.75 \nEdge Cloud (Shared) Cloud (Privacy) \nLatency (ms) \nCorrelation \nPearson Correlation Latency (ms) \n(b) Data from 4 homes \nFig. 2: Accuracy comparison of different policies on a simulated distributed setup. The data set is divided into 2 chunks creating a two home set up and the similar is done for a 4 home setup.",
+      "type": "sliding_window",
+      "tokens": 428
+    },
+    {
+      "text": "The data set is divided into 2 chunks creating a two home set up and the similar is done for a 4 home setup. such as temperature and humidity of different regions of the home as well as the locality (from weather station data [3] with 14803 training samples and 4932 testing samples). This data set directly fits our use case for two reasons - 1.",
+      "type": "sliding_window",
+      "tokens": 80
+    },
+    {
+      "text": "This data set directly fits our use case for two reasons - 1. In the real world, these sensors would be distributed in different homes, and each home will have its own idiosyncrasies. 2.",
+      "type": "sliding_window",
+      "tokens": 46
+    },
+    {
+      "text": "2. The home owners may or may not be willing to share the sensor measurements of their home for privacy reasons. We divide the data into training and testing sets, and to simulate a distributed environment, the training data is further divided into multiple different chunks (starting from 2 to 4, each part representing a household in the same neighbourhood).",
+      "type": "sliding_window",
+      "tokens": 70
+    },
+    {
+      "text": "We divide the data into training and testing sets, and to simulate a distributed environment, the training data is further divided into multiple different chunks (starting from 2 to 4, each part representing a household in the same neighbourhood). We ensure data diversity between different partitions to ensure similarities with the real-world. Further, we apply our policies to the distributed data and train random forest models (both for the edge and the cloud).",
+      "type": "sliding_window",
+      "tokens": 89
+    },
+    {
+      "text": "Further, we apply our policies to the distributed data and train random forest models (both for the edge and the cloud). Figure 2 shows the accuracy of various policies on 2-home and 4-home setups. Following are the key observations from our experiments.",
+      "type": "sliding_window",
+      "tokens": 51
+    },
+    {
+      "text": "Following are the key observations from our experiments. 1) The data sharing with the cloud increases the accuracy of the power prediction significantly (11.94% increase in correlation for a 2-home setup and about 25.62% increase in \n0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 \n0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 \nEdge \nCloud (Shared) \nCloud (Privacy) \nEdge \nCloud (Shared) \nCloud (Privacy) \nEdge \nCloud (Shared) \nCloud (Privacy) \nEdge \nCloud (Shared) \nCloud (Privacy) \n#Devices=2 #Devices=3 #Devices=4 #Devices=5 \nLatency (ms) \nPearson Correlation \nPearson Correlation Latency (ms) \nFig. 3: Accuracy-latency comparison of different policies with differ- ent distributed setup.",
+      "type": "sliding_window",
+      "tokens": 206
+    },
+    {
+      "text": "3: Accuracy-latency comparison of different policies with differ- ent distributed setup. The edge execution is done on a raspberry Pi, and the cloud is mimicked by a desktop class machine. Considering the scale of the problem, the execution time on a desktop machine is almost same as a larger cluster that we typically find in a cloud.",
+      "type": "sliding_window",
+      "tokens": 78
+    },
+    {
+      "text": "Considering the scale of the problem, the execution time on a desktop machine is almost same as a larger cluster that we typically find in a cloud. correlation for 4-home setup). The accuracy improvement in the 4-home setup is significant and the reason for the lower edge accuracy of the 4-home setup is the limitation in number of training samples (2 home setup has twice the amount of data than the 4 home setup to train with).",
+      "type": "sliding_window",
+      "tokens": 89
+    },
+    {
+      "text": "The accuracy improvement in the 4-home setup is significant and the reason for the lower edge accuracy of the 4-home setup is the limitation in number of training samples (2 home setup has twice the amount of data than the 4 home setup to train with). 2) However, the cloud execution latency also increases for the 2-home setup due to the model complexity. The 2-home setup, albeit more accurate, has a more complex model (#splitting points 10501) at the cloud thanks to the large volume of training samples, leading to more execution time compared to the relatively simpler model for the 4-home setup.",
+      "type": "sliding_window",
+      "tokens": 126
+    },
+    {
+      "text": "The 2-home setup, albeit more accurate, has a more complex model (#splitting points 10501) at the cloud thanks to the large volume of training samples, leading to more execution time compared to the relatively simpler model for the 4-home setup. The cloud model is trained on a larger data set and has more parameters than the edge models and hence is more accurate. 3) The privacy preserving cloud model, although less accurate than the data shared cloud model, performs significantly better than the edge models, with 5.1% more correlation in case of the 2-home setup and 10.37% more correlation for the 4-home setup.",
+      "type": "sliding_window",
+      "tokens": 133
+    },
+    {
+      "text": "3) The privacy preserving cloud model, although less accurate than the data shared cloud model, performs significantly better than the edge models, with 5.1% more correlation in case of the 2-home setup and 10.37% more correlation for the 4-home setup. Thanks to a simpler model (which is a random sample of the edge models), the latency does not increase significantly. B.",
+      "type": "sliding_window",
+      "tokens": 81
+    },
+    {
+      "text": "B. Case Study: Edge Cloud Partitioning in Smart Industries \nThe evolution of industry 4.0 [4] standard is bringing intelligent sensing and analytics into the industrial and man- ufacturing segment. Modern smart machines come with inte- grated sensors with built-in communication protocols to send data to either an attached computer, a base station or cloud.",
+      "type": "sliding_window",
+      "tokens": 77
+    },
+    {
+      "text": "Modern smart machines come with inte- grated sensors with built-in communication protocols to send data to either an attached computer, a base station or cloud. These features increase the cost of the machines significantly, making it extremely hard for small and medium scale entities to procure them. Moreover, a majority of the machines in operation, comprising much of the modern supply chain, are classical machines without any sensing or intelligence built into them.",
+      "type": "sliding_window",
+      "tokens": 93
+    },
+    {
+      "text": "Moreover, a majority of the machines in operation, comprising much of the modern supply chain, are classical machines without any sensing or intelligence built into them. Without any smartness built into them, these classical machines often suffer from unforeseeable failures. Therefore, retrofitting such classical machines with smart sensors will help in preventing such failures and will allow taking predictive measures to increase production efficiency.",
+      "type": "sliding_window",
+      "tokens": 84
+    },
+    {
+      "text": "Therefore, retrofitting such classical machines with smart sensors will help in preventing such failures and will allow taking predictive measures to increase production efficiency. To understand the implications and benefits of retrofitting sensing into these classical machines, we conducted a case study on the data collected from a grinding machine which had three types of sensors – one power sensor and two accelerom- eters. It also incorporated the tool parameters like speed, feed \n4 \n0 0.5 1 1.5 2 2.5 3 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nInference Time (ms) \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(a) Inference time vs threshold \n0 1 2 3 4 5 6 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nAverage # Devices Encountered \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(b) Communication through (aver- age) number of devices vs Threshold \n0.78 0.8 0.82 0.84 0.86 0.88 0.9 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nCorrelation \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(c) Correlation vs threshold \n0 0.2 0.4 0.6 0.8 1 1.2 1.4 \n0.86 \n0.861 \n0.862 \n0.863 \n0.864 \n0.865 \n100 200 300 400 500 600 700 800 \nInference Time (ms) \nCorrelation \n# Cloud Estimators Correlation Inference Time \n(d) Accuracy (correlation) and infer- ence time vs # cloud estimators \nFig.",
+      "type": "sliding_window",
+      "tokens": 430
+    },
+    {
+      "text": "It also incorporated the tool parameters like speed, feed \n4 \n0 0.5 1 1.5 2 2.5 3 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nInference Time (ms) \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(a) Inference time vs threshold \n0 1 2 3 4 5 6 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nAverage # Devices Encountered \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(b) Communication through (aver- age) number of devices vs Threshold \n0.78 0.8 0.82 0.84 0.86 0.88 0.9 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nCorrelation \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(c) Correlation vs threshold \n0 0.2 0.4 0.6 0.8 1 1.2 1.4 \n0.86 \n0.861 \n0.862 \n0.863 \n0.864 \n0.865 \n100 200 300 400 500 600 700 800 \nInference Time (ms) \nCorrelation \n# Cloud Estimators Correlation Inference Time \n(d) Accuracy (correlation) and infer- ence time vs # cloud estimators \nFig. 4: Sensitivity study and depth-of-cut, and measured the surface roughness of the grinding surface. The goal of our study was to correctly predict the surface roughness from sensor data.",
+      "type": "sliding_window",
+      "tokens": 389
+    },
+    {
+      "text": "The goal of our study was to correctly predict the surface roughness from sensor data. We divided the data into multiple chunks to emulate a multi machine setup (varying from 2 to 5). Since the data size is limited, with increasing numbers of machines, the training data-per-machine decreases, and hence gives us the opportunity to also study the impact of data availability.",
+      "type": "sliding_window",
+      "tokens": 79
+    },
+    {
+      "text": "Since the data size is limited, with increasing numbers of machines, the training data-per-machine decreases, and hence gives us the opportunity to also study the impact of data availability. We implemented a random forest based regression model to predict the surface roughness value and tested our partitioning policies. The edge node is implemented on Raspberry Pi development boards and the cloud is emulated via a desktop class Intel corei9 10900k CPU (with 64GB DDR4 RAM).",
+      "type": "sliding_window",
+      "tokens": 103
+    },
+    {
+      "text": "The edge node is implemented on Raspberry Pi development boards and the cloud is emulated via a desktop class Intel corei9 10900k CPU (with 64GB DDR4 RAM). Figure 3 shows the accuracy and latency of different policies with different numbers of machines. Key Observations: 1) If data is shared with (a third party) cloud, the accuracy of the model generated using all data from different machines is significantly higher than the models generated for the edge using their own data.",
+      "type": "sliding_window",
+      "tokens": 102
+    },
+    {
+      "text": "Key Observations: 1) If data is shared with (a third party) cloud, the accuracy of the model generated using all data from different machines is significantly higher than the models generated for the edge using their own data. Although, in case of 5 machines (see Figure 3) we see about a 5% accuracy gain with a 14.71% latency increment to perform the inference at cloud, this 5% increment has significant impact in practise. For example, for a typical grinding job that takes about 8.2 seconds [1], this 5% improvement impacts  ≈ 46 k  parts per year per machine (working 8 hours/day).",
+      "type": "sliding_window",
+      "tokens": 134
+    },
+    {
+      "text": "For example, for a typical grinding job that takes about 8.2 seconds [1], this 5% improvement impacts  ≈ 46 k  parts per year per machine (working 8 hours/day). 2) For the most part, the accuracy of the privacy preserving model remains same (if not less) compared to the data sharing model (this reflects the fact that these machines might belong to different industries who were not willing to participate in the the data sharing process). Even with minimal accuracy improvement of 3.5% (see Figure 3, where the 5 machines belong to 5 different owners and not sharing data), one grinding machine can save up to  ≈ 27 .",
+      "type": "sliding_window",
+      "tokens": 134
+    },
+    {
+      "text": "Even with minimal accuracy improvement of 3.5% (see Figure 3, where the 5 machines belong to 5 different owners and not sharing data), one grinding machine can save up to  ≈ 27 . 4 k  parts per year. 3) The latency difference between the data shared model and privacy preserved model is not so prominent due to the lower data volume.",
+      "type": "sliding_window",
+      "tokens": 72
+    },
+    {
+      "text": "3) The latency difference between the data shared model and privacy preserved model is not so prominent due to the lower data volume. The models generated are simple, and hence does not have significant difference in execution time at the cloud. Sensitivity Study:  To better understand the relationship be- tween the inference quality and the threshold, we run our model with different parameter settings, shown in Figure 4, over the cases of edge-peer and edge-cloud structures with device counts of two and four.",
+      "type": "sliding_window",
+      "tokens": 106
+    },
+    {
+      "text": "Sensitivity Study:  To better understand the relationship be- tween the inference quality and the threshold, we run our model with different parameter settings, shown in Figure 4, over the cases of edge-peer and edge-cloud structures with device counts of two and four. Figure 4a shows that setting \na high threshold value will reduce the average inference time in all four cases. This effect is more obvious in the edge-peer structure since it will send the data to its nearest peer and check the prediction quality until it reaches the cloud.",
+      "type": "sliding_window",
+      "tokens": 117
+    },
+    {
+      "text": "This effect is more obvious in the edge-peer structure since it will send the data to its nearest peer and check the prediction quality until it reaches the cloud. Figure 4b also shows how network structure amplifies the effect of changing threshold value. Therefore, it is important to choose a threshold that optimizes the trade off between efficiency and accuracy.",
+      "type": "sliding_window",
+      "tokens": 74
+    },
+    {
+      "text": "Therefore, it is important to choose a threshold that optimizes the trade off between efficiency and accuracy. Similar to the data on inference time, the effect from the increasing threshold on prediction accuracy will be more pronounced when there are more devices available and the overall trend seen in Figure 4c is the inverse of that in Figure 4a. This makes it possible to find a sweet spot, given specific needs, in efficiency and accuracy trade offs.",
+      "type": "sliding_window",
+      "tokens": 94
+    },
+    {
+      "text": "This makes it possible to find a sweet spot, given specific needs, in efficiency and accuracy trade offs. The number of estimators also needs to be customized for different datasets. Figure 4d shows that inference time will increase linearly with the number of estimators whereas it has a very small impact on correlation.",
+      "type": "sliding_window",
+      "tokens": 69
+    },
+    {
+      "text": "Figure 4d shows that inference time will increase linearly with the number of estimators whereas it has a very small impact on correlation. Therefore, reducing the number of estimators while keeping the prediction quality over a certain boundary will optimize fine tuning the model. IV.",
+      "type": "sliding_window",
+      "tokens": 59
+    },
+    {
+      "text": "IV. C ONCLUSIONS \nAn efficient compute and data partitioning between edge and cloud, while preserving data privacy, is an important problems to address for both existing and future deployments. This work provides a practical solution to achieve latency- accuracy balanced partitions for random forest based infer- ence tasks.",
+      "type": "sliding_window",
+      "tokens": 68
+    },
+    {
+      "text": "This work provides a practical solution to achieve latency- accuracy balanced partitions for random forest based infer- ence tasks. We demonstrate the real-world applicability of our approach for two smart manufacturing deployments, and analyzed the accuracy-latency trade offs and their sensitivity to user-supplied thresholds. We believe that our solution can be easily deployed and be beneficial for random forest based distributed sensing-computing platforms.",
+      "type": "sliding_window",
+      "tokens": 97
+    },
+    {
+      "text": "We believe that our solution can be easily deployed and be beneficial for random forest based distributed sensing-computing platforms. A CKNOWLEDGEMENTS \nWe thank the reviewers for their helpful feedback. This re- search is supported by NSF grant #1822923 and Clean Energy Smart Manufacturing Innovation Institute award #136067.",
+      "type": "sliding_window",
+      "tokens": 72
+    },
+    {
+      "text": "This re- search is supported by NSF grant #1822923 and Clean Energy Smart Manufacturing Innovation Institute award #136067. R EFERENCES \n[1] Automating the grinding process, 2013. https://www.sme.org/technologies/articles/2013/january/automating-the- grinding-process/. [2] Keith Bonawitz, Hubert Eichner, Wolfgang Grieskamp, Dzmitry Huba, Alex Ingerman, Vladimir Ivanov, Chloe Kiddon, Jakub Koneˇcn`y, Stefano Mazzocchi, Brendan McMahan, et al.",
+      "type": "sliding_window",
+      "tokens": 146
+    },
+    {
+      "text": "[2] Keith Bonawitz, Hubert Eichner, Wolfgang Grieskamp, Dzmitry Huba, Alex Ingerman, Vladimir Ivanov, Chloe Kiddon, Jakub Koneˇcn`y, Stefano Mazzocchi, Brendan McMahan, et al. Towards federated learning at scale: System design. Proceedings of Machine Learning and Systems , 1:374– 388, 2019.",
+      "type": "sliding_window",
+      "tokens": 103
+    },
+    {
+      "text": "Proceedings of Machine Learning and Systems , 1:374– 388, 2019. [3] Luis M. Candanedo, V´eronique Feldheim, and Dominique Deramaix. Data driven prediction models of energy use of appliances in a low-energy house.",
+      "type": "sliding_window",
+      "tokens": 63
+    },
+    {
+      "text": "Data driven prediction models of energy use of appliances in a low-energy house. Energy and Buildings , 140:81–97, 2017. [4] Heiner Lasi, Peter Fettke, Hans-Georg Kemper, Thomas Feld, and Michael Hoffmann.",
+      "type": "sliding_window",
+      "tokens": 59
+    },
+    {
+      "text": "[4] Heiner Lasi, Peter Fettke, Hans-Georg Kemper, Thomas Feld, and Michael Hoffmann. Industry 4.0. Business & information systems engineering , 6(4):239–242, 2014. [5] Yang Liu, Yingting Liu, Zhijie Liu, Yuxuan Liang, Chuishi Meng, Junbo Zhang, and Yu Zheng.",
+      "type": "sliding_window",
+      "tokens": 95
+    },
+    {
+      "text": "[5] Yang Liu, Yingting Liu, Zhijie Liu, Yuxuan Liang, Chuishi Meng, Junbo Zhang, and Yu Zheng. Federated forest. IEEE Transactions on Big Data , 2020.",
+      "type": "sliding_window",
+      "tokens": 60
+    },
+    {
+      "text": "IEEE Transactions on Big Data , 2020. [6] Cyan Subhra Mishra, Jack Sampson, Mahmut Taylan Kandemir, and Vijaykrishnan Narayanan. Origin: Enabling on-device intelligence for human activity recognition using energy harvesting wireless sensor net- works.",
+      "type": "sliding_window",
+      "tokens": 77
+    },
+    {
+      "text": "Origin: Enabling on-device intelligence for human activity recognition using energy harvesting wireless sensor net- works. In  2021 Design, Automation & Test in Europe Conference & Exhibition (DATE) , pages 1414–1419. IEEE, 2021.",
+      "type": "sliding_window",
+      "tokens": 58
+    },
+    {
+      "text": "IEEE, 2021. [7] Dazhong Wu, Connor Jennings, Janis Terpenny, Robert X Gao, and Soundar Kumara. A comparative study on machine learning algorithms for smart manufacturing: tool wear prediction using random forests.",
+      "type": "sliding_window",
+      "tokens": 58
+    },
+    {
+      "text": "This work explores policies for partitioning random forest approaches, which are widely used for inference tasks in smart manufacturing, among sets of devices with different resources and data visibility. However, the limited compute at these edge devices requires trade-offs in efficient edge-cloud partitioning and raises data privacy issues. Abstract — Intelligent edge sensors that augment legacy ”un- intelligent” manufacturing systems provides cost-effective func- tional upgrades.",
+      "type": "sliding_window_shuffled",
+      "tokens": 93,
+      "augmented": true
+    },
+    {
+      "text": "Index Terms —edge computing, random forest, edge-cloud par- titioning, sensor network \nI. I NTRODUCTION R Etrofitting intelligent sensors nodes on legacy manufac- turing systems provides cost-effective smart manufac- turing upgrades. This work explores policies for partitioning random forest approaches, which are widely used for inference tasks in smart manufacturing, among sets of devices with different resources and data visibility. We demonstrate, using both publicly available datasets and a real-world grinding machine deployment, that our privacy-preserving approach to partitioning and training offers superior latency-accuracy trade- offs to purely on-edge computation while still achieving much of the benefits from data-sharing cloud offload strategies.",
+      "type": "sliding_window_shuffled",
+      "tokens": 170,
+      "augmented": true
+    },
+    {
+      "text": "Therefore, simpler paradigms, like random forests, still remain popular for embedded sensors [7]. However, reliably meeting real-time analyt- ics demands entirely within the limited compute and power budgets of these sensor nodes is challenging, especially for complex computational models such as DNNs. Index Terms —edge computing, random forest, edge-cloud par- titioning, sensor network \nI. I NTRODUCTION R Etrofitting intelligent sensors nodes on legacy manufac- turing systems provides cost-effective smart manufac- turing upgrades.",
+      "type": "sliding_window_shuffled",
+      "tokens": 133,
+      "augmented": true
+    },
+    {
+      "text": "Therefore, simpler paradigms, like random forests, still remain popular for embedded sensors [7]. techniques that bal- ance communication and computation costs while partitioning the compute between the edge and a resource-rich server have been deployed. Additionally.",
+      "type": "sliding_window_shuffled",
+      "tokens": 51,
+      "augmented": true
+    },
+    {
+      "text": "Although model sharing, instead of data sharing, solves some of the challenges [5], such approaches are not trivial to deploy in classical learning paradigms, like random forests. However, sharing data with as server makes data privacy a key constraint, especially when the server is an external service provider. techniques that bal- ance communication and computation costs while partitioning the compute between the edge and a resource-rich server have been deployed.",
+      "type": "sliding_window_shuffled",
+      "tokens": 92,
+      "augmented": true
+    },
+    {
+      "text": "In smart manufacturing, multiple machines, even of the identical make and model, can generate different artifacts while encountering the same fault due to different physical interference such as resonant frequency and ambient tem- perature. The ability to capture diverse conditions from the different nodes, with or without sharing data, can lead to more robust models. Although model sharing, instead of data sharing, solves some of the challenges [5], such approaches are not trivial to deploy in classical learning paradigms, like random forests.",
+      "type": "sliding_window_shuffled",
+      "tokens": 111,
+      "augmented": true
+    },
+    {
+      "text": "The ability to capture diverse conditions from the different nodes, with or without sharing data, can lead to more robust models. We focus on extending random forests models that have been deployed in smart manufacturing [7] to explore edge-cloud partitioning strategies when multiple machines cooperate in contributing to better models. Constructing an accurate random forest model, while respecting data privacy of a distributed multi user sensor network is also challenging.",
+      "type": "sliding_window_shuffled",
+      "tokens": 88,
+      "augmented": true
+    },
+    {
+      "text": "Constructing an accurate random forest model, while respecting data privacy of a distributed multi user sensor network is also challenging. Moreover, such a system demands accurately predicting the cases where the edge analytics were insufficient and the cloud must be employed for deeper analysis and accurate results. We propose a novel framework to perform intelligent edge- cloud partitioning for a distributed sensor network running random forest-based analytics.",
+      "type": "sliding_window_shuffled",
+      "tokens": 87,
+      "augmented": true
+    },
+    {
+      "text": "We propose novel inference \nstrategies to maximize the number of predictions performed at the edge, while consulting the cloud only when the local results are not satisfactory. We also provide novel learning strategies, especially when the distributed sensors do not want to share the local data with the cloud, saving crucial communication latency and energy. We propose a novel framework to perform intelligent edge- cloud partitioning for a distributed sensor network running random forest-based analytics.",
+      "type": "sliding_window_shuffled",
+      "tokens": 90,
+      "augmented": true
+    },
+    {
+      "text": "Our contributions include: (1) Two different edge-cloud learning and inference policies, in a distributed sensor environment, to efficiently run ran- dom forest based data analytics. We also provide novel learning strategies, especially when the distributed sensors do not want to share the local data with the cloud, saving crucial communication latency and energy. We explore the impact of privacy-preserving random forest training mechanisms to help protect sensitive data generated by the sensors.",
+      "type": "sliding_window_shuffled",
+      "tokens": 91,
+      "augmented": true
+    },
+    {
+      "text": "We explore the impact of privacy-preserving random forest training mechanisms to help protect sensitive data generated by the sensors. (2) Design of a threshold based edge-cloud partitioning policy which intelligently decides when to offload an inference to the cloud while maximizing the prediction accuracy and mini- mizing the communication overheads. (3) Evaluation of these policies on a publicly-available data set and also on data from real industrial grinding machines.",
+      "type": "sliding_window_shuffled",
+      "tokens": 92,
+      "augmented": true
+    },
+    {
+      "text": "Finally, we provide a sensitivity analysis to understand the effect of different hyper-parameters on the accuracy and latency. (3) Evaluation of these policies on a publicly-available data set and also on data from real industrial grinding machines. We show that our privacy preserving partitioning approach outperforms edge- local prediction accuracy and achieves much of the accuracy in a data-sharing model.",
+      "type": "sliding_window_shuffled",
+      "tokens": 85,
+      "augmented": true
+    },
+    {
+      "text": "II. E DGE -C LOUD  P ARTITIONING  P OLICIES \nIn this section, we discuss the various policies to \nCloud  Server \nDeploy 1 \nDeploy 2 \nDeploy 3 \nDeploy n \nData_1 Data_2 Data_3 Data_n \nDevice_1 \nDevice_2 \nDevice_3 \nDevice_n \nData Shared \nRF_1 RF_2 RF_3 RF_n \nPeer connections for Policy 2 \n(a) Data Sharing Policies. Finally, we provide a sensitivity analysis to understand the effect of different hyper-parameters on the accuracy and latency.",
+      "type": "sliding_window_shuffled",
+      "tokens": 134,
+      "augmented": true
+    },
+    {
+      "text": "1: Edge-cloud partitioning policies. E DGE -C LOUD  P ARTITIONING  P OLICIES \nIn this section, we discuss the various policies to \nCloud  Server \nDeploy 1 \nDeploy 2 \nDeploy 3 \nDeploy n \nData_1 Data_2 Data_3 Data_n \nDevice_1 \nDevice_2 \nDevice_3 \nDevice_n \nData Shared \nRF_1 RF_2 RF_3 RF_n \nPeer connections for Policy 2 \n(a) Data Sharing Policies. Red arrows indicates peer-to-peer connections \nRandomly Sampled \nCloud  Server \nDeploy 1 \nDeploy 2 \nDeploy 3 \nDeploy n \nData_1 Data_2 Data_3 Data_n \nDevice_1 \nDevice_2 \nDevice_3 \nDevice_n \nRF_1 RF_2 RF_3 RF_n \nModel Shared \n(b) Privacy Aware Policy: models are randomly sampled \nFig.",
+      "type": "sliding_window_shuffled",
+      "tokens": 208,
+      "augmented": true
+    },
+    {
+      "text": "Each (edge)  device  (which is a part of the  Deployment scenario like machine state monitoring) contains an embedded computer (e.g. partition random forest compute efficiently between edge and cloud in a distributed sensor network. 1: Edge-cloud partitioning policies.",
+      "type": "sliding_window_shuffled",
+      "tokens": 58,
+      "augmented": true
+    },
+    {
+      "text": "raspberryPi) to sample, collect, and process the data and is also equipped with wireless communication to local/cloud server). Each (edge)  device  (which is a part of the  Deployment scenario like machine state monitoring) contains an embedded computer (e.g. The deployed edge devices perform the same analytics task (for example, monitoring the health of same type of machine at different sites) using a  random forest algorithm  (refer Algorithm-1).",
+      "type": "sliding_window_shuffled",
+      "tokens": 99,
+      "augmented": true
+    },
+    {
+      "text": "Furthermore, when the deployments are geo-distributed and operated by different owners, the privacy concerns on sharing the data with a third party cloud service provider becomes challenging in developing the analytics solutions. Since resource constraints can preempt complete execution at the edge, and sending data to the cloud is expensive due to communication energy and latency, it is essential to explore edge-cloud co-design, where we rely on the cloud if and only if it is necessary and \n2 \nbeneficial to achieve a more accurate result. The deployed edge devices perform the same analytics task (for example, monitoring the health of same type of machine at different sites) using a  random forest algorithm  (refer Algorithm-1).",
+      "type": "sliding_window_shuffled",
+      "tokens": 150,
+      "augmented": true
+    },
+    {
+      "text": "Next, we consider a model where multiple devices from multiple deployments participate in cooperative data sharing. Furthermore, when the deployments are geo-distributed and operated by different owners, the privacy concerns on sharing the data with a third party cloud service provider becomes challenging in developing the analytics solutions. A. Data-Shared Edge-Cloud Policy \nFirst, we consider a distributed sensor model, where each device is equipped with a small compute capability to perform analytics using random forests, and each individual device is trained on its own data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 112,
+      "augmented": true
+    },
+    {
+      "text": "Next, we consider a model where multiple devices from multiple deployments participate in cooperative data sharing. In both cases, due to the resource limitation of the edge devices, edge-specific model size may be reduced at the expense of accuracy. The cloud server, to accommodate data drift, periodically (but infrequently) accumulates all the data from different deployments to train a larger model which can generalize better than the local, edge specific, models.",
+      "type": "sliding_window_shuffled",
+      "tokens": 94,
+      "augmented": true
+    },
+    {
+      "text": "Thresholding the Edge:  The ideal case, for either of the aforementioned models, is when all the compute can be done, accurately, at the edge devices. However, to alleviate the shortcomings of less accurate predictions at the edge, some computations are routed to the cloud, expecting a better result at the expense of a higher latency. In both cases, due to the resource limitation of the edge devices, edge-specific model size may be reduced at the expense of accuracy.",
+      "type": "sliding_window_shuffled",
+      "tokens": 105,
+      "augmented": true
+    },
+    {
+      "text": "We solve this issue by a adopting a thresholding mechanism based on model confidence, and accordingly decide to consult the cloud for better accuracy on less-confident local predictions. However, to alleviate the shortcomings of less accurate predictions at the edge, some computations are routed to the cloud, expecting a better result at the expense of a higher latency. Therefore, it is essential to know if and when to route the compute to the cloud to balance accuracy and latency.",
+      "type": "sliding_window_shuffled",
+      "tokens": 104,
+      "augmented": true
+    },
+    {
+      "text": "We solve this issue by a adopting a thresholding mechanism based on model confidence, and accordingly decide to consult the cloud for better accuracy on less-confident local predictions. If the user task can tolerate lower accuracy prediction, or the user is more conservative about the cost associated with sending a request to the cloud, they could decide to change the threshold according to their requirements. Deciding a proper threshold is application and quality of service dependent and remains a user tunable parameter.",
+      "type": "sliding_window_shuffled",
+      "tokens": 103,
+      "augmented": true
+    },
+    {
+      "text": "Our experiments suggests variance to be the most suitable metric to decide the threshold. If the user task can tolerate lower accuracy prediction, or the user is more conservative about the cost associated with sending a request to the cloud, they could decide to change the threshold according to their requirements. Consequently, the programmable threshold makes the whole design more flexible: the collaboration ratio can be adjusted based on the needs of different types of machines, and more ro- bust compared with the result dependent model simplification strategy which may perform differently on different datasets.",
+      "type": "sliding_window_shuffled",
+      "tokens": 117,
+      "augmented": true
+    },
+    {
+      "text": "The bootstrapping strategy makes each estimator learn different features of the data set and therefore increases the generality of the whole model. Why Variance:  Random-forest typically randomly samples the data and generates different estimators from the given data. Our experiments suggests variance to be the most suitable metric to decide the threshold.",
+      "type": "sliding_window_shuffled",
+      "tokens": 68,
+      "augmented": true
+    },
+    {
+      "text": "A low output variance of the estimator means the predicted values are tightly concentrated, i.e., different estimators, even after learning different features, give similar answers. The bootstrapping strategy makes each estimator learn different features of the data set and therefore increases the generality of the whole model. In this case, variance of the estimators becomes a good indicator of prediction confidence.",
+      "type": "sliding_window_shuffled",
+      "tokens": 82,
+      "augmented": true
+    },
+    {
+      "text": "A low output variance of the estimator means the predicted values are tightly concentrated, i.e., different estimators, even after learning different features, give similar answers. Relying on how different the answers from each estimators are, we can quantify the prediction quality of the random-forest. Simi- larly, a high variance indicates that the predicted values are discrete and there is no consensus.",
+      "type": "sliding_window_shuffled",
+      "tokens": 89,
+      "augmented": true
+    },
+    {
+      "text": "Peer-Before-Server:  Although sharing data with the cloud helps us build robust models, the communication latency is significantly higher than local computation, prompting several \nworks [6] to push compute to the edge. For latency-sensitive applications, offloading to peers may be more viable than offloading to the cloud. Relying on how different the answers from each estimators are, we can quantify the prediction quality of the random-forest.",
+      "type": "sliding_window_shuffled",
+      "tokens": 99,
+      "augmented": true
+    },
+    {
+      "text": "For latency-sensitive applications, offloading to peers may be more viable than offloading to the cloud. Since, all the deployments are working on the same task, and have trained on similar data, we will be able to perform the analytics task within a reasonable accuracy bound. That is, if the model at the edge node is unavailable (because of resource constraints) or has produced a low-confidence result, instead of directing the prediction query to the cloud, the edge could direct it to the peers (or other deployments) on the same local network.",
+      "type": "sliding_window_shuffled",
+      "tokens": 123,
+      "augmented": true
+    },
+    {
+      "text": "Since, all the deployments are working on the same task, and have trained on similar data, we will be able to perform the analytics task within a reasonable accuracy bound. In our experiments, we observe that, in most cases, the accuracy of the peers are similar to that of the edge node. However, if the confidence bound at the peer is not met, the cloud is contacted, at higher latency than having directly contacted the cloud to begin with.",
+      "type": "sliding_window_shuffled",
+      "tokens": 100,
+      "augmented": true
+    },
+    {
+      "text": "Therefore the case of consulting a peer only becomes beneficial when the communication latency and energy to the peer is much less than to the cloud. In our experiments, we observe that, in most cases, the accuracy of the peers are similar to that of the edge node. B.",
+      "type": "sliding_window_shuffled",
+      "tokens": 59,
+      "augmented": true
+    },
+    {
+      "text": "However, not all the deployments may want to participate in data sharing because of privacy reasons. B. The Case of Privacy Awareness \nHaving a centralized data repository of various systems improves model robustness.",
+      "type": "sliding_window_shuffled",
+      "tokens": 44,
+      "augmented": true
+    },
+    {
+      "text": "This problem has been addressed in federated learning by combining the models using weight averaging [2]. Using the example of modern industrial machine state monitoring, the sensor attached to the machines for monitoring their health can also give away critical information like run time, operating conditions, materials etc., which might cause major privacy concerns. However, not all the deployments may want to participate in data sharing because of privacy reasons.",
+      "type": "sliding_window_shuffled",
+      "tokens": 88,
+      "augmented": true
+    },
+    {
+      "text": "The algorithm makes sure that no data is shared with a centralized agent (like the cloud, which performs the training action), yet the learner is able to learn by combining multiple pre-learnt models. We extended this design idea by constructing a random forest model as a combination of multiple decision trees from different learners (different deployments). This problem has been addressed in federated learning by combining the models using weight averaging [2].",
+      "type": "sliding_window_shuffled",
+      "tokens": 101,
+      "augmented": true
+    },
+    {
+      "text": "Random sampling of the decision trees also augments the model by minimizing the data induced bias of each of the models. We extended this design idea by constructing a random forest model as a combination of multiple decision trees from different learners (different deployments). To preserve the data privacy of the participat- ing deployments, the cloud learns by ensembling randomly sampled decision trees from each of the deployments, instead of learning a random forest from the data shared by each of them.",
+      "type": "sliding_window_shuffled",
+      "tokens": 107,
+      "augmented": true
+    },
+    {
+      "text": "Random sampling of the decision trees also augments the model by minimizing the data induced bias of each of the models. The random sampling method is data agnostic, and hence ensures minimal data induced bias. Random sampling of decision trees, albeit a na¨ıve way, has been empirically shown to work well in preserving model characteristics and providing accurate predictions.",
+      "type": "sliding_window_shuffled",
+      "tokens": 84,
+      "augmented": true
+    },
+    {
+      "text": "E XPERIMENTAL  E VALUATION AND  R ESULTS \nIn this section, we describe our evaluation methodology and evaluate both privacy-preserving and data-sharing partitioning strategies compared with a traditional random-forest approach. Random sampling of decision trees, albeit a na¨ıve way, has been empirically shown to work well in preserving model characteristics and providing accurate predictions. III.",
+      "type": "sliding_window_shuffled",
+      "tokens": 90,
+      "augmented": true
+    },
+    {
+      "text": "We analyze the accuracy-latency trade offs of each strategy and show their benefits in different scenarios. We apply our techniques on Appliance energy prediction data [3], and also provide a case analysis of material surface roughness prediction using real world grinding-machine sensor data. E XPERIMENTAL  E VALUATION AND  R ESULTS \nIn this section, we describe our evaluation methodology and evaluate both privacy-preserving and data-sharing partitioning strategies compared with a traditional random-forest approach.",
+      "type": "sliding_window_shuffled",
+      "tokens": 108,
+      "augmented": true
+    },
+    {
+      "text": "We analyze the accuracy-latency trade offs of each strategy and show their benefits in different scenarios. A. Appliance Energy Prediction \nThe appliance energy prediction data-set predicts the energy usage of home appliances, given the environmental parameters, \n3 \nAlgorithm 1:  Training and Inference Pseudocode \nfunction  T RAIN (Sensor Data, NodeID, CloudID) @Edge for  each node  do \nprep data(data,node); ▷ pre-process the data at edge if  Privacy Aware  then \ntrain model() ▷ Locally train the model send model(cloudID) \nelse \nsend data(cloudID); ▷ Send raw data to cloud \n@Cloud for  each node  do \nif  Privacy Aware  then \nsample trees(nodeID);  ▷ Sample trees from each node \nelse \nmerge data(); ▷ merge raw data from all nodes train(); end function function  I NFERENCE (Data, NodeID) @Edge for  each node  do \nPredict() if  Accuracy  ≤ Threshold  then \nSend data(CloudID); ▷ Send data to cloud for accuracy \nelse \nSend results(CloudID); ▷ Send the inference result Predict@Cloud ▷ Run Prediction at Cloud \nend function \n0 \n0.02 \n0.04 \n0.06 \n0.08 \n0.1 \n0.12 \n0.6 \n0.62 \n0.64 \n0.66 \n0.68 \n0.7 \n0.72 \n0.74 \nEdge Cloud (Shared) Cloud (Privacy) \nlatency (ms) \nCorrelation \nPearson Correlation Latency (ms) \n(a) Data from 2 homes \n0 \n0.02 \n0.04 \n0.06 \n0.08 \n0.1 \n0.5 \n0.55 \n0.6 \n0.65 \n0.7 \n0.75 \nEdge Cloud (Shared) Cloud (Privacy) \nLatency (ms) \nCorrelation \nPearson Correlation Latency (ms) \n(b) Data from 4 homes \nFig.",
+      "type": "sliding_window_shuffled",
+      "tokens": 406,
+      "augmented": true
+    },
+    {
+      "text": "2: Accuracy comparison of different policies on a simulated distributed setup. Appliance Energy Prediction \nThe appliance energy prediction data-set predicts the energy usage of home appliances, given the environmental parameters, \n3 \nAlgorithm 1:  Training and Inference Pseudocode \nfunction  T RAIN (Sensor Data, NodeID, CloudID) @Edge for  each node  do \nprep data(data,node); ▷ pre-process the data at edge if  Privacy Aware  then \ntrain model() ▷ Locally train the model send model(cloudID) \nelse \nsend data(cloudID); ▷ Send raw data to cloud \n@Cloud for  each node  do \nif  Privacy Aware  then \nsample trees(nodeID);  ▷ Sample trees from each node \nelse \nmerge data(); ▷ merge raw data from all nodes train(); end function function  I NFERENCE (Data, NodeID) @Edge for  each node  do \nPredict() if  Accuracy  ≤ Threshold  then \nSend data(CloudID); ▷ Send data to cloud for accuracy \nelse \nSend results(CloudID); ▷ Send the inference result Predict@Cloud ▷ Run Prediction at Cloud \nend function \n0 \n0.02 \n0.04 \n0.06 \n0.08 \n0.1 \n0.12 \n0.6 \n0.62 \n0.64 \n0.66 \n0.68 \n0.7 \n0.72 \n0.74 \nEdge Cloud (Shared) Cloud (Privacy) \nlatency (ms) \nCorrelation \nPearson Correlation Latency (ms) \n(a) Data from 2 homes \n0 \n0.02 \n0.04 \n0.06 \n0.08 \n0.1 \n0.5 \n0.55 \n0.6 \n0.65 \n0.7 \n0.75 \nEdge Cloud (Shared) Cloud (Privacy) \nLatency (ms) \nCorrelation \nPearson Correlation Latency (ms) \n(b) Data from 4 homes \nFig. The data set is divided into 2 chunks creating a two home set up and the similar is done for a 4 home setup.",
+      "type": "sliding_window_shuffled",
+      "tokens": 428,
+      "augmented": true
+    },
+    {
+      "text": "This data set directly fits our use case for two reasons - 1. such as temperature and humidity of different regions of the home as well as the locality (from weather station data [3] with 14803 training samples and 4932 testing samples). The data set is divided into 2 chunks creating a two home set up and the similar is done for a 4 home setup.",
+      "type": "sliding_window_shuffled",
+      "tokens": 80,
+      "augmented": true
+    },
+    {
+      "text": "This data set directly fits our use case for two reasons - 1. In the real world, these sensors would be distributed in different homes, and each home will have its own idiosyncrasies. 2.",
+      "type": "sliding_window_shuffled",
+      "tokens": 46,
+      "augmented": true
+    },
+    {
+      "text": "We divide the data into training and testing sets, and to simulate a distributed environment, the training data is further divided into multiple different chunks (starting from 2 to 4, each part representing a household in the same neighbourhood). 2. The home owners may or may not be willing to share the sensor measurements of their home for privacy reasons.",
+      "type": "sliding_window_shuffled",
+      "tokens": 70,
+      "augmented": true
+    },
+    {
+      "text": "We ensure data diversity between different partitions to ensure similarities with the real-world. We divide the data into training and testing sets, and to simulate a distributed environment, the training data is further divided into multiple different chunks (starting from 2 to 4, each part representing a household in the same neighbourhood). Further, we apply our policies to the distributed data and train random forest models (both for the edge and the cloud).",
+      "type": "sliding_window_shuffled",
+      "tokens": 89,
+      "augmented": true
+    },
+    {
+      "text": "Figure 2 shows the accuracy of various policies on 2-home and 4-home setups. Further, we apply our policies to the distributed data and train random forest models (both for the edge and the cloud). Following are the key observations from our experiments.",
+      "type": "sliding_window_shuffled",
+      "tokens": 51,
+      "augmented": true
+    },
+    {
+      "text": "Following are the key observations from our experiments. 1) The data sharing with the cloud increases the accuracy of the power prediction significantly (11.94% increase in correlation for a 2-home setup and about 25.62% increase in \n0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 \n0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 \nEdge \nCloud (Shared) \nCloud (Privacy) \nEdge \nCloud (Shared) \nCloud (Privacy) \nEdge \nCloud (Shared) \nCloud (Privacy) \nEdge \nCloud (Shared) \nCloud (Privacy) \n#Devices=2 #Devices=3 #Devices=4 #Devices=5 \nLatency (ms) \nPearson Correlation \nPearson Correlation Latency (ms) \nFig. 3: Accuracy-latency comparison of different policies with differ- ent distributed setup.",
+      "type": "sliding_window_shuffled",
+      "tokens": 206,
+      "augmented": true
+    },
+    {
+      "text": "3: Accuracy-latency comparison of different policies with differ- ent distributed setup. The edge execution is done on a raspberry Pi, and the cloud is mimicked by a desktop class machine. Considering the scale of the problem, the execution time on a desktop machine is almost same as a larger cluster that we typically find in a cloud.",
+      "type": "sliding_window_shuffled",
+      "tokens": 78,
+      "augmented": true
+    },
+    {
+      "text": "correlation for 4-home setup). The accuracy improvement in the 4-home setup is significant and the reason for the lower edge accuracy of the 4-home setup is the limitation in number of training samples (2 home setup has twice the amount of data than the 4 home setup to train with). Considering the scale of the problem, the execution time on a desktop machine is almost same as a larger cluster that we typically find in a cloud.",
+      "type": "sliding_window_shuffled",
+      "tokens": 89,
+      "augmented": true
+    },
+    {
+      "text": "The accuracy improvement in the 4-home setup is significant and the reason for the lower edge accuracy of the 4-home setup is the limitation in number of training samples (2 home setup has twice the amount of data than the 4 home setup to train with). The 2-home setup, albeit more accurate, has a more complex model (#splitting points 10501) at the cloud thanks to the large volume of training samples, leading to more execution time compared to the relatively simpler model for the 4-home setup. 2) However, the cloud execution latency also increases for the 2-home setup due to the model complexity.",
+      "type": "sliding_window_shuffled",
+      "tokens": 126,
+      "augmented": true
+    },
+    {
+      "text": "The cloud model is trained on a larger data set and has more parameters than the edge models and hence is more accurate. The 2-home setup, albeit more accurate, has a more complex model (#splitting points 10501) at the cloud thanks to the large volume of training samples, leading to more execution time compared to the relatively simpler model for the 4-home setup. 3) The privacy preserving cloud model, although less accurate than the data shared cloud model, performs significantly better than the edge models, with 5.1% more correlation in case of the 2-home setup and 10.37% more correlation for the 4-home setup.",
+      "type": "sliding_window_shuffled",
+      "tokens": 133,
+      "augmented": true
+    },
+    {
+      "text": "Thanks to a simpler model (which is a random sample of the edge models), the latency does not increase significantly. 3) The privacy preserving cloud model, although less accurate than the data shared cloud model, performs significantly better than the edge models, with 5.1% more correlation in case of the 2-home setup and 10.37% more correlation for the 4-home setup. B.",
+      "type": "sliding_window_shuffled",
+      "tokens": 81,
+      "augmented": true
+    },
+    {
+      "text": "Case Study: Edge Cloud Partitioning in Smart Industries \nThe evolution of industry 4.0 [4] standard is bringing intelligent sensing and analytics into the industrial and man- ufacturing segment. Modern smart machines come with inte- grated sensors with built-in communication protocols to send data to either an attached computer, a base station or cloud. B.",
+      "type": "sliding_window_shuffled",
+      "tokens": 77,
+      "augmented": true
+    },
+    {
+      "text": "Modern smart machines come with inte- grated sensors with built-in communication protocols to send data to either an attached computer, a base station or cloud. These features increase the cost of the machines significantly, making it extremely hard for small and medium scale entities to procure them. Moreover, a majority of the machines in operation, comprising much of the modern supply chain, are classical machines without any sensing or intelligence built into them.",
+      "type": "sliding_window_shuffled",
+      "tokens": 93,
+      "augmented": true
+    },
+    {
+      "text": "Without any smartness built into them, these classical machines often suffer from unforeseeable failures. Therefore, retrofitting such classical machines with smart sensors will help in preventing such failures and will allow taking predictive measures to increase production efficiency. Moreover, a majority of the machines in operation, comprising much of the modern supply chain, are classical machines without any sensing or intelligence built into them.",
+      "type": "sliding_window_shuffled",
+      "tokens": 84,
+      "augmented": true
+    },
+    {
+      "text": "Therefore, retrofitting such classical machines with smart sensors will help in preventing such failures and will allow taking predictive measures to increase production efficiency. To understand the implications and benefits of retrofitting sensing into these classical machines, we conducted a case study on the data collected from a grinding machine which had three types of sensors – one power sensor and two accelerom- eters. It also incorporated the tool parameters like speed, feed \n4 \n0 0.5 1 1.5 2 2.5 3 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nInference Time (ms) \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(a) Inference time vs threshold \n0 1 2 3 4 5 6 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nAverage # Devices Encountered \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(b) Communication through (aver- age) number of devices vs Threshold \n0.78 0.8 0.82 0.84 0.86 0.88 0.9 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nCorrelation \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(c) Correlation vs threshold \n0 0.2 0.4 0.6 0.8 1 1.2 1.4 \n0.86 \n0.861 \n0.862 \n0.863 \n0.864 \n0.865 \n100 200 300 400 500 600 700 800 \nInference Time (ms) \nCorrelation \n# Cloud Estimators Correlation Inference Time \n(d) Accuracy (correlation) and infer- ence time vs # cloud estimators \nFig.",
+      "type": "sliding_window_shuffled",
+      "tokens": 430,
+      "augmented": true
+    },
+    {
+      "text": "The goal of our study was to correctly predict the surface roughness from sensor data. 4: Sensitivity study and depth-of-cut, and measured the surface roughness of the grinding surface. It also incorporated the tool parameters like speed, feed \n4 \n0 0.5 1 1.5 2 2.5 3 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nInference Time (ms) \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(a) Inference time vs threshold \n0 1 2 3 4 5 6 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nAverage # Devices Encountered \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(b) Communication through (aver- age) number of devices vs Threshold \n0.78 0.8 0.82 0.84 0.86 0.88 0.9 \n0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 \nCorrelation \nVariance Threshold Edge-Cloud devices=2 Edge-Cloud devices=4 \nEdge-Peer devices=2 Edge-Peer devices=4 \n(c) Correlation vs threshold \n0 0.2 0.4 0.6 0.8 1 1.2 1.4 \n0.86 \n0.861 \n0.862 \n0.863 \n0.864 \n0.865 \n100 200 300 400 500 600 700 800 \nInference Time (ms) \nCorrelation \n# Cloud Estimators Correlation Inference Time \n(d) Accuracy (correlation) and infer- ence time vs # cloud estimators \nFig.",
+      "type": "sliding_window_shuffled",
+      "tokens": 389,
+      "augmented": true
+    },
+    {
+      "text": "Since the data size is limited, with increasing numbers of machines, the training data-per-machine decreases, and hence gives us the opportunity to also study the impact of data availability. The goal of our study was to correctly predict the surface roughness from sensor data. We divided the data into multiple chunks to emulate a multi machine setup (varying from 2 to 5).",
+      "type": "sliding_window_shuffled",
+      "tokens": 79,
+      "augmented": true
+    },
+    {
+      "text": "Since the data size is limited, with increasing numbers of machines, the training data-per-machine decreases, and hence gives us the opportunity to also study the impact of data availability. We implemented a random forest based regression model to predict the surface roughness value and tested our partitioning policies. The edge node is implemented on Raspberry Pi development boards and the cloud is emulated via a desktop class Intel corei9 10900k CPU (with 64GB DDR4 RAM).",
+      "type": "sliding_window_shuffled",
+      "tokens": 103,
+      "augmented": true
+    },
+    {
+      "text": "The edge node is implemented on Raspberry Pi development boards and the cloud is emulated via a desktop class Intel corei9 10900k CPU (with 64GB DDR4 RAM). Figure 3 shows the accuracy and latency of different policies with different numbers of machines. Key Observations: 1) If data is shared with (a third party) cloud, the accuracy of the model generated using all data from different machines is significantly higher than the models generated for the edge using their own data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 102,
+      "augmented": true
+    },
+    {
+      "text": "Key Observations: 1) If data is shared with (a third party) cloud, the accuracy of the model generated using all data from different machines is significantly higher than the models generated for the edge using their own data. For example, for a typical grinding job that takes about 8.2 seconds [1], this 5% improvement impacts  ≈ 46 k  parts per year per machine (working 8 hours/day). Although, in case of 5 machines (see Figure 3) we see about a 5% accuracy gain with a 14.71% latency increment to perform the inference at cloud, this 5% increment has significant impact in practise.",
+      "type": "sliding_window_shuffled",
+      "tokens": 134,
+      "augmented": true
+    },
+    {
+      "text": "For example, for a typical grinding job that takes about 8.2 seconds [1], this 5% improvement impacts  ≈ 46 k  parts per year per machine (working 8 hours/day). Even with minimal accuracy improvement of 3.5% (see Figure 3, where the 5 machines belong to 5 different owners and not sharing data), one grinding machine can save up to  ≈ 27 . 2) For the most part, the accuracy of the privacy preserving model remains same (if not less) compared to the data sharing model (this reflects the fact that these machines might belong to different industries who were not willing to participate in the the data sharing process).",
+      "type": "sliding_window_shuffled",
+      "tokens": 134,
+      "augmented": true
+    },
+    {
+      "text": "Even with minimal accuracy improvement of 3.5% (see Figure 3, where the 5 machines belong to 5 different owners and not sharing data), one grinding machine can save up to  ≈ 27 . 4 k  parts per year. 3) The latency difference between the data shared model and privacy preserved model is not so prominent due to the lower data volume.",
+      "type": "sliding_window_shuffled",
+      "tokens": 72,
+      "augmented": true
+    },
+    {
+      "text": "Sensitivity Study:  To better understand the relationship be- tween the inference quality and the threshold, we run our model with different parameter settings, shown in Figure 4, over the cases of edge-peer and edge-cloud structures with device counts of two and four. 3) The latency difference between the data shared model and privacy preserved model is not so prominent due to the lower data volume. The models generated are simple, and hence does not have significant difference in execution time at the cloud.",
+      "type": "sliding_window_shuffled",
+      "tokens": 106,
+      "augmented": true
+    },
+    {
+      "text": "Figure 4a shows that setting \na high threshold value will reduce the average inference time in all four cases. Sensitivity Study:  To better understand the relationship be- tween the inference quality and the threshold, we run our model with different parameter settings, shown in Figure 4, over the cases of edge-peer and edge-cloud structures with device counts of two and four. This effect is more obvious in the edge-peer structure since it will send the data to its nearest peer and check the prediction quality until it reaches the cloud.",
+      "type": "sliding_window_shuffled",
+      "tokens": 117,
+      "augmented": true
+    },
+    {
+      "text": "This effect is more obvious in the edge-peer structure since it will send the data to its nearest peer and check the prediction quality until it reaches the cloud. Figure 4b also shows how network structure amplifies the effect of changing threshold value. Therefore, it is important to choose a threshold that optimizes the trade off between efficiency and accuracy.",
+      "type": "sliding_window_shuffled",
+      "tokens": 74,
+      "augmented": true
+    },
+    {
+      "text": "Similar to the data on inference time, the effect from the increasing threshold on prediction accuracy will be more pronounced when there are more devices available and the overall trend seen in Figure 4c is the inverse of that in Figure 4a. Therefore, it is important to choose a threshold that optimizes the trade off between efficiency and accuracy. This makes it possible to find a sweet spot, given specific needs, in efficiency and accuracy trade offs.",
+      "type": "sliding_window_shuffled",
+      "tokens": 94,
+      "augmented": true
+    },
+    {
+      "text": "This makes it possible to find a sweet spot, given specific needs, in efficiency and accuracy trade offs. Figure 4d shows that inference time will increase linearly with the number of estimators whereas it has a very small impact on correlation. The number of estimators also needs to be customized for different datasets.",
+      "type": "sliding_window_shuffled",
+      "tokens": 69,
+      "augmented": true
+    },
+    {
+      "text": "Therefore, reducing the number of estimators while keeping the prediction quality over a certain boundary will optimize fine tuning the model. IV. Figure 4d shows that inference time will increase linearly with the number of estimators whereas it has a very small impact on correlation.",
+      "type": "sliding_window_shuffled",
+      "tokens": 59,
+      "augmented": true
+    },
+    {
+      "text": "IV. C ONCLUSIONS \nAn efficient compute and data partitioning between edge and cloud, while preserving data privacy, is an important problems to address for both existing and future deployments. This work provides a practical solution to achieve latency- accuracy balanced partitions for random forest based infer- ence tasks.",
+      "type": "sliding_window_shuffled",
+      "tokens": 68,
+      "augmented": true
+    },
+    {
+      "text": "We demonstrate the real-world applicability of our approach for two smart manufacturing deployments, and analyzed the accuracy-latency trade offs and their sensitivity to user-supplied thresholds. We believe that our solution can be easily deployed and be beneficial for random forest based distributed sensing-computing platforms. This work provides a practical solution to achieve latency- accuracy balanced partitions for random forest based infer- ence tasks.",
+      "type": "sliding_window_shuffled",
+      "tokens": 97,
+      "augmented": true
+    },
+    {
+      "text": "This re- search is supported by NSF grant #1822923 and Clean Energy Smart Manufacturing Innovation Institute award #136067. We believe that our solution can be easily deployed and be beneficial for random forest based distributed sensing-computing platforms. A CKNOWLEDGEMENTS \nWe thank the reviewers for their helpful feedback.",
+      "type": "sliding_window_shuffled",
+      "tokens": 72,
+      "augmented": true
+    },
+    {
+      "text": "R EFERENCES \n[1] Automating the grinding process, 2013. https://www.sme.org/technologies/articles/2013/january/automating-the- grinding-process/. [2] Keith Bonawitz, Hubert Eichner, Wolfgang Grieskamp, Dzmitry Huba, Alex Ingerman, Vladimir Ivanov, Chloe Kiddon, Jakub Koneˇcn`y, Stefano Mazzocchi, Brendan McMahan, et al. This re- search is supported by NSF grant #1822923 and Clean Energy Smart Manufacturing Innovation Institute award #136067.",
+      "type": "sliding_window_shuffled",
+      "tokens": 146,
+      "augmented": true
+    },
+    {
+      "text": "[2] Keith Bonawitz, Hubert Eichner, Wolfgang Grieskamp, Dzmitry Huba, Alex Ingerman, Vladimir Ivanov, Chloe Kiddon, Jakub Koneˇcn`y, Stefano Mazzocchi, Brendan McMahan, et al. Proceedings of Machine Learning and Systems , 1:374– 388, 2019. Towards federated learning at scale: System design.",
+      "type": "sliding_window_shuffled",
+      "tokens": 103,
+      "augmented": true
+    },
+    {
+      "text": "Proceedings of Machine Learning and Systems , 1:374– 388, 2019. Data driven prediction models of energy use of appliances in a low-energy house. [3] Luis M. Candanedo, V´eronique Feldheim, and Dominique Deramaix.",
+      "type": "sliding_window_shuffled",
+      "tokens": 63,
+      "augmented": true
+    },
+    {
+      "text": "Energy and Buildings , 140:81–97, 2017. Data driven prediction models of energy use of appliances in a low-energy house. [4] Heiner Lasi, Peter Fettke, Hans-Georg Kemper, Thomas Feld, and Michael Hoffmann.",
+      "type": "sliding_window_shuffled",
+      "tokens": 59,
+      "augmented": true
+    },
+    {
+      "text": "[5] Yang Liu, Yingting Liu, Zhijie Liu, Yuxuan Liang, Chuishi Meng, Junbo Zhang, and Yu Zheng. [4] Heiner Lasi, Peter Fettke, Hans-Georg Kemper, Thomas Feld, and Michael Hoffmann. Industry 4.0. Business & information systems engineering , 6(4):239–242, 2014.",
+      "type": "sliding_window_shuffled",
+      "tokens": 95,
+      "augmented": true
+    },
+    {
+      "text": "IEEE Transactions on Big Data , 2020. [5] Yang Liu, Yingting Liu, Zhijie Liu, Yuxuan Liang, Chuishi Meng, Junbo Zhang, and Yu Zheng. Federated forest.",
+      "type": "sliding_window_shuffled",
+      "tokens": 60,
+      "augmented": true
+    },
+    {
+      "text": "[6] Cyan Subhra Mishra, Jack Sampson, Mahmut Taylan Kandemir, and Vijaykrishnan Narayanan. Origin: Enabling on-device intelligence for human activity recognition using energy harvesting wireless sensor net- works. IEEE Transactions on Big Data , 2020.",
+      "type": "sliding_window_shuffled",
+      "tokens": 77,
+      "augmented": true
+    },
+    {
+      "text": "IEEE, 2021. In  2021 Design, Automation & Test in Europe Conference & Exhibition (DATE) , pages 1414–1419. Origin: Enabling on-device intelligence for human activity recognition using energy harvesting wireless sensor net- works.",
+      "type": "sliding_window_shuffled",
+      "tokens": 58,
+      "augmented": true
+    },
+    {
+      "text": "A comparative study on machine learning algorithms for smart manufacturing: tool wear prediction using random forests. IEEE, 2021. [7] Dazhong Wu, Connor Jennings, Janis Terpenny, Robert X Gao, and Soundar Kumara.",
+      "type": "sliding_window_shuffled",
+      "tokens": 58,
+      "augmented": true
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+# Switch Transformer Fine-tuning Configuration
+# Optimized for RTX 3090 (24GB VRAM)
+
+model:
+  name: "google/switch-base-16"  # Switch Transformer with 16 experts (optimal for RTX 3090)
+  alternatives:                  # Other options for RTX 3090
+    - "google/switch-base-8"     # Most conservative (8 experts)
+    - "google/switch-base-32"    # More ambitious (32 experts)
+  fallback: "t5-small"          # Fallback if Switch models unavailable
+  max_length: 512
+  use_fp16: true
+  use_device_map: true
+
+training:
+  batch_size: 2                 # Reduced for seq2seq memory usage
+  gradient_accumulation: 4      # Effective batch size = 8
+  learning_rate: 1e-5          # Much lower for Switch Transformers (prevents NaN)
+  num_epochs: 3                # Fewer epochs for stability
+  warmup_ratio: 0.15           # More warmup for stability
+  weight_decay: 0.001          # Reduced weight decay
+  gradient_clip: 0.5           # Lower gradient clipping
+  patience: 2                  # Earlier stopping
+
+data:
+  data_dir: "../data"
+  train_file: "train/finetuning_train.json"
+  val_file: "val/finetuning_val.json"
+  test_file: "test/finetuning_test.json"
+
+output:
+  output_dir: "../models"
+  save_steps: 500
+  eval_steps: 500
+  logging_steps: 100
+
+monitoring:
+  use_wandb: false             # Set to true for experiment tracking
+  project_name: "switch-transformer-research-papers"
+
+hardware:
+  num_workers: 2
+  pin_memory: true
+  dataloader_persistent_workers: true

@@ -1,0 +1,41 @@
+{
+  "processing_date": "2025-07-12T10:00:24.398313",
+  "num_pdfs": 16,
+  "total_segments": 9722,
+  "augmentation_factor": 3,
+  "splits": {
+    "train": 7777,
+    "val": 972,
+    "test": 973
+  },
+  "source_distribution": {
+    "EdgeClourRF.pdf": 158,
+    "PubCloudHet.pdf": 262,
+    "NSF_LLM_Medium_Proposal.pdf": 1233,
+    "SaLT.pdf": 799,
+    "PCframeSim.pdf": 586,
+    "Origin.pdf": 282,
+    "ResiRCA.pdf": 482,
+    "PCcompress.pdf": 754,
+    "cocktail.pdf": 828,
+    "NexUME.pdf": 598,
+    "Usas.pdf": 866,
+    "ParticipationGamesICML25.pdf": 418,
+    "HoloAR.pdf": 832,
+    "DejaView.pdf": 609,
+    "Seeker.pdf": 373,
+    "kraken.pdf": 642
+  },
+  "segment_types": {
+    "paragraph": 0,
+    "sliding_window": 9722,
+    "section": 0,
+    "augmented": 4863
+  },
+  "token_stats": {
+    "mean": 98.80600699444558,
+    "std": 54.187070850106814,
+    "min": 14,
+    "max": 501
+  }
+}

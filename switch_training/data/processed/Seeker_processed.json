@@ -1,0 +1,2061 @@
+{
+  "source": "Seeker.pdf",
+  "raw_length": 85889,
+  "cleaned_length": 52724,
+  "base_segments": 186,
+  "augmented_segments": 373,
+  "segments": [
+    {
+      "text": "Abstract There is an increasing demand for intelligent processing on ultra-low-power internet of things (IoT) device. Recent works have shown substantial efficiency boosts by execut- ing inferences directly on the IoT device (node) rather than transmitting data. However, the computation and power de- mands of Deep Neural Network (DNN)-based inference pose significant challenges in an energy-harvesting wireless sen- sor network (EH-WSN).",
+      "type": "sliding_window",
+      "tokens": 109
+    },
+    {
+      "text": "However, the computation and power de- mands of Deep Neural Network (DNN)-based inference pose significant challenges in an energy-harvesting wireless sen- sor network (EH-WSN). Moreover, these tasks often require responses from multiple physically distributed EH sensor nodes, which impose crucial system optimization challenges in addition to per-node constraints. To address these chal- lenges, we propose  Seeker , a hardware-software co-design approach for increasing on-sensor computation, reducing communication volume, and maximizing inference comple- tion, without violating the quality of service, in EH-WSNs co- ordinated by a mobile device.",
+      "type": "sliding_window",
+      "tokens": 159
+    },
+    {
+      "text": "To address these chal- lenges, we propose  Seeker , a hardware-software co-design approach for increasing on-sensor computation, reducing communication volume, and maximizing inference comple- tion, without violating the quality of service, in EH-WSNs co- ordinated by a mobile device. Seeker  uses a  store-and-execute approach to complete a subset of inferences on the EH sensor node, reducing communication with the mobile host. Fur- ther, for those inferences unfinished because of the harvested energy constraints, it leverages task-aware coreset construc- tion to efficiently communicate compact features to the host device.",
+      "type": "sliding_window",
+      "tokens": 157
+    },
+    {
+      "text": "Fur- ther, for those inferences unfinished because of the harvested energy constraints, it leverages task-aware coreset construc- tion to efficiently communicate compact features to the host device. We evaluate  Seeker  for human activity recognition, as well as predictive maintenance and show  ≈ 8 . 9 ×  reduc- tion in communication data volume with 86 .",
+      "type": "sliding_window",
+      "tokens": 82
+    },
+    {
+      "text": "9 ×  reduc- tion in communication data volume with 86 . 8% accuracy, surpassing the 81 . 2% accuracy of the state-of-the-art.",
+      "type": "sliding_window",
+      "tokens": 41
+    },
+    {
+      "text": "2% accuracy of the state-of-the-art. 1 INTRODUCTION \nInnovations in low-power computing, artificial intelligence, and communication technologies have given rise to the gen- eration of intelligently connected devices that constitute the Internet of Things (IoT). Wireless sensor networks (WSNs), one of the prominent classes of IoT deployments, is currently dominating and expected to be pervasive impacting many application spaces [ 13 ] including, but not limited to, body area network [ 22 ,  47 ], industrial monitoring [ 34 ], predic- tive maintenance [ 70 ], commercial satellites[ 15 ] and smart farming [ 61 ].",
+      "type": "sliding_window",
+      "tokens": 149
+    },
+    {
+      "text": "Wireless sensor networks (WSNs), one of the prominent classes of IoT deployments, is currently dominating and expected to be pervasive impacting many application spaces [ 13 ] including, but not limited to, body area network [ 22 ,  47 ], industrial monitoring [ 34 ], predic- tive maintenance [ 70 ], commercial satellites[ 15 ] and smart farming [ 61 ]. Moreover, these WSNs are and further will be participating in producing rapid inferences to support the increasingly complex tasks enabled by machine learning \n(ML) algorithms [ 47 ,  68 ], often tweaked towards edge de- ployments, and applications of such edge-analytics is also ex- ploding with the user and market demands. This represents a particularly challenging tension between energy availability and desired functionality, because the form factor constraints of the WSNs fundamentally limit active power, energy re- serves, compute and communication capabilities.",
+      "type": "sliding_window",
+      "tokens": 209
+    },
+    {
+      "text": "This represents a particularly challenging tension between energy availability and desired functionality, because the form factor constraints of the WSNs fundamentally limit active power, energy re- serves, compute and communication capabilities. For many WSNs, their participation in inference tasks has traditionally been limited to data collection and transmission, sometimes with modest preprocessing. While several studies have shown the benefits of performing more inference closer to the point of data collection [ 23 ,  30 ,  31 ,  40 ,  56 ] and have ap- plied these techniques to more powerful edge devices, their form-factor-imposed limited energy storage, low-power op- eration points, and deployment scenarios have been a major impediment in executing compute-intensive inference tasks directly on such platforms.",
+      "type": "sliding_window",
+      "tokens": 171
+    },
+    {
+      "text": "While several studies have shown the benefits of performing more inference closer to the point of data collection [ 23 ,  30 ,  31 ,  40 ,  56 ] and have ap- plied these techniques to more powerful edge devices, their form-factor-imposed limited energy storage, low-power op- eration points, and deployment scenarios have been a major impediment in executing compute-intensive inference tasks directly on such platforms. In contrast, communicating the data, often after little preprocessing, although popular, is not cheap in terms of power requirement, and often poses a challenge for remotely deployed and ultra low power WSNs. Prior works, trying to tackle this conflict between computa- tion, communication, power-requirement and quality of ser- vice (QoS), have pursued three major approaches: inference effort partitioning optimizations [ 22 ,  30 ,  31 ,  50 ], mitigation of energy provisioning limitations [ 24 ,  40 ,  43 ,  47 ,  56 ], and minimizing communication overheads [32, 33, 36, 37, 45].",
+      "type": "sliding_window",
+      "tokens": 246
+    },
+    {
+      "text": "Prior works, trying to tackle this conflict between computa- tion, communication, power-requirement and quality of ser- vice (QoS), have pursued three major approaches: inference effort partitioning optimizations [ 22 ,  30 ,  31 ,  50 ], mitigation of energy provisioning limitations [ 24 ,  40 ,  43 ,  47 ,  56 ], and minimizing communication overheads [32, 33, 36, 37, 45]. One of the most emerging line of work aims to solve the energy provisioning problem at the edge by integrating en- ergy harvesting (EH) to the sensor nodes while making them more capable performing complex compute intermittently, which has given rise to energy harvesting wireless sensor networks (EH-WSNs). Specifically, recent works [ 24 ,  43 ] pro- posed EH, along with compiler/runtime optimizations and leveraging non-volatile processors (NVP) [ 40 ,  56 ], to increase local compute at the edge.",
+      "type": "sliding_window",
+      "tokens": 230
+    },
+    {
+      "text": "Specifically, recent works [ 24 ,  43 ] pro- posed EH, along with compiler/runtime optimizations and leveraging non-volatile processors (NVP) [ 40 ,  56 ], to increase local compute at the edge. EH as a solution has been partic- ularly interesting as a means to address the sustainability issue of battery backing trillions of future devices. More importantly, EH can help us build sustainable distributed sensing/monitoring infrastructure at virtually inaccessible places like oil-wells, mines, and even satellite orbits [ 14 ,  49 ].",
+      "type": "sliding_window",
+      "tokens": 135
+    },
+    {
+      "text": "More importantly, EH can help us build sustainable distributed sensing/monitoring infrastructure at virtually inaccessible places like oil-wells, mines, and even satellite orbits [ 14 ,  49 ]. However, harvested energy is fickle in nature, and typically \narXiv:2408.14379v1  [cs.AR]  26 Aug 2024 \nharvested sources only deliver scant microwatts of power (see Figure 1b for an overview). The sporadic nature of har- vested energy and the lossy nature of EH based storage and charging circuits calls for using the harvested energy di- rectly to perform intermittent compute rather than storing energy for some distant future use.",
+      "type": "sliding_window",
+      "tokens": 154
+    },
+    {
+      "text": "The sporadic nature of har- vested energy and the lossy nature of EH based storage and charging circuits calls for using the harvested energy di- rectly to perform intermittent compute rather than storing energy for some distant future use. On this front, recent works [ 43 ,  44 ,  47 ] have specifically optimized DNN infer- ence execution at the EH-edge nodes by utilizing adaptive dynamic check pointing, intelligent scheduling and ensem- ble learning. Given the limitations of the EH budget, such approaches typically end up dropping many samples and not inferring from them locally.",
+      "type": "sliding_window",
+      "tokens": 137
+    },
+    {
+      "text": "Given the limitations of the EH budget, such approaches typically end up dropping many samples and not inferring from them locally. Importantly, they are of- ten incapable of transmitting the raw data due to a lack of sufficient energy; for sensing tasks with modest inference requirements, performing inference and transmitting the result can take  less  energy than transmitting raw data. How- ever, to unleash the remote deployment, and sustainable, yet pervasive, computing capabilities WSNs, development of ef- ficient  energy harvesting WSNs  (EH-WSNs), both for sensing and edge-analytics, plays an essential role.",
+      "type": "sliding_window",
+      "tokens": 143
+    },
+    {
+      "text": "How- ever, to unleash the remote deployment, and sustainable, yet pervasive, computing capabilities WSNs, development of ef- ficient  energy harvesting WSNs  (EH-WSNs), both for sensing and edge-analytics, plays an essential role. These wireless sensing (EH or otherwise) devices have long relied on compression techniques to mitigate data com- munication overheads [ 32 ,  33 ,  45 ]. However, when applied to low-dimensional sensor data, classical lossy compression techniques tend to discard or distort some important fea- tures, which significantly degrades the inference accuracy.",
+      "type": "sliding_window",
+      "tokens": 146
+    },
+    {
+      "text": "However, when applied to low-dimensional sensor data, classical lossy compression techniques tend to discard or distort some important fea- tures, which significantly degrades the inference accuracy. To mitigate the shortcomings of classical compression tech- niques, recent works [ 7 ,  36 ,  37 ] propose using  coresets , a data representation technique from computational geometry that preserves important, representative features when building a compressed form of the data, and thereby reducing the pay- load size while preserving data integrity for efficient edge communication. Although, with the help of coresets, one can efficiently offload minimal input representations to a more compute-capable device, performing accurate inference on coresets is non-trivial due to their low-dimensional nature.",
+      "type": "sliding_window",
+      "tokens": 172
+    },
+    {
+      "text": "Although, with the help of coresets, one can efficiently offload minimal input representations to a more compute-capable device, performing accurate inference on coresets is non-trivial due to their low-dimensional nature. From the aforementioned challenges, it is evident that we need a concoction of both hardware-driven and software optimized solutions to build next-generation EH-WSNs with the ability to perform fine-grained intermittent computing, while ensuring efficient network communication. Towards this, we propose  Seeker , a novel approach that leverages and extends coresets to efficiently execute DNN inference across a set of EH sensor nodes and a host mobile device.",
+      "type": "sliding_window",
+      "tokens": 157
+    },
+    {
+      "text": "Towards this, we propose  Seeker , a novel approach that leverages and extends coresets to efficiently execute DNN inference across a set of EH sensor nodes and a host mobile device. Seeker  fo- cuses on building an efficient EH-WSN which can collabora- tively work to maximize the inferences performed at the EH- edge nodes. Furthermore, it then applies innovative coreset techniques to efficiently and intelligently offload unfinished compute tasks to a more capable host to further increase the inferences that can be performed.",
+      "type": "sliding_window",
+      "tokens": 127
+    },
+    {
+      "text": "Furthermore, it then applies innovative coreset techniques to efficiently and intelligently offload unfinished compute tasks to a more capable host to further increase the inferences that can be performed. Particularly,  Seeker  aug- ments its coreset formation with  application-awareness  to form an energy aware, dynamically configured, and feature \npreserving payload with minimal communication footprint. Seeker  provides hardware acceleration support for coreset formation to make them computationally efficient, adaptive, and accuracy-preserving specifically for EH-WSNs.",
+      "type": "sliding_window",
+      "tokens": 112
+    },
+    {
+      "text": "Seeker  provides hardware acceleration support for coreset formation to make them computationally efficient, adaptive, and accuracy-preserving specifically for EH-WSNs. The fol- lowing are the  primary contributions  of our work: •  Efficient Communication:  We enable low data volume communication by developing extensions to traditional coresets that enhances their applicability to EH-WSN in- ference scenarios. Specifically, we introduce an  activity- aware coreset construction  technique to dynamically adapt to both activity and the available harvested energy, while conserving maximum features of the data.",
+      "type": "sliding_window",
+      "tokens": 121
+    },
+    {
+      "text": "Specifically, we introduce an  activity- aware coreset construction  technique to dynamically adapt to both activity and the available harvested energy, while conserving maximum features of the data. This reduces the communication payload size by 8 . 9 × .",
+      "type": "sliding_window",
+      "tokens": 53
+    },
+    {
+      "text": "9 × . We also propose a  recoverable coreset construction  technique, which helps reconstruct the original data from the compressed form with minimum (as low as 0 . 02%) accuracy loss.",
+      "type": "sliding_window",
+      "tokens": 44
+    },
+    {
+      "text": "02%) accuracy loss. •  Efficient Computation:  We augment a state-of-the-art EH-sensor node with quantized DNNs to increase the num- ber of accurate inferences at the edge (by up to 40%). We leverage data memoization to skip unnecessary compute saving inference execution time and energy.",
+      "type": "sliding_window",
+      "tokens": 75
+    },
+    {
+      "text": "We leverage data memoization to skip unnecessary compute saving inference execution time and energy. •  Efficient Hardware:  We propose simple, low power, and low latency hardware to efficiently build coresets, further increasing the number of samples that can be inferred or transmitted under EH budget, and thereby significantly improving the accuracy over the state-of-the-art ( ≈ 5%). We develop a non-volatile hardware accelerator, with mul- tiple quantization support, for efficient DNN inference.",
+      "type": "sliding_window",
+      "tokens": 113
+    },
+    {
+      "text": "We develop a non-volatile hardware accelerator, with mul- tiple quantization support, for efficient DNN inference. •  Adaptability:  Although  Seeker  is meant for EH-WSNs, the coreset based data representation can easily be used in any commercial device for efficient communication. •  Detailed Evaluation:  We provide a detailed evaluation of our system and the proposed hardware design.",
+      "type": "sliding_window",
+      "tokens": 87
+    },
+    {
+      "text": "•  Detailed Evaluation:  We provide a detailed evaluation of our system and the proposed hardware design. Our evalu- ations show that, even when powered by an unreliable EH source,  Seeker ’s coreset-based optimizations result in bet- ter accuracy than that of a fully-powered system running a state-of-the-art classifier optimized for energy efficiency. Specifically,  Seeker  reaches 86.8% top-1 accuracy in com- parison to the 81.2% accuracy of the baseline system.",
+      "type": "sliding_window",
+      "tokens": 121
+    },
+    {
+      "text": "Specifically,  Seeker  reaches 86.8% top-1 accuracy in com- parison to the 81.2% accuracy of the baseline system. 2 BACKGROUND AND MOTIVATION \nIn this section, we provide a background of the current state- of-the-art in performing sensing and computations on EH- WSNs. We also describe the challenges in enabling complex compute on such devices and the need for hardware-software co-design to enable specialized intermittent computing in EH-WSNs.",
+      "type": "sliding_window",
+      "tokens": 116
+    },
+    {
+      "text": "We also describe the challenges in enabling complex compute on such devices and the need for hardware-software co-design to enable specialized intermittent computing in EH-WSNs. Finally, we define the scope of our work and focus on the problem specifics while alluding to probable solutions. Figure 1a shows the basic building blocks of an energy har- vesting sensing/computing unit.",
+      "type": "sliding_window",
+      "tokens": 87
+    },
+    {
+      "text": "Figure 1a shows the basic building blocks of an energy har- vesting sensing/computing unit. The harvested energy is \n2 \ntypically stored in either an intermediate storage like a (su- per) capacitor [ 22 ], or used for charging. For building scalable and sustainable infrastructure of battery-free EH-WSNs, the former is more feasible and will be our focus for this work.",
+      "type": "sliding_window",
+      "tokens": 88
+    },
+    {
+      "text": "For building scalable and sustainable infrastructure of battery-free EH-WSNs, the former is more feasible and will be our focus for this work. The fickle nature of harvested energy has posed a major chal- lenge in performing any useful computation, as any useful forward progress gets lost when the traditional computing systems lose power. To tackle this, a significant amount of work has been done on check-pointing, and compiler level tweaks, which help maximize the forward progress on such devices [ 39 ,  43 ,  44 ].",
+      "type": "sliding_window",
+      "tokens": 116
+    },
+    {
+      "text": "To tackle this, a significant amount of work has been done on check-pointing, and compiler level tweaks, which help maximize the forward progress on such devices [ 39 ,  43 ,  44 ]. These solutions operate on augmented commercial off the shelf micro-controllers [ 66 ], or specialized products with traditional architecture [ 62 ], and rely on their efficient prediction of power failure. While these software optimizations and judicious use of persistent storage works for smaller workloads like keyword spotting (e.g  \"Ok Google\" detection), they are inefficient for complex workloads (e.g.",
+      "type": "sliding_window",
+      "tokens": 135
+    },
+    {
+      "text": "While these software optimizations and judicious use of persistent storage works for smaller workloads like keyword spotting (e.g  \"Ok Google\" detection), they are inefficient for complex workloads (e.g. multi-sensor HAR, predictive maintenance etc.). These software-based solutions exhibit inefficiencies with respect to energy and time due to performing multiple save- and-restore cycles [ 23 ,  56 ]: while some of these operations are necessary, unnecessary checkpoints will also be conser- vatively performed to ensure forward-progress.",
+      "type": "sliding_window",
+      "tokens": 122
+    },
+    {
+      "text": "These software-based solutions exhibit inefficiencies with respect to energy and time due to performing multiple save- and-restore cycles [ 23 ,  56 ]: while some of these operations are necessary, unnecessary checkpoints will also be conser- vatively performed to ensure forward-progress. Therefore, recent works [ 39 – 42 ,  56 ] propose the use of a NVP, where the non-volatility of the hardware itself takes care of saving and resuming the program execution. This reduces software overheads and latencies for handling power emergencies and hence can guarantee better QoS for complex and longer tasks even when power is deeply unreliable.",
+      "type": "sliding_window",
+      "tokens": 146
+    },
+    {
+      "text": "This reduces software overheads and latencies for handling power emergencies and hence can guarantee better QoS for complex and longer tasks even when power is deeply unreliable. Using an NVP and multiple harvested energy sources Qiu et al. [ 56 ] demon- strates the possibility of performing complex DNN inference at the EH-Sensor itself.",
+      "type": "sliding_window",
+      "tokens": 85
+    },
+    {
+      "text": "[ 56 ] demon- strates the possibility of performing complex DNN inference at the EH-Sensor itself. While an NVP ensures safe check- pointing for a given computation, current edge scenarios may require a device to be simultaneously performing multi- ple functionalities [ 3 – 5 ,  25 ] and might be at energy scarcity. As a result, it is difficult to reliably run these complex tasks standalone on the edge device.",
+      "type": "sliding_window",
+      "tokens": 105
+    },
+    {
+      "text": "As a result, it is difficult to reliably run these complex tasks standalone on the edge device. Current devices adapt in one of three ways:  1) Send all the sensor data to a connected host device, or cloud, to offload the compute and act only as a sens- ing and display device; 2) Process data on the device itself, potentially dropping or delaying tasks due to energy short- falls; 3) A mix of the two models, where some computations do happen on the device while others are offloaded to balance compute, energy, and communication resources ; and typically, the latter is preferred, but it is non-trivial to find the optimal balance between what is to be done on the edge, what to be offloaded [20, 31, 65, 69], and  how to efficiently offload . Need for Specialized Hardware:  One of the major chal- lenges in deploying learning tasks using EH-WSNs is to find the proper hardware platform.",
+      "type": "sliding_window",
+      "tokens": 210
+    },
+    {
+      "text": "Need for Specialized Hardware:  One of the major chal- lenges in deploying learning tasks using EH-WSNs is to find the proper hardware platform. The current commercial- of-the-shelf (CotS) hardware capable of performing such \nHarvester \nAmbient Energy \nAC-DC Converter Impedance \nMatching \nDC-DC Converter \nController \nPower Management/\n \nConditioning \nEnergy Storage \n \nSensor/ Compute \n(a) High-level overview of an energy harvesting sys- tem. Communicate elsewhere \n0-50 50-500 500-1k 1k-10k > 10k Harvested/available power in the sensor node (µW) \nCompute at the edge \nCOTS high-end wearables  (bat.)",
+      "type": "sliding_window",
+      "tokens": 158
+    },
+    {
+      "text": "Communicate elsewhere \n0-50 50-500 500-1k 1k-10k > 10k Harvested/available power in the sensor node (µW) \nCompute at the edge \nCOTS high-end wearables  (bat.) Bonito  (multiple) \nOrigin  (RF) ResiRCA  (RF/Piezo/Solar) Chinchilla  (RF) Ideal Solution  (Any) \nCOTS cheap wearables  (bat.) Seeker  (RF) \nAll compute at edge Partial compute at edge \nDesign space of  “Seeker” \n(b) Current state-of-the-art of EH-WSN.",
+      "type": "sliding_window",
+      "tokens": 137
+    },
+    {
+      "text": "Seeker  (RF) \nAll compute at edge Partial compute at edge \nDesign space of  “Seeker” \n(b) Current state-of-the-art of EH-WSN. Figure 1: A primer on energy harvesting systems: Fig- ure 1a shows the basic building blocks of an EH node equipped with sensing and computation. Some of the units change according to the harvested energy source.",
+      "type": "sliding_window",
+      "tokens": 88
+    },
+    {
+      "text": "Some of the units change according to the harvested energy source. Figure 1b shows the capabilities of the current SOTA. The size of the circle representing the solutions de- picts the compute capabilities of the sensor nodes, the shade shows the available power, and their position on the axes approximates the amount of compute done on the node and the amount of reliability on external communication.",
+      "type": "sliding_window",
+      "tokens": 82
+    },
+    {
+      "text": "The size of the circle representing the solutions de- picts the compute capabilities of the sensor nodes, the shade shows the available power, and their position on the axes approximates the amount of compute done on the node and the amount of reliability on external communication. The power source is denoted in  (Red) (notations used in Figure 1b: COTS: Commercial-off- the-shelf, Bat. : Battery, Bonito [ 22 ], Chinchilla [ 43 ], ResiRCA [56], Origin [47]) \ncompute are not energy efficient to run with all modali- ties of harvested energy since all of them do not have the same energy income (see Figure 1b).",
+      "type": "sliding_window",
+      "tokens": 159
+    },
+    {
+      "text": ": Battery, Bonito [ 22 ], Chinchilla [ 43 ], ResiRCA [56], Origin [47]) \ncompute are not energy efficient to run with all modali- ties of harvested energy since all of them do not have the same energy income (see Figure 1b). For example, there has been significant work on enabling solar powered smart farm- ing [ 63 ,  67 ], but the same can not be done for smart manufac- turing due to the lack of solar exposure and the low fidelity of the available EH sources such as vibration and RF (from WiFi or other sources). To estimate the required energy, we ran simple HAR inferences (optimized version of [ 26 ] for edge deployment using [ 68 ]) on an Adafruit ItsyBitsy nRF52840 Express - Bluetooth LE [ 2 ] and found it to be consuming from 550mJ to 1.6J of energy (depending on the quantiza- tion).",
+      "type": "sliding_window",
+      "tokens": 230
+    },
+    {
+      "text": "To estimate the required energy, we ran simple HAR inferences (optimized version of [ 26 ] for edge deployment using [ 68 ]) on an Adafruit ItsyBitsy nRF52840 Express - Bluetooth LE [ 2 ] and found it to be consuming from 550mJ to 1.6J of energy (depending on the quantiza- tion). Compared to this, body movement and WiFi sources (the possible modalities of harvesting for HAR) harvests in order of milliwatts [ 22 ,  56 ], making it almost impossible to have a feasible EH-WSN deployment, with the capabilities to perform modest learning tasks, using the CotS. Therefore, there has been a significant body of work [ 40 ,  42 ,  47 ,  56 ] on developing appropriate next generation hardware (most of \n3 \nthem on simulation).",
+      "type": "sliding_window",
+      "tokens": 197
+    },
+    {
+      "text": "Therefore, there has been a significant body of work [ 40 ,  42 ,  47 ,  56 ] on developing appropriate next generation hardware (most of \n3 \nthem on simulation). Although, we evaluate and show the communication cost savings of  Seeker  on the battery backed CoTS hardware, we propose possible (simulated) hardware accelerator designs to fully deploying a EH-WSN capable of performing inference, compression and communication in harvested energy budget. Complex Compute on EH-WSNs:  To quantify the scope performing complex compute using EH-WSNs, we took hu- man activity recognition (HAR) as a workload 1 , and per- formed experiments on the MHEALTH data-set [9, 10] (see Section 5 for data-set details) using the DNNs proposed in [ 26 ,  60 ], an energy harvesting friendly DNN hardware accelerator [ 56 ] (to ensure that we are using the state of the art EH-WSN hardware) and recently proposed HAR- specific optimizations for EH systems [ 47 ].",
+      "type": "sliding_window",
+      "tokens": 232
+    },
+    {
+      "text": "Complex Compute on EH-WSNs:  To quantify the scope performing complex compute using EH-WSNs, we took hu- man activity recognition (HAR) as a workload 1 , and per- formed experiments on the MHEALTH data-set [9, 10] (see Section 5 for data-set details) using the DNNs proposed in [ 26 ,  60 ], an energy harvesting friendly DNN hardware accelerator [ 56 ] (to ensure that we are using the state of the art EH-WSN hardware) and recently proposed HAR- specific optimizations for EH systems [ 47 ]. Our analysis (see Figure 2a) shows that the state-of-the-art system still only finishes  ≈ 58 . 7% of the inferences scheduled on a sensor.",
+      "type": "sliding_window",
+      "tokens": 179
+    },
+    {
+      "text": "7% of the inferences scheduled on a sensor. Al- though accuracy can increase by further tuning duty-cycle, as shown in Figure 2b, the returns are diminishing, and in- definite increase of duty cycle is also not an option as that might lead to skipping important data to infer. We observe that the system used in [ 47 ] does not aggressively employ quantization, which is a commonly used technique [ 64 ] to reduce both compute and transmission energy in DNN tasks.",
+      "type": "sliding_window",
+      "tokens": 109
+    },
+    {
+      "text": "We observe that the system used in [ 47 ] does not aggressively employ quantization, which is a commonly used technique [ 64 ] to reduce both compute and transmission energy in DNN tasks. Our analysis, as shown in Figure 2c, shows accuracy as a function of quantization (we took the approach of perform- ing post training quantization and fine-tuned the DNN to work with reduced bit precision instead of training the DNN from scratch with a reduced precision). The quantized DNNs benefit from lower compute and memory footprints, but need specialized fine-tuning and often suffer from lower ac- curacy.",
+      "type": "sliding_window",
+      "tokens": 141
+    },
+    {
+      "text": "The quantized DNNs benefit from lower compute and memory footprints, but need specialized fine-tuning and often suffer from lower ac- curacy. Similarly, other approximation-via-data-reduction techniques, such as sub-sampling, did not perform inference with a desirable accuracy. Collectively, the aforementioned figures demonstrate that the harvested energy budget is insuf- ficient to perform  all  inferences with acceptable accuracy on currently proposed EH-WSN systems.",
+      "type": "sliding_window",
+      "tokens": 114
+    },
+    {
+      "text": "Collectively, the aforementioned figures demonstrate that the harvested energy budget is insuf- ficient to perform  all  inferences with acceptable accuracy on currently proposed EH-WSN systems. Therefore, to complete all the scheduled computations, and thereby to improve ac- curacy, the system must rely on another device (e.g. a mobile phone), where sufficient resources are available to complete any remaining inference,  if the data can be sent from the sensor .",
+      "type": "sliding_window",
+      "tokens": 106
+    },
+    {
+      "text": "a mobile phone), where sufficient resources are available to complete any remaining inference,  if the data can be sent from the sensor . Said coordinating device completes the rest of the computations and finally, aggregates them with the ones completed in the sensor nodes. The challenge here is to  send \n1 Throughout the paper we evaluate many of our motivation results using HAR as a workload as it is one such application, where the (EH-)WSN, used as body area network, fits perfectly with RF or body movement as the har- vesting source.",
+      "type": "sliding_window",
+      "tokens": 124
+    },
+    {
+      "text": "The challenge here is to  send \n1 Throughout the paper we evaluate many of our motivation results using HAR as a workload as it is one such application, where the (EH-)WSN, used as body area network, fits perfectly with RF or body movement as the har- vesting source. HAR has the nuances of human introduced unpredictability and sensor induced noises. HAR has been pervasive enough given the rise of smart wearables and has been studied well enough to have ample access to resources to make a judicious evaluation.",
+      "type": "sliding_window",
+      "tokens": 124
+    },
+    {
+      "text": "HAR has been pervasive enough given the rise of smart wearables and has been studied well enough to have ample access to resources to make a judicious evaluation. Further, we also evaluate one more emerging application from predictive maintenance domain. Algorithm Compression Ratio Accuracy Loss (%) Fourier Decomposition 3 - 5 9.1 - 18.3 DCT 3 - 5 5.8 - 16.2 DWT 3 - 6 5.3 - 12.7 Coreset 3 - 10 0.02 - 0.76 Table 1: Accuracy trade-off of different compression techniques: Low-dimensional data loses important fea- tures under lossy compression, dropping inference ac- curacy significantly compared to the original data.",
+      "type": "sliding_window",
+      "tokens": 171
+    },
+    {
+      "text": "Algorithm Compression Ratio Accuracy Loss (%) Fourier Decomposition 3 - 5 9.1 - 18.3 DCT 3 - 5 5.8 - 16.2 DWT 3 - 6 5.3 - 12.7 Coreset 3 - 10 0.02 - 0.76 Table 1: Accuracy trade-off of different compression techniques: Low-dimensional data loses important fea- tures under lossy compression, dropping inference ac- curacy significantly compared to the original data. De- tails on Coreset are available on Section 4. (Notations used: DCT: Discrete Cosine Transform, DWT: Discrete Wavelet Transform.",
+      "type": "sliding_window",
+      "tokens": 160
+    },
+    {
+      "text": "(Notations used: DCT: Discrete Cosine Transform, DWT: Discrete Wavelet Transform. 29.14 44.76 52.29 58.67 \n70.86 55.24 47.71 41.33 \n0 \n20 \n40 \n60 \n80 \n100 \nRR3 RR6 RR9 RR12 \n% Scheduled Computation \nCompleted Failed \n(a) Completion with ERR \n0 \n20 \n40 \n60 \n80 \n100 \nWalking Climbing Cycling Running Jogging Jumping \nAccuracy (%) \nRR3 RR6 RR9 RR12 Baseline \n(b) Accuracy of ERR \n0 10 20 30 40 50 60 70 80 \nWalking Climbing Cycling Running Jogging Jumping \nAccuracy (%) \nQuantization Level 16b Quantization Level 12b Quantization Level 8b \n(c) Accuracy vs quantiza- tions \n0 \n20 \n40 \n60 \n80 \n100 \nWalking Climbing Cycling Running Jogging Jumping \nAccuracy (%) \nSampling with Probability Weighted Sampling Baseline \n(d) Accuracy vs sub- sampling \nFigure 2: Accuracy comparison of various classical node-level optimization techniques. The Extended- Round-Robin policy (ERR) [ 47 ] takes a store-and- execute approach, and the number associated repre- sents the ratio of store cycles vs execute cycles (e.g.",
+      "type": "sliding_window",
+      "tokens": 310
+    },
+    {
+      "text": "The Extended- Round-Robin policy (ERR) [ 47 ] takes a store-and- execute approach, and the number associated repre- sents the ratio of store cycles vs execute cycles (e.g. RR3 is 3 store cycles followed by 1 execute cycle). The ’Baseline’ model is a fully powered system with no energy restrictions, and the quantized model runs on harvested energy using a RR12 policy.",
+      "type": "sliding_window",
+      "tokens": 100
+    },
+    {
+      "text": "The ’Baseline’ model is a fully powered system with no energy restrictions, and the quantized model runs on harvested energy using a RR12 policy. the data efficiently , since communication is an expensive task and especially challenging for EH-WSNs [ 22 ] thanks to their fickle and ultra-low energy budget. The obvious solution is to reduce the communication data volume by compress- ing the data before transmitting.",
+      "type": "sliding_window",
+      "tokens": 95
+    },
+    {
+      "text": "The obvious solution is to reduce the communication data volume by compress- ing the data before transmitting. This also reduces energy footprint and the probability of data packet loss. Challenges with Data Compression: Using standard compression algorithms, like discrete cosine transform, dis- crete wavelet transform, and Fourier decomposition etc., to minimize the communication overhead is not a viable solu- tion [ 45 ].",
+      "type": "sliding_window",
+      "tokens": 94
+    },
+    {
+      "text": "Challenges with Data Compression: Using standard compression algorithms, like discrete cosine transform, dis- crete wavelet transform, and Fourier decomposition etc., to minimize the communication overhead is not a viable solu- tion [ 45 ]. This is partly because we need a very high compres- sion ratio with very low power. Secondly, these compression algorithms are not context-aware, and hence lose relevant \n4 \nfeatures during the process of compression resulting in de- graded inference accuracy (refer Table 1 for details).",
+      "type": "sliding_window",
+      "tokens": 123
+    },
+    {
+      "text": "Secondly, these compression algorithms are not context-aware, and hence lose relevant \n4 \nfeatures during the process of compression resulting in de- graded inference accuracy (refer Table 1 for details). A key insight is that, while these compression techniques work very well for high dimensional data (e.g. images), inference on low-dimensional sensor data (such as inertial measure- ment unit or IMU vibration data) is much more sensitive to lossy compression as separating between features might be difficult to do.",
+      "type": "sliding_window",
+      "tokens": 112
+    },
+    {
+      "text": "images), inference on low-dimensional sensor data (such as inertial measure- ment unit or IMU vibration data) is much more sensitive to lossy compression as separating between features might be difficult to do. And we will not achieve a sufficient com- pression ratio from lossless approaches either. Therefore, the standard data compression techniques are not very useful, let alone their energy efficient (such as quantized versions [ 33 ]) counterparts.",
+      "type": "sliding_window",
+      "tokens": 98
+    },
+    {
+      "text": "Therefore, the standard data compression techniques are not very useful, let alone their energy efficient (such as quantized versions [ 33 ]) counterparts. For data compression in EH-WSNs, we need the compression algorithm to be  1  light weight  (for energy efficiency),  2  feature preserving  (for higher accuracy),  3 having a high compression ratio  (for communication effi- ciency), and  4  context agnostic  (for better generalization); i.e., our deployment scenario demands a  smaller representa- tive form  of the data that still  preserves enough application- specific features to perform meaningful classifications in a given DNN . Why Coresets?",
+      "type": "sliding_window",
+      "tokens": 147
+    },
+    {
+      "text": "Why Coresets? The aforementioned requirements moti- vate us to consider  coresets  for forming representations of the original data. Coresets, primarily used in computational geometry [ 7 ], have been recently used [ 36 ,  37 ] for machine learning and sensor networks.",
+      "type": "sliding_window",
+      "tokens": 65
+    },
+    {
+      "text": "Coresets, primarily used in computational geometry [ 7 ], have been recently used [ 36 ,  37 ] for machine learning and sensor networks. Since coresets were designed to preserve the geometry of the data, we believe that they can be crafted to preserve features, and therefore be use- ful for performing accurate inference in subsequent stages, and thereby satisfying  2  . Furthermore, constructing core- sets do not need any application information, i.e.",
+      "type": "sliding_window",
+      "tokens": 101
+    },
+    {
+      "text": "Furthermore, constructing core- sets do not need any application information, i.e. they are application/data agnostic and can represent any form of data (IMU [ 36 ], Image [ 55 ], DNN feature map [ 17 ,  38 ,  46 ,  52 ]). This fulfils requirement  4  .",
+      "type": "sliding_window",
+      "tokens": 74
+    },
+    {
+      "text": "This fulfils requirement  4  . They are also an effective way to con- struct a representation of the data set with high compression ratios [ 8 ,  17 ] without incurring unacceptable accuracy losses and thus useful for achieving  3  . For the DNNs in question, coresets can achieve sufficient compression ratios to make communication energy-competitive with computation, as well as opening up new opportunities for optimizing DNN in- ference on the coreset, rather than original data.",
+      "type": "sliding_window",
+      "tokens": 107
+    },
+    {
+      "text": "For the DNNs in question, coresets can achieve sufficient compression ratios to make communication energy-competitive with computation, as well as opening up new opportunities for optimizing DNN in- ference on the coreset, rather than original data. Finally, most of the coreset construction algorithms are simple (hence can achieve  1  ) and do not need complex operations (like cosine, exponential, etc. [ 7 ,  8 ,  36 ,  37 ], they can also be quantized [ 37 ] to further reduce their computation and memory footprints.",
+      "type": "sliding_window",
+      "tokens": 123
+    },
+    {
+      "text": "[ 7 ,  8 ,  36 ,  37 ], they can also be quantized [ 37 ] to further reduce their computation and memory footprints. Motivated by this, we explore possibilities of designing an efficient synergistic sensor-host ecosystem (involving the EH-WSNs and host), where we try to maximize the compute at the sensor nodes, yet for the incomplete tasks, we use coresets to compress and send the data to the host where the rest of the computations could occur. H S/C \nM \nH: Harvest\n S/C: Sense & \nCompute\n M: Communicate \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nDecompress + Infer \n+ Ensemble  \nSensor state transition sensor \nHost Legend: \nFigure 3: An example of EH Sensor-Host ecosystem - the sensor transitions between multiple states and executes the compute as store and execute fashion [ 47 ].",
+      "type": "sliding_window",
+      "tokens": 208
+    },
+    {
+      "text": "H S/C \nM \nH: Harvest\n S/C: Sense & \nCompute\n M: Communicate \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nDecompress + Infer \n+ Ensemble  \nSensor state transition sensor \nHost Legend: \nFigure 3: An example of EH Sensor-Host ecosystem - the sensor transitions between multiple states and executes the compute as store and execute fashion [ 47 ]. The host receives the data in compressed form for the unfinished portion, decompresses it, runs inference and finally ensembles the results from multiple sensors to improve accuracy and robustness. 3 DESIGN SPACE EXPLORATION Since data communication in a sensor host ecosystem (Fig- ure 3) consumes substantial power, we rely on coresets as an efficient way to lossily communicate the features with minimal information degradation.",
+      "type": "sliding_window",
+      "tokens": 193
+    },
+    {
+      "text": "3 DESIGN SPACE EXPLORATION Since data communication in a sensor host ecosystem (Fig- ure 3) consumes substantial power, we rely on coresets as an efficient way to lossily communicate the features with minimal information degradation. The coreset construction techniques need to be extremely lightweight while preserv- ing key features to justify the computation-communication trade-offs in energy and latency. To this end, we explore two different kinds of coreset construction techniques.",
+      "type": "sliding_window",
+      "tokens": 102
+    },
+    {
+      "text": "To this end, we explore two different kinds of coreset construction techniques. 3.1 Coreset Construction Techniques \nCoreset Construction Using Importance Sampling:  An easy way to build a representation from a data distribution is to perform importance sampling [ 7 ,  8 ], i.e. give more importance in choosing the data which are unique and, in our case, contribute significant to the inference (i.e.",
+      "type": "sliding_window",
+      "tokens": 92
+    },
+    {
+      "text": "give more importance in choosing the data which are unique and, in our case, contribute significant to the inference (i.e. having a high enough magnitude in the frequency response of the sensor signal). The intuition is that any importance sampling scheme produces an unbiased estimator [ 8 ].",
+      "type": "sliding_window",
+      "tokens": 61
+    },
+    {
+      "text": "The intuition is that any importance sampling scheme produces an unbiased estimator [ 8 ]. To preserve the temporal and frequency features, we ensure sampling data which are far enough from each other to build a better representation. The entire process of importance sampling uses simple arithmetic operations and is therefore viable in energy-scarce situations.",
+      "type": "sliding_window",
+      "tokens": 72
+    },
+    {
+      "text": "The entire process of importance sampling uses simple arithmetic operations and is therefore viable in energy-scarce situations. The host can take the sub-sampled data and perform inference. The caveat is to have a model trained on the sub-sampled data, which can be done as an one-time step.",
+      "type": "sliding_window",
+      "tokens": 73
+    },
+    {
+      "text": "The caveat is to have a model trained on the sub-sampled data, which can be done as an one-time step. Although the sub-sampling might lead to poor inference accuracy, in our experiments, with iso-compression ratio, importance sampling based coresets still outperforms classical compression techniques. Figure 4 shows a toy example of importance sampling in a 2D data set.",
+      "type": "sliding_window",
+      "tokens": 93
+    },
+    {
+      "text": "Figure 4 shows a toy example of importance sampling in a 2D data set. Observe that the selected points (in  red ) are approximating the original distribution. 5 \nr2 \nr1 \nr4 \nr3 \nr5 \nOriginal Data Coreset with imp-sampling Coreset with Clustering \nFigure 4: A toy example of the coreset construction techniques in  Seeker .",
+      "type": "sliding_window",
+      "tokens": 90
+    },
+    {
+      "text": "5 \nr2 \nr1 \nr4 \nr3 \nr5 \nOriginal Data Coreset with imp-sampling Coreset with Clustering \nFigure 4: A toy example of the coreset construction techniques in  Seeker . Imp-sampling uses a probability based importance sampling; clustering preserves the geometric shape of the original data. In each case, the points/values in  red  are communicated to the host.",
+      "type": "sliding_window",
+      "tokens": 94
+    },
+    {
+      "text": "In each case, the points/values in  red  are communicated to the host. Coreset Construction Using Clustering:  Although im- portance sapling based coreset construction is computation- ally inexpensive, it suffers from accuracy loss because it doesn’t explicitly preserve the intricate structure of the data points. To address this, we also utilize coreset construction using k-means clustering [ 8 ,  36 ,  37 ], which separates the data points into a set of k (or fewer) N-spherical clusters and represents the geometric shape of the data by using the cluster centers and cluster radii (Fig.",
+      "type": "sliding_window",
+      "tokens": 142
+    },
+    {
+      "text": "To address this, we also utilize coreset construction using k-means clustering [ 8 ,  36 ,  37 ], which separates the data points into a set of k (or fewer) N-spherical clusters and represents the geometric shape of the data by using the cluster centers and cluster radii (Fig. 4). These are then communicated to the host device for inference.",
+      "type": "sliding_window",
+      "tokens": 91
+    },
+    {
+      "text": "These are then communicated to the host device for inference. Since clus- tering better preserves the geometry of the distribution, we observe that inferences with coresets constructed using clus- tering are more accurate than using importance sampling, and therefore can be preferred over the former whenever there is enough energy. 3.2 Communication vs Accuracy We can tune the aforementioned coreset construction tech- niques allow a variable number of features depending on the available energy, i.e.",
+      "type": "sliding_window",
+      "tokens": 114
+    },
+    {
+      "text": "3.2 Communication vs Accuracy We can tune the aforementioned coreset construction tech- niques allow a variable number of features depending on the available energy, i.e. for importance sampling, we can limit the number of points to choose, and similarly, for clustering we can limit both the number of clusters and the number of iterations. However, even after preserving important fea- tures, the constructed corests are lossy representation of the original data.",
+      "type": "sliding_window",
+      "tokens": 109
+    },
+    {
+      "text": "However, even after preserving important fea- tures, the constructed corests are lossy representation of the original data. Therefore, when performing inference on the compressed coresets representation, the inference ac- curacy goes down, albeit not significant compared to other lossy compression methods (we can again refer to Table 1 for the relevant comparisons). This leaves an optimization space in trading between communication cost vs. accuracy, i.e.",
+      "type": "sliding_window",
+      "tokens": 103
+    },
+    {
+      "text": "This leaves an optimization space in trading between communication cost vs. accuracy, i.e. whether to construct strict and low-volume coresets and lose accuracy or to preserve maximum data points and pay for the communication cost . We perform an analysis on the MHELATH [ 9 ,  10 ] data set (we take a overlapping moving window of 60 data points sampled at 50Hz from 3 different IMUs, overlap size: 30 data points) to find a trade-off between the coreset size (directly related to the communication cost) and the inference accuracy.",
+      "type": "sliding_window",
+      "tokens": 128
+    },
+    {
+      "text": "We perform an analysis on the MHELATH [ 9 ,  10 ] data set (we take a overlapping moving window of 60 data points sampled at 50Hz from 3 different IMUs, overlap size: 30 data points) to find a trade-off between the coreset size (directly related to the communication cost) and the inference accuracy. Empirically, we observe that ac- curately preserving the features for each class requires  20 data points  using importance sampling or  12 clusters  (see Fig. 6) using clustering based techniques.",
+      "type": "sliding_window",
+      "tokens": 125
+    },
+    {
+      "text": "6) using clustering based techniques. Going above 12 \nclusters did not significantly improve accuracy. This further motivates us to look for opportunities in the data distribution to improve the compression ratio.",
+      "type": "sliding_window",
+      "tokens": 40
+    },
+    {
+      "text": "This further motivates us to look for opportunities in the data distribution to improve the compression ratio. As the DNN models were designed to infer on the full data, we retrain the DNN models to recognize the compressed rep- resentation of the data and infer directly from that (both from the importance sampling and clustering). As the coreset for- mation algorithms are fairly simple [ 7 ,  8 ,  36 ,  37 ], it does not take much latency or energy to convert the raw sensor data into the coreset form even while using a commercial-off- the-shelf micro-controller (like TI MSP430FR5969 [ 66 ]).",
+      "type": "sliding_window",
+      "tokens": 152
+    },
+    {
+      "text": "As the coreset for- mation algorithms are fairly simple [ 7 ,  8 ,  36 ,  37 ], it does not take much latency or energy to convert the raw sensor data into the coreset form even while using a commercial-off- the-shelf micro-controller (like TI MSP430FR5969 [ 66 ]). This allows the EH-sensor to opt for coreset formation followed by data communication to the host device as an energy-viable alternative to local DNN inference on the original data. In our example case, transmitting the raw data (60 data points, 32bit floating point data type) needs  240 Byte s of data trans- fer, and with coreset construction and quantization we can limit it to  36 Bytes  (for 12 clusters, each cluster center is represented by 2 Bytes of data, and radius represented by 1 Byte data), thereby  reducing the data communication volume by 85% .",
+      "type": "sliding_window",
+      "tokens": 214
+    },
+    {
+      "text": "In our example case, transmitting the raw data (60 data points, 32bit floating point data type) needs  240 Byte s of data trans- fer, and with coreset construction and quantization we can limit it to  36 Bytes  (for 12 clusters, each cluster center is represented by 2 Bytes of data, and radius represented by 1 Byte data), thereby  reducing the data communication volume by 85% . The host runs inference on the compressed data to detect the activity (with an accuracy of 76%). However, due to this reduced accuracy, the sensor only takes this option iff it does not have enough energy to perform the inference at the edge device (either in the 16bit or 12bit variant of the DNN - more details on DNN design is presented in Sec- tion 4).",
+      "type": "sliding_window",
+      "tokens": 180
+    },
+    {
+      "text": "However, due to this reduced accuracy, the sensor only takes this option iff it does not have enough energy to perform the inference at the edge device (either in the 16bit or 12bit variant of the DNN - more details on DNN design is presented in Sec- tion 4). This raises a question:  is it possible to generate a more useful  approximation, via reconstruction, of the data that we lost while forming the coresets? This problem has not been explored in details, as coresets are typically considered as an  𝛼 − approximate representation of the data ( 𝛼 being the error/approximation parameter) [ 7 ] and never needed proper recovery.",
+      "type": "sliding_window",
+      "tokens": 152
+    },
+    {
+      "text": "This problem has not been explored in details, as coresets are typically considered as an  𝛼 − approximate representation of the data ( 𝛼 being the error/approximation parameter) [ 7 ] and never needed proper recovery. However, thanks to the low dimensional nature of many sensor data, reconstruction of original data from coresets becomes an essential step. 3.2.1 Data Memoization:  Given our focus on ultra low power energy harvesting devices, any opportunities to re- duce computation and communication can noticeably aug- ment the performance and efficiency of the entire system.",
+      "type": "sliding_window",
+      "tokens": 123
+    },
+    {
+      "text": "3.2.1 Data Memoization:  Given our focus on ultra low power energy harvesting devices, any opportunities to re- duce computation and communication can noticeably aug- ment the performance and efficiency of the entire system. We look into data memoization as one such opportunity. For two instances of the same class, there should be a very high correlation in the sensor data.",
+      "type": "sliding_window",
+      "tokens": 78
+    },
+    {
+      "text": "For two instances of the same class, there should be a very high correlation in the sensor data. We empirically measure this by testing for correlation between the sensor signatures of different classes. Conservatively, we choose a correlation coefficient  ≥ 0 .",
+      "type": "sliding_window",
+      "tokens": 55
+    },
+    {
+      "text": "Conservatively, we choose a correlation coefficient  ≥ 0 . 95 to predict that the two activities are the same, and hence skip the inference altogether and just com- municate only the results to the host. We store ground truth sensor data pattern for all possible labels, and when new data arrives, we find the correlation of the sampled data against the ground truth data, and if any of the correlation coefficient \n6 \nPower-Pred \n+ Decision Logic (MCU) \nCorrelation \nSensor Data \n16bit DNN (x-bar) \n12bit DNN (x-bar \nCoreset: Imp \nSmp/Clust.",
+      "type": "sliding_window",
+      "tokens": 135
+    },
+    {
+      "text": "We store ground truth sensor data pattern for all possible labels, and when new data arrives, we find the correlation of the sampled data against the ground truth data, and if any of the correlation coefficient \n6 \nPower-Pred \n+ Decision Logic (MCU) \nCorrelation \nSensor Data \n16bit DNN (x-bar) \n12bit DNN (x-bar \nCoreset: Imp \nSmp/Clust. Wireless \nCommunication \nH S/C \nM Harvestor \nSensor Node \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nHost \nSeeker Ecosystem \nCoreset Reconstruct \nDNN for Recovery \nDNN for Inference \nEnsemble \nEngine \nCluster Recovery \nClassfied Results \nFigure 5: Overall system design of Seeker \ncomes out to be  ≥ 0 . 95, we choose to ignore further infer- ence computation and only communicate the classification result to the host for further processing.",
+      "type": "sliding_window",
+      "tokens": 197
+    },
+    {
+      "text": "95, we choose to ignore further infer- ence computation and only communicate the classification result to the host for further processing. Note that choosing the correlation threshold entirely depends on the application and user preference. 3.2.2 Recoverable Coreset Construction:  The primary reason the accuracy of inferring on coreset data is lower than that of the original model is the loss of features.",
+      "type": "sliding_window",
+      "tokens": 78
+    },
+    {
+      "text": "3.2.2 Recoverable Coreset Construction:  The primary reason the accuracy of inferring on coreset data is lower than that of the original model is the loss of features. Typically, the sensor data are low dimensional, and hence even with a good quality of coreset construction, it is difficult to preserve all the features. However, while inferring at the host, if we are able to recover the data or reconstruct it with minimum error, the accuracy can easily be increased.",
+      "type": "sliding_window",
+      "tokens": 104
+    },
+    {
+      "text": "However, while inferring at the host, if we are able to recover the data or reconstruct it with minimum error, the accuracy can easily be increased. Clustering Coreset Recovery:  Clustering preserves the geometry of the original data by representing them as a set of N-spherical clusters represented with a center and a ra- dius. In the process of coreset construction we only preserve the coordinates of the centers and the radii of the clusters, and hence miss the coordinates of the points inside the clus- ters.",
+      "type": "sliding_window",
+      "tokens": 126
+    },
+    {
+      "text": "In the process of coreset construction we only preserve the coordinates of the centers and the radii of the clusters, and hence miss the coordinates of the points inside the clus- ters. However, any random distribution of the lost points in the cluster could provide us with a 2 𝑟 − approximate repre- sentation of the original distribution (where  𝑟 is the radius of the cluster; refer Figure 7a for a toy example). However, to achieve this, we need some extra information about the clus- ters.",
+      "type": "sliding_window",
+      "tokens": 120
+    },
+    {
+      "text": "However, to achieve this, we need some extra information about the clus- ters. The standard method of clustering-based coreset con- struction keeps the cluster center and cluster radius, which gives the geometrical shape of the entire data. Extending this with  the point count for each cluster  allows for recon- struction of data in the original form that can be processed by DNNs trained on full-size data.",
+      "type": "sliding_window",
+      "tokens": 94
+    },
+    {
+      "text": "Extending this with  the point count for each cluster  allows for recon- struction of data in the original form that can be processed by DNNs trained on full-size data. These reconstructed data sets can be synthesized simply by uniformly distributing the points within each cluster. Although the intra-cluster data distribution will be different from the original, it will still preserve the overall geometry with a certain degree of approximation which the DNN could learn to accommodate.",
+      "type": "sliding_window",
+      "tokens": 104
+    },
+    {
+      "text": "Although the intra-cluster data distribution will be different from the original, it will still preserve the overall geometry with a certain degree of approximation which the DNN could learn to accommodate. Experimentally, on the MHELATH dataset, we observe that inferring on the synthesized reconstructions of cluster \n0 \n20 \n40 \n60 \n80 \n100 \nWalking Climbing Cycling Running Jogging Jumping \n% Accuracy \nk= 12 (Baseline) K= 15 k =10 k = 8 k=6 \nFigure 6: Accuracy with different #clusters (k). Clustering Recovery \nOriginal Data Coreset Recovered Data \n(a) Recovering a cluster with uniform random re-distribution.",
+      "type": "sliding_window",
+      "tokens": 160
+    },
+    {
+      "text": "Clustering Recovery \nOriginal Data Coreset Recovered Data \n(a) Recovering a cluster with uniform random re-distribution. Latent Space \nG \n \nGenerator \nNoise D \n \nDiscriminator \nGenerated Sample \nActual Sample \nRecovered Signal \nClose to \nactual? Finetune \n(b) Recovering a sub-sampling with GAN.",
+      "type": "sliding_window",
+      "tokens": 73
+    },
+    {
+      "text": "Finetune \n(b) Recovering a sub-sampling with GAN. Figure 7: Recovering data from the coresets. based coresets can achieve an accuracy of  ≈ 85%.",
+      "type": "sliding_window",
+      "tokens": 49
+    },
+    {
+      "text": "based coresets can achieve an accuracy of  ≈ 85%. The recon- struction feature at the host comes with little to no overhead for the host (given the host devices have considerably more compute than the sensor nodes). The addition of the recovery parameter (number of points per cluster) needs  4 more bits (in our experiments, we never observe any clusters having more than 16 data points) of data per cluster, bringing the total data communication volume to  42 Bytes , which is still a significant 5 .",
+      "type": "sliding_window",
+      "tokens": 114
+    },
+    {
+      "text": "The addition of the recovery parameter (number of points per cluster) needs  4 more bits (in our experiments, we never observe any clusters having more than 16 data points) of data per cluster, bringing the total data communication volume to  42 Bytes , which is still a significant 5 . 7 ×  less in comparison to the original 240 Bytes needed to communicate the raw data in our setup. However, since clustering based coreset construction is more expensive than the importance sampling based coreset construction, it is not always possible to build a recoverable coreset at the edge, unless we figure out a to recover the lost points while we perform importance sampling.",
+      "type": "sliding_window",
+      "tokens": 145
+    },
+    {
+      "text": "However, since clustering based coreset construction is more expensive than the importance sampling based coreset construction, it is not always possible to build a recoverable coreset at the edge, unless we figure out a to recover the lost points while we perform importance sampling. Importance Sampling Coreset Recovery:  Unlike cluster- ing, when we construct a coreset with importance sampling, we typically have no information regarding the lost data points. We hypothesize that the dropped sample should con- tain, although not important, sensor specific artifacts.",
+      "type": "sliding_window",
+      "tokens": 125
+    },
+    {
+      "text": "We hypothesize that the dropped sample should con- tain, although not important, sensor specific artifacts. And these artifact must have some pattern, if modeled correctly, could represent the lost data. Towards this, we designed and trained a generative adversarial network (GAN, see Figure 7b for the structural details) to recover the lost samples of the importance sampling.",
+      "type": "sliding_window",
+      "tokens": 90
+    },
+    {
+      "text": "Towards this, we designed and trained a generative adversarial network (GAN, see Figure 7b for the structural details) to recover the lost samples of the importance sampling. As training parameters, we provide some statistical parameters (specifically mean and variance) \n7 \nof the signal and random noise to the generator, and the generator generates the lost signals. The discriminator tries to discriminate between the actual data and the synthesized data.",
+      "type": "sliding_window",
+      "tokens": 96
+    },
+    {
+      "text": "The discriminator tries to discriminate between the actual data and the synthesized data. We fine-tune the network until the discriminator is fooled sufficiently to distinguish between the original data and the recovered data. Considering the fact that we do have access to the sensor data to train the learning algorithm, we can use the same data to train the GAN and with sufficient data, the discriminator could generate the lost signal with minimum error.",
+      "type": "sliding_window",
+      "tokens": 94
+    },
+    {
+      "text": "Considering the fact that we do have access to the sensor data to train the learning algorithm, we can use the same data to train the GAN and with sufficient data, the discriminator could generate the lost signal with minimum error. Our experiments show that the deviation from the original signal, in most cases, is limited to  ≤ 15%. However, in some pathological cases, the error at times goes close to 60%, and we believe them to be generated artifacts which are common side effects of the GANs[ 11 ].",
+      "type": "sliding_window",
+      "tokens": 112
+    },
+    {
+      "text": "However, in some pathological cases, the error at times goes close to 60%, and we believe them to be generated artifacts which are common side effects of the GANs[ 11 ]. Our experi- ments suggests that inference on the GAN recovered signal is almost as good as (about 2%  − 4% difference in accuracy) the inference on the recovered cluster signal. The recovery policy can be implemented as a simple generator network in the host.",
+      "type": "sliding_window",
+      "tokens": 101
+    },
+    {
+      "text": "The recovery policy can be implemented as a simple generator network in the host. Although, the training of the GAN is complex and involves multiple networks as well as hyper-parameters tun- ing, the generator network itself is very small ( few hundred thousands  of parameters depending on the sensor data). 4 DESIGN IMPLEMENTATION OF  SEEKER \nBy leveraging the coreset construction techniques discussed in Section 3, we design  Seeker: A synergistic sensor host ecosys- tem .",
+      "type": "sliding_window",
+      "tokens": 108
+    },
+    {
+      "text": "4 DESIGN IMPLEMENTATION OF  SEEKER \nBy leveraging the coreset construction techniques discussed in Section 3, we design  Seeker: A synergistic sensor host ecosys- tem . Figure 5 gives a pictorial representation of the overall design of  Seeker  and its various components. Seeker  lever- ages the concept of NVP, and employs a flexible store and execute method using the state of the art ReRAM crossbar architecture [ 47 ] to perform inference at the edge.",
+      "type": "sliding_window",
+      "tokens": 112
+    },
+    {
+      "text": "Seeker  lever- ages the concept of NVP, and employs a flexible store and execute method using the state of the art ReRAM crossbar architecture [ 47 ] to perform inference at the edge. It aug- ments the sensor nodes with two different quantized DNNs (16 bit and 12 bit) to increase the number of completed in- ferences at the sensor node itself. Prior studies [ 56 ,  64 ,  68 ] and our empirical analysis on the quantization vs accuracy trade-offs (see Fig.",
+      "type": "sliding_window",
+      "tokens": 122
+    },
+    {
+      "text": "Prior studies [ 56 ,  64 ,  68 ] and our empirical analysis on the quantization vs accuracy trade-offs (see Fig. 2c) indicate the 16 and 12bit precision to maximize the accuracy of the inferences while minimizing the energy consumption. Moreover, we also implement the memoization option so that it does not have to repeat infer- ences if it encounters similar data, thereby saving substantial energy as well as delivering results with extremely low la- tency.",
+      "type": "sliding_window",
+      "tokens": 113
+    },
+    {
+      "text": "Moreover, we also implement the memoization option so that it does not have to repeat infer- ences if it encounters similar data, thereby saving substantial energy as well as delivering results with extremely low la- tency. However, even with all these optimizations, due to the fickle nature of EH,  Seeker  cannot finish all the inferences at the edge and must communicate with a host device. To minimize the data communication overhead between the sensor-node and the host device,  Seeker  utilizes coresets to build representative, yet compressed, forms of the data.",
+      "type": "sliding_window",
+      "tokens": 130
+    },
+    {
+      "text": "To minimize the data communication overhead between the sensor-node and the host device,  Seeker  utilizes coresets to build representative, yet compressed, forms of the data. To cater towards the fickle EH budget, we use the two dif- ferent coreset construction techniques, described in Section 3: a cheaper, less accurate formation (importance sampling) and a more expensive, yet accurate formation (K-means). Trans- mitting coresets rather than raw data greatly improves the \nenergy efficiency of communication to the host, when re- quired, and effectively increases the number of completed inferences, thereby increasing overall accuracy.",
+      "type": "sliding_window",
+      "tokens": 142
+    },
+    {
+      "text": "Trans- mitting coresets rather than raw data greatly improves the \nenergy efficiency of communication to the host, when re- quired, and effectively increases the number of completed inferences, thereby increasing overall accuracy. Depending on the incoming data and the EH budget, the sensor decides whether to skip compute, perform an inference at the edge, or form a coreset to offload the inference to the host. The host, after obtaining information from multiple sensors, per- forms any further required computation and uses ensemble learning [ 47 ] to give an accurate classification result.",
+      "type": "sliding_window",
+      "tokens": 127
+    },
+    {
+      "text": "The host, after obtaining information from multiple sensors, per- forms any further required computation and uses ensemble learning [ 47 ] to give an accurate classification result. Note that, unlike prior EH-WSN systems [ 47 ], the role of the host device here is not limited to just result aggregation; rather, the host participates and performs inference when the sen- sors do not have enough energy and choose to communicate the data (in the form of coresets) to the host. In this section, we will explain, in detail, the overall execution workflow of the  Seeker  system, followed by the the detailed design of the hardware support to maximize its energy efficiency.",
+      "type": "sliding_window",
+      "tokens": 148
+    },
+    {
+      "text": "In this section, we will explain, in detail, the overall execution workflow of the  Seeker  system, followed by the the detailed design of the hardware support to maximize its energy efficiency. 4.1 Decision Flow: From Sensors to the Host Figure 8 depicts a flow chat showing the decision process taken in the sensor nodes to navigate between each compo- nents. Each sensor has a data buffer that collects the data points for classification (implemented using a 60  × 3 FIFO structure of 4Byte cells to store the floating point data.",
+      "type": "sliding_window",
+      "tokens": 126
+    },
+    {
+      "text": "Each sensor has a data buffer that collects the data points for classification (implemented using a 60  × 3 FIFO structure of 4Byte cells to store the floating point data. The × 3 caters towards the multiple channels of the sensor. The moving window is designed using a counter to shift the streaming data.)",
+      "type": "sliding_window",
+      "tokens": 75
+    },
+    {
+      "text": "The moving window is designed using a counter to shift the streaming data.) The sensor also stores one ground truth trace for each activity. The sensor computes the correlation (  1a  ) between the stored ground truth and the current data.",
+      "type": "sliding_window",
+      "tokens": 50
+    },
+    {
+      "text": "The sensor computes the correlation (  1a  ) between the stored ground truth and the current data. If the correlation coefficient is  ≥ 𝑡ℎ𝑟𝑒𝑠ℎ𝑜𝑙𝑑 (  1b  ) the sensor skips all computation and sends the result to the host. Oth- erwise, the sensor prioritizes local computation and, with the help of a moving average power predictor [ 47 ], predicts whether it can finish the quantized DNN inference with the combination of stored energy and expected income (  2a  and \n2b  ).",
+      "type": "sliding_window",
+      "tokens": 110
+    },
+    {
+      "text": "Oth- erwise, the sensor prioritizes local computation and, with the help of a moving average power predictor [ 47 ], predicts whether it can finish the quantized DNN inference with the combination of stored energy and expected income (  2a  and \n2b  ). If energy is insufficient for DNN inference, the sensor will use coreset formation to communicate the important features to the host, which completes the inference. Since the clustering based coreset is typically more accurate then those formed by importance sampling, the former is pre- ferred, when possible.",
+      "type": "sliding_window",
+      "tokens": 126
+    },
+    {
+      "text": "Since the clustering based coreset is typically more accurate then those formed by importance sampling, the former is pre- ferred, when possible. We increase the frequency of cluster- based formation by using custom, energy efficient hardware. With the help of an activity-aware and recoverable coreset construction and low-power hardware design, we can effi- ciently communicate inferences or compressed data to the host device with minimum power and latency overheads.",
+      "type": "sliding_window",
+      "tokens": 101
+    },
+    {
+      "text": "With the help of an activity-aware and recoverable coreset construction and low-power hardware design, we can effi- ciently communicate inferences or compressed data to the host device with minimum power and latency overheads. Seeker , accounting for the available energy budget, con- siders the following decisions:  D0:  Test for data similarity using correlation, and if similarity is found then communi- cate the results to the host;  D1:  DNN at sensor with raw data + Communicate the results to the host;  D2:  Try Quantized \n8 \nStart Current Data \nLast Data \nCorrelation \nPower Predictor\nAbstract to predictive maintenance . Else- vier.",
+      "type": "sliding_window",
+      "tokens": 151
+    },
+    {
+      "text": "Else- vier. [49]  Reem E Mohamed, Ahmed I Saleh, Maher Abdelrazzak, and Ahmed S Samra. 2018.",
+      "type": "sliding_window",
+      "tokens": 38
+    },
+    {
+      "text": "2018. Survey on wireless sensor network applications and energy efficient routing protocols. Wireless Personal Communications 101, 2 (2018), 1019–1055.",
+      "type": "sliding_window",
+      "tokens": 27
+    },
+    {
+      "text": "Wireless Personal Communications 101, 2 (2018), 1019–1055. [50]  Thaha Mohammed, Carlee Joe-Wong, Rohit Babbar, and Mario Di Francesco. 2020.",
+      "type": "sliding_window",
+      "tokens": 42
+    },
+    {
+      "text": "2020. Distributed inference acceleration with adap- tive DNN partitioning and offloading. In  IEEE INFOCOM 2020-IEEE Conference on Computer Communications .",
+      "type": "sliding_window",
+      "tokens": 41
+    },
+    {
+      "text": "In  IEEE INFOCOM 2020-IEEE Conference on Computer Communications . IEEE, 854–863. [51]  Mu Editor 2022.",
+      "type": "sliding_window",
+      "tokens": 31
+    },
+    {
+      "text": "[51]  Mu Editor 2022. Code with Mu a simple Python editor for beginner programmers. https://codewith.mu/en/.",
+      "type": "sliding_window",
+      "tokens": 33
+    },
+    {
+      "text": "https://codewith.mu/en/. [52]  Ben Mussay, Margarita Osadchy, Vladimir Braverman, Samson Zhou, and Dan Feldman. 2019.",
+      "type": "sliding_window",
+      "tokens": 44
+    },
+    {
+      "text": "2019. Data-independent neural pruning via coresets. arXiv preprint arXiv:1907.04018  (2019).",
+      "type": "sliding_window",
+      "tokens": 31
+    },
+    {
+      "text": "arXiv preprint arXiv:1907.04018  (2019). [53]  Dhiraj Neupane and Jongwon Seok. 2020.",
+      "type": "sliding_window",
+      "tokens": 39
+    },
+    {
+      "text": "2020. Bearing fault detection and diagnosis using case western reserve university dataset with deep learning approaches: A review. IEEE Access  8 (2020), 93155–93178.",
+      "type": "sliding_window",
+      "tokens": 35
+    },
+    {
+      "text": "IEEE Access  8 (2020), 93155–93178. [54]  Kyle Olszewski, Zimo Li, Chao Yang, Yi Zhou, Ronald Yu, Zeng Huang, Sitao Xiang, Shunsuke Saito, Pushmeet Kohli, and Hao Li. 2017.",
+      "type": "sliding_window",
+      "tokens": 75
+    },
+    {
+      "text": "2017. Re- alistic dynamic facial textures from a single image using gans. In Proceedings of the IEEE International Conference on Computer Vision .",
+      "type": "sliding_window",
+      "tokens": 31
+    },
+    {
+      "text": "In Proceedings of the IEEE International Conference on Computer Vision . 5429–5438. [55]  Rohan Paul, Dan Feldman, Daniela Rus, and Paul Newman.",
+      "type": "sliding_window",
+      "tokens": 40
+    },
+    {
+      "text": "[55]  Rohan Paul, Dan Feldman, Daniela Rus, and Paul Newman. 2014. Visual precis generation using coresets.",
+      "type": "sliding_window",
+      "tokens": 31
+    },
+    {
+      "text": "Visual precis generation using coresets. In  2014 IEEE International Conference on Robotics and Automation (ICRA) . 1304–1311.",
+      "type": "sliding_window",
+      "tokens": 31
+    },
+    {
+      "text": "1304–1311. https://doi.org/10. 1109/ICRA.2014.6907021 [56]  K. Qiu, N. Jao, M. Zhao, C. S. Mishra, G. Gudukbay, S. Jose, J. Samp- son, M. T. Kandemir, and V. Narayanan.",
+      "type": "sliding_window",
+      "tokens": 86
+    },
+    {
+      "text": "1109/ICRA.2014.6907021 [56]  K. Qiu, N. Jao, M. Zhao, C. S. Mishra, G. Gudukbay, S. Jose, J. Samp- son, M. T. Kandemir, and V. Narayanan. 2020. ResiRCA: A Resilient Energy Harvesting ReRAM Crossbar-Based Accelerator for Intelligent Embedded Processors.",
+      "type": "sliding_window",
+      "tokens": 106
+    },
+    {
+      "text": "ResiRCA: A Resilient Energy Harvesting ReRAM Crossbar-Based Accelerator for Intelligent Embedded Processors. In  2020 HPCA . 315–327.",
+      "type": "sliding_window",
+      "tokens": 43
+    },
+    {
+      "text": "315–327. [57]  Attila Reiss and Didier Stricker. 2012.",
+      "type": "sliding_window",
+      "tokens": 25
+    },
+    {
+      "text": "2012. Creating and benchmarking a new dataset for physical activity monitoring. In  PETRA , Fillia Makedon (Ed.).",
+      "type": "sliding_window",
+      "tokens": 31
+    },
+    {
+      "text": "In  PETRA , Fillia Makedon (Ed.). ACM. [58]  Attila Reiss and Didier Stricker.",
+      "type": "sliding_window",
+      "tokens": 36
+    },
+    {
+      "text": "[58]  Attila Reiss and Didier Stricker. 2012. Introducing a New Benchmarked Dataset for Activity Monitoring.",
+      "type": "sliding_window",
+      "tokens": 32
+    },
+    {
+      "text": "Introducing a New Benchmarked Dataset for Activity Monitoring. In  ISWC . IEEE.",
+      "type": "sliding_window",
+      "tokens": 21
+    },
+    {
+      "text": "IEEE. [59]  Mohammad Rostami, Jeremy Gummeson, Ali Kiaghadi, and Deepak Ganesan. 2018.",
+      "type": "sliding_window",
+      "tokens": 35
+    },
+    {
+      "text": "2018. Polymorphic radios: A new design paradigm for ultra- low power communication. In  Proceedings of the 2018 Conference of the ACM Special Interest Group on Data Communication .",
+      "type": "sliding_window",
+      "tokens": 37
+    },
+    {
+      "text": "In  Proceedings of the 2018 Conference of the ACM Special Interest Group on Data Communication . 446–460. [60]  Fernando Moya Rueda, René Grzeszick, Gernot A. Fink, Sascha Feld- horst, and Michael ten Hompel.",
+      "type": "sliding_window",
+      "tokens": 70
+    },
+    {
+      "text": "[60]  Fernando Moya Rueda, René Grzeszick, Gernot A. Fink, Sascha Feld- horst, and Michael ten Hompel. 2018. Convolutional Neural Networks for Human Activity Recognition Using Body-Worn Sensors.",
+      "type": "sliding_window",
+      "tokens": 69
+    },
+    {
+      "text": "Convolutional Neural Networks for Human Activity Recognition Using Body-Worn Sensors. Informat- ics  (2018). [61]  Rachid Saadane, Abdellah Chehri, Seunggil Jeon, et al .",
+      "type": "sliding_window",
+      "tokens": 61
+    },
+    {
+      "text": "[61]  Rachid Saadane, Abdellah Chehri, Seunggil Jeon, et al . 2022. AI-based modeling and data-driven evaluation for smart farming-oriented big data architecture using IoT with energy harvesting capabilities.",
+      "type": "sliding_window",
+      "tokens": 62
+    },
+    {
+      "text": "AI-based modeling and data-driven evaluation for smart farming-oriented big data architecture using IoT with energy harvesting capabilities. Sus- tainable Energy Technologies and Assessments  52 (2022), 102093. [62]  Alanson P Sample, Daniel J Yeager, Pauline S Powledge, Alexander V Mamishev, and Joshua R Smith.",
+      "type": "sliding_window",
+      "tokens": 82
+    },
+    {
+      "text": "[62]  Alanson P Sample, Daniel J Yeager, Pauline S Powledge, Alexander V Mamishev, and Joshua R Smith. 2008. Design of an RFID-based battery- free programmable sensing platform.",
+      "type": "sliding_window",
+      "tokens": 51
+    },
+    {
+      "text": "Design of an RFID-based battery- free programmable sensing platform. IEEE transactions on instrumen- tation and measurement  57, 11 (2008), 2608–2615. [63]  Himanshu Sharma, Ahteshamul Haque, and Zainul Abdin Jaffery.",
+      "type": "sliding_window",
+      "tokens": 65
+    },
+    {
+      "text": "[63]  Himanshu Sharma, Ahteshamul Haque, and Zainul Abdin Jaffery. 2019. Maximization of wireless sensor network lifetime using solar energy harvesting for smart agriculture monitoring.",
+      "type": "sliding_window",
+      "tokens": 45
+    },
+    {
+      "text": "Maximization of wireless sensor network lifetime using solar energy harvesting for smart agriculture monitoring. Ad Hoc Networks  94 (2019), 101966. [64]  Zhuoran Song, Bangqi Fu, Feiyang Wu, Zhaoming Jiang, Li Jiang, Naifeng Jing, and Xiaoyao Liang.",
+      "type": "sliding_window",
+      "tokens": 82
+    },
+    {
+      "text": "[64]  Zhuoran Song, Bangqi Fu, Feiyang Wu, Zhaoming Jiang, Li Jiang, Naifeng Jing, and Xiaoyao Liang. 2020. DRQ: dynamic region-based quantization for deep neural network acceleration.",
+      "type": "sliding_window",
+      "tokens": 68
+    },
+    {
+      "text": "DRQ: dynamic region-based quantization for deep neural network acceleration. In  ISCA . IEEE.",
+      "type": "sliding_window",
+      "tokens": 24
+    },
+    {
+      "text": "IEEE. [65]  Ben Taylor, Vicent Sanz Marco, Willy Wolff, Yehia Elkhatib, and Zheng Wang. 2018.",
+      "type": "sliding_window",
+      "tokens": 37
+    },
+    {
+      "text": "2018. Adaptive deep learning model selection on embedded systems. ACM SIGPLAN Notices  53, 6 (2018), 31–43.",
+      "type": "sliding_window",
+      "tokens": 29
+    },
+    {
+      "text": "ACM SIGPLAN Notices  53, 6 (2018), 31–43. [66]  Texas Instrument Micro-controller with FRAM 2022. 16 MHz MCU with 64KB FRAM, 2KB SRAM, AES, 12-bit ADC, comparator, DMA, \n14 \nUART/SPI/I2C, timer.",
+      "type": "sliding_window",
+      "tokens": 76
+    },
+    {
+      "text": "16 MHz MCU with 64KB FRAM, 2KB SRAM, AES, 12-bit ADC, comparator, DMA, \n14 \nUART/SPI/I2C, timer. https://www.ti.com/product/MSP430FR5969. [67]  Rambabu Vatti, Nagarjuna Vatti, K Mahender, Prasanna Lakshmi Vatti, and B Krishnaveni.",
+      "type": "sliding_window",
+      "tokens": 100
+    },
+    {
+      "text": "[67]  Rambabu Vatti, Nagarjuna Vatti, K Mahender, Prasanna Lakshmi Vatti, and B Krishnaveni. 2020. Solar energy harvesting for smart farming using nanomaterial and machine learning.",
+      "type": "sliding_window",
+      "tokens": 54
+    },
+    {
+      "text": "Solar energy harvesting for smart farming using nanomaterial and machine learning. In  IOP Conference Series: Materials Science and Engineering , Vol. 981.",
+      "type": "sliding_window",
+      "tokens": 32
+    },
+    {
+      "text": "981. IOP Publishing, 032009. [68]  Tien-Ju Yang, Andrew Howard, Bo Chen, Xiao Zhang, Alec Go, Mark Sandler, Vivienne Sze, and Hartwig Adam.",
+      "type": "sliding_window",
+      "tokens": 53
+    },
+    {
+      "text": "[68]  Tien-Ju Yang, Andrew Howard, Bo Chen, Xiao Zhang, Alec Go, Mark Sandler, Vivienne Sze, and Hartwig Adam. 2018. NetAdapt: Platform- Aware Neural Network Adaptation for Mobile Applications.",
+      "type": "sliding_window",
+      "tokens": 61
+    },
+    {
+      "text": "NetAdapt: Platform- Aware Neural Network Adaptation for Mobile Applications. In  ECCV . [69]  Zhuoran Zhao, Kamyar Mirzazad Barijough, and Andreas Gerstlauer.",
+      "type": "sliding_window",
+      "tokens": 54
+    },
+    {
+      "text": "[69]  Zhuoran Zhao, Kamyar Mirzazad Barijough, and Andreas Gerstlauer. 2018. DeepThings: Distributed adaptive deep learning inference on resource-constrained IoT edge clusters.",
+      "type": "sliding_window",
+      "tokens": 56
+    },
+    {
+      "text": "DeepThings: Distributed adaptive deep learning inference on resource-constrained IoT edge clusters. IEEE Transactions on Computer- Aided Design of Integrated Circuits and Systems  37, 11 (2018), 2348– 2359. [70]  Tiago Zonta, Cristiano André da Costa, Rodrigo da Rosa Righi, Miro- mar Jose de Lima, Eduardo Silveira da Trindade, and Guann Pyng Li.",
+      "type": "sliding_window",
+      "tokens": 105
+    },
+    {
+      "text": "[70]  Tiago Zonta, Cristiano André da Costa, Rodrigo da Rosa Righi, Miro- mar Jose de Lima, Eduardo Silveira da Trindade, and Guann Pyng Li. 2020. Predictive maintenance in the Industry 4.0: A systematic litera- ture review.",
+      "type": "sliding_window",
+      "tokens": 75
+    },
+    {
+      "text": "Predictive maintenance in the Industry 4.0: A systematic litera- ture review. Computers & Industrial Engineering  150 (2020), 106889. 15 \n0 \n20 \n40 \n60 \n0 \n0.1 \n0.2 \n0.3 \n0.4 \n1 \n4 \n7 \n10 \n13 \n16 \n19 \n22 \n25 \n28 \n31 \n34 \n37 \n40 \n43 \n46 \n49 \n% Reconstruction Error \nFFT Amplitude \nFrequency (Hz) Reconstructed Original % Error \nFigure 14: An example of generator based coreset re- covery \nFigure 15: % completion of the inference at the edge for bearing fault data with different EH source.",
+      "type": "sliding_window",
+      "tokens": 133
+    },
+    {
+      "text": "15 \n0 \n20 \n40 \n60 \n0 \n0.1 \n0.2 \n0.3 \n0.4 \n1 \n4 \n7 \n10 \n13 \n16 \n19 \n22 \n25 \n28 \n31 \n34 \n37 \n40 \n43 \n46 \n49 \n% Reconstruction Error \nFFT Amplitude \nFrequency (Hz) Reconstructed Original % Error \nFigure 14: An example of generator based coreset re- covery \nFigure 15: % completion of the inference at the edge for bearing fault data with different EH source. Figure 16: Communication data volume with different number of clusters. Component Spec Power Area(mm 2 ) \nSRAM Buffers \n1kB*256+ 8kB*256+ 64kB+16*256kB \n10.372W 117.164 \nMAC Unit (8*8) 256 8.46W 32.72 \nAdder Tree and Comparator 16*16bit + 256 2.4W 21.556 \nControl – 0.96W 12.2 Host ∼ Cortex A78 series 11W – Design at 592MHz with Synopsys AED 32nm library \nTotal 256 tiles 33.192W 183.64 Table 3: Area and power estimation of our design.",
+      "type": "sliding_window",
+      "tokens": 251
+    },
+    {
+      "text": "Component Spec Power Area(mm 2 ) \nSRAM Buffers \n1kB*256+ 8kB*256+ 64kB+16*256kB \n10.372W 117.164 \nMAC Unit (8*8) 256 8.46W 32.72 \nAdder Tree and Comparator 16*16bit + 256 2.4W 21.556 \nControl – 0.96W 12.2 Host ∼ Cortex A78 series 11W – Design at 592MHz with Synopsys AED 32nm library \nTotal 256 tiles 33.192W 183.64 Table 3: Area and power estimation of our design. A APPENDIX A.1 Reconstructing Importance Sampling Coreset As discussed in Section 3.2.2, we use GANs to recover the data we lost while performing importance sampling. This was motivated from the observation that as we selected more number of points in importance sampling, the accuracy of the inference on the compressed data increased significantly (at times by 2%).",
+      "type": "sliding_window",
+      "tokens": 219
+    },
+    {
+      "text": "This was motivated from the observation that as we selected more number of points in importance sampling, the accuracy of the inference on the compressed data increased significantly (at times by 2%). Hence, the points which were not selected while performing importance sampling still had some impor- tance and can be represented as a function containing the low level nuances of the activity performed and the sensor state. The challenge was to learn this function, i.e.",
+      "type": "sliding_window",
+      "tokens": 97
+    },
+    {
+      "text": "The challenge was to learn this function, i.e. to de- vice a transformation function which can mimic the sensor signal given the aactivity and the sensor states. A similar problem, in terms of generating faces, paintings etc.",
+      "type": "sliding_window",
+      "tokens": 52
+    },
+    {
+      "text": "A similar problem, in terms of generating faces, paintings etc. given some latent space has already been solved using GANs [ 54 ]. Motivated by this, we designed a GANs to regenerate the lost data points while performing importance sampling.",
+      "type": "sliding_window",
+      "tokens": 56
+    },
+    {
+      "text": "Motivated by this, we designed a GANs to regenerate the lost data points while performing importance sampling. The latent space takes the activity, and the first and second order moments of the data sample to recreate the signal, and the Discriminator tried to distinguish between the generated sig- nal and the actual signal. The generator is tuned repeatedly until the discriminator could not distinguish the original and the generated signal.",
+      "type": "sliding_window",
+      "tokens": 90
+    },
+    {
+      "text": "The generator is tuned repeatedly until the discriminator could not distinguish the original and the generated signal. The GAN modeled the lost signals with a very high correlation ( ≥ 0 . 9 in most cases and 0 .",
+      "type": "sliding_window",
+      "tokens": 50
+    },
+    {
+      "text": "9 in most cases and 0 . 6 in some of the worst cases (refer Figure 14 for an example). In rare cases (once in over 2000 cases), the generator induced arti- facts which could result in wrong classifications.",
+      "type": "sliding_window",
+      "tokens": 52
+    },
+    {
+      "text": "In rare cases (once in over 2000 cases), the generator induced arti- facts which could result in wrong classifications. However, this error could be rectified with further fine tuning. A.2 More Results on Bearing Fault Data We repeated our experiments with similar experimental setup on the bearing fault data set [ 53 ].",
+      "type": "sliding_window",
+      "tokens": 68
+    },
+    {
+      "text": "A.2 More Results on Bearing Fault Data We repeated our experiments with similar experimental setup on the bearing fault data set [ 53 ]. The bearing fault data is sampled at a much higher frequency (48KHz) than the HAR data, and hence require a larger DNN, larger num- ber of importance sampling, and more number of clusters. We took the learning from multiple domain specific litera- tures [ 19 ,  29 ,  53 ] to isolate the frequency regions specific to the fault pattern to minimize the computations.",
+      "type": "sliding_window",
+      "tokens": 119
+    },
+    {
+      "text": "We took the learning from multiple domain specific litera- tures [ 19 ,  29 ,  53 ] to isolate the frequency regions specific to the fault pattern to minimize the computations. But, because of the larger data volume, the number of computations per- formed at the edge diminished significantly (refer Figure 15). We also conducted an empirical study on number of clusters required, and found out that the bearing set data needs about 15 to 20 clusters to maintain the inference accuracy.",
+      "type": "sliding_window",
+      "tokens": 104
+    },
+    {
+      "text": "We also conducted an empirical study on number of clusters required, and found out that the bearing set data needs about 15 to 20 clusters to maintain the inference accuracy. The data volume communicated for different number of clusters is represented in Figure 13. B APPENDIX \n16 \n-0.45 \n-0.24 \n-0.02 \n-0.07 \n-0.14 \n-0.19 \n-0.50 \n-0.40 \n-0.30 \n-0.20 \n-0.10 \n0.00 \n0 \n50 \n100 \nWalking Climbing Cycling Running Jogging Jumping Geo Mean \nError \nAccuracy (%) \nCoreset: Compressed Coreset: Reconstructed Reconstructed with Larger Model Seeker Baseline: EAP Baseline: Origin Baseline: Large DNN Error vs Fully Powered \n(a) Accuracy with MHEALTH dataset \n-0.26 \n-0.19 \n-0.76 \n-0.28 \n-0.04 \n-0.80 \n-0.60 \n-0.40 \n-0.20 \n0.00 \n0 \n20 \n40 \n60 \n80 \n100 \nWalking Climbing Cycling Running Jumping Geo Mean \nError \nAccuracy (%) \nCoreset: Compressed Coreset: Reconstructed Reconstructed with Larger Model Seeker Baseline: EAP Baseline: Origin Baseline: Large DNN Error vs Fully Powered \n(b) Accuracy with PAMAP2 dataset \nFigure 17: Accuracy and communication efficiency of  Seeker  with different data sets and sensitivity study.",
+      "type": "sliding_window",
+      "tokens": 321
+    },
+    {
+      "text": "However, the computation and power de- mands of Deep Neural Network (DNN)-based inference pose significant challenges in an energy-harvesting wireless sen- sor network (EH-WSN). Recent works have shown substantial efficiency boosts by execut- ing inferences directly on the IoT device (node) rather than transmitting data. Abstract There is an increasing demand for intelligent processing on ultra-low-power internet of things (IoT) device.",
+      "type": "sliding_window_shuffled",
+      "tokens": 109,
+      "augmented": true
+    },
+    {
+      "text": "To address these chal- lenges, we propose  Seeker , a hardware-software co-design approach for increasing on-sensor computation, reducing communication volume, and maximizing inference comple- tion, without violating the quality of service, in EH-WSNs co- ordinated by a mobile device. Moreover, these tasks often require responses from multiple physically distributed EH sensor nodes, which impose crucial system optimization challenges in addition to per-node constraints. However, the computation and power de- mands of Deep Neural Network (DNN)-based inference pose significant challenges in an energy-harvesting wireless sen- sor network (EH-WSN).",
+      "type": "sliding_window_shuffled",
+      "tokens": 159,
+      "augmented": true
+    },
+    {
+      "text": "Seeker  uses a  store-and-execute approach to complete a subset of inferences on the EH sensor node, reducing communication with the mobile host. Fur- ther, for those inferences unfinished because of the harvested energy constraints, it leverages task-aware coreset construc- tion to efficiently communicate compact features to the host device. To address these chal- lenges, we propose  Seeker , a hardware-software co-design approach for increasing on-sensor computation, reducing communication volume, and maximizing inference comple- tion, without violating the quality of service, in EH-WSNs co- ordinated by a mobile device.",
+      "type": "sliding_window_shuffled",
+      "tokens": 157,
+      "augmented": true
+    },
+    {
+      "text": "Fur- ther, for those inferences unfinished because of the harvested energy constraints, it leverages task-aware coreset construc- tion to efficiently communicate compact features to the host device. 9 ×  reduc- tion in communication data volume with 86 . We evaluate  Seeker  for human activity recognition, as well as predictive maintenance and show  ≈ 8 .",
+      "type": "sliding_window_shuffled",
+      "tokens": 82,
+      "augmented": true
+    },
+    {
+      "text": "2% accuracy of the state-of-the-art. 8% accuracy, surpassing the 81 . 9 ×  reduc- tion in communication data volume with 86 .",
+      "type": "sliding_window_shuffled",
+      "tokens": 41,
+      "augmented": true
+    },
+    {
+      "text": "2% accuracy of the state-of-the-art. Wireless sensor networks (WSNs), one of the prominent classes of IoT deployments, is currently dominating and expected to be pervasive impacting many application spaces [ 13 ] including, but not limited to, body area network [ 22 ,  47 ], industrial monitoring [ 34 ], predic- tive maintenance [ 70 ], commercial satellites[ 15 ] and smart farming [ 61 ]. 1 INTRODUCTION \nInnovations in low-power computing, artificial intelligence, and communication technologies have given rise to the gen- eration of intelligently connected devices that constitute the Internet of Things (IoT).",
+      "type": "sliding_window_shuffled",
+      "tokens": 149,
+      "augmented": true
+    },
+    {
+      "text": "This represents a particularly challenging tension between energy availability and desired functionality, because the form factor constraints of the WSNs fundamentally limit active power, energy re- serves, compute and communication capabilities. Wireless sensor networks (WSNs), one of the prominent classes of IoT deployments, is currently dominating and expected to be pervasive impacting many application spaces [ 13 ] including, but not limited to, body area network [ 22 ,  47 ], industrial monitoring [ 34 ], predic- tive maintenance [ 70 ], commercial satellites[ 15 ] and smart farming [ 61 ]. Moreover, these WSNs are and further will be participating in producing rapid inferences to support the increasingly complex tasks enabled by machine learning \n(ML) algorithms [ 47 ,  68 ], often tweaked towards edge de- ployments, and applications of such edge-analytics is also ex- ploding with the user and market demands.",
+      "type": "sliding_window_shuffled",
+      "tokens": 209,
+      "augmented": true
+    },
+    {
+      "text": "For many WSNs, their participation in inference tasks has traditionally been limited to data collection and transmission, sometimes with modest preprocessing. While several studies have shown the benefits of performing more inference closer to the point of data collection [ 23 ,  30 ,  31 ,  40 ,  56 ] and have ap- plied these techniques to more powerful edge devices, their form-factor-imposed limited energy storage, low-power op- eration points, and deployment scenarios have been a major impediment in executing compute-intensive inference tasks directly on such platforms. This represents a particularly challenging tension between energy availability and desired functionality, because the form factor constraints of the WSNs fundamentally limit active power, energy re- serves, compute and communication capabilities.",
+      "type": "sliding_window_shuffled",
+      "tokens": 171,
+      "augmented": true
+    },
+    {
+      "text": "Prior works, trying to tackle this conflict between computa- tion, communication, power-requirement and quality of ser- vice (QoS), have pursued three major approaches: inference effort partitioning optimizations [ 22 ,  30 ,  31 ,  50 ], mitigation of energy provisioning limitations [ 24 ,  40 ,  43 ,  47 ,  56 ], and minimizing communication overheads [32, 33, 36, 37, 45]. While several studies have shown the benefits of performing more inference closer to the point of data collection [ 23 ,  30 ,  31 ,  40 ,  56 ] and have ap- plied these techniques to more powerful edge devices, their form-factor-imposed limited energy storage, low-power op- eration points, and deployment scenarios have been a major impediment in executing compute-intensive inference tasks directly on such platforms. In contrast, communicating the data, often after little preprocessing, although popular, is not cheap in terms of power requirement, and often poses a challenge for remotely deployed and ultra low power WSNs.",
+      "type": "sliding_window_shuffled",
+      "tokens": 246,
+      "augmented": true
+    },
+    {
+      "text": "One of the most emerging line of work aims to solve the energy provisioning problem at the edge by integrating en- ergy harvesting (EH) to the sensor nodes while making them more capable performing complex compute intermittently, which has given rise to energy harvesting wireless sensor networks (EH-WSNs). Specifically, recent works [ 24 ,  43 ] pro- posed EH, along with compiler/runtime optimizations and leveraging non-volatile processors (NVP) [ 40 ,  56 ], to increase local compute at the edge. Prior works, trying to tackle this conflict between computa- tion, communication, power-requirement and quality of ser- vice (QoS), have pursued three major approaches: inference effort partitioning optimizations [ 22 ,  30 ,  31 ,  50 ], mitigation of energy provisioning limitations [ 24 ,  40 ,  43 ,  47 ,  56 ], and minimizing communication overheads [32, 33, 36, 37, 45].",
+      "type": "sliding_window_shuffled",
+      "tokens": 230,
+      "augmented": true
+    },
+    {
+      "text": "More importantly, EH can help us build sustainable distributed sensing/monitoring infrastructure at virtually inaccessible places like oil-wells, mines, and even satellite orbits [ 14 ,  49 ]. Specifically, recent works [ 24 ,  43 ] pro- posed EH, along with compiler/runtime optimizations and leveraging non-volatile processors (NVP) [ 40 ,  56 ], to increase local compute at the edge. EH as a solution has been partic- ularly interesting as a means to address the sustainability issue of battery backing trillions of future devices.",
+      "type": "sliding_window_shuffled",
+      "tokens": 135,
+      "augmented": true
+    },
+    {
+      "text": "However, harvested energy is fickle in nature, and typically \narXiv:2408.14379v1  [cs.AR]  26 Aug 2024 \nharvested sources only deliver scant microwatts of power (see Figure 1b for an overview). The sporadic nature of har- vested energy and the lossy nature of EH based storage and charging circuits calls for using the harvested energy di- rectly to perform intermittent compute rather than storing energy for some distant future use. More importantly, EH can help us build sustainable distributed sensing/monitoring infrastructure at virtually inaccessible places like oil-wells, mines, and even satellite orbits [ 14 ,  49 ].",
+      "type": "sliding_window_shuffled",
+      "tokens": 154,
+      "augmented": true
+    },
+    {
+      "text": "Given the limitations of the EH budget, such approaches typically end up dropping many samples and not inferring from them locally. On this front, recent works [ 43 ,  44 ,  47 ] have specifically optimized DNN infer- ence execution at the EH-edge nodes by utilizing adaptive dynamic check pointing, intelligent scheduling and ensem- ble learning. The sporadic nature of har- vested energy and the lossy nature of EH based storage and charging circuits calls for using the harvested energy di- rectly to perform intermittent compute rather than storing energy for some distant future use.",
+      "type": "sliding_window_shuffled",
+      "tokens": 137,
+      "augmented": true
+    },
+    {
+      "text": "Importantly, they are of- ten incapable of transmitting the raw data due to a lack of sufficient energy; for sensing tasks with modest inference requirements, performing inference and transmitting the result can take  less  energy than transmitting raw data. Given the limitations of the EH budget, such approaches typically end up dropping many samples and not inferring from them locally. How- ever, to unleash the remote deployment, and sustainable, yet pervasive, computing capabilities WSNs, development of ef- ficient  energy harvesting WSNs  (EH-WSNs), both for sensing and edge-analytics, plays an essential role.",
+      "type": "sliding_window_shuffled",
+      "tokens": 143,
+      "augmented": true
+    },
+    {
+      "text": "However, when applied to low-dimensional sensor data, classical lossy compression techniques tend to discard or distort some important fea- tures, which significantly degrades the inference accuracy. These wireless sensing (EH or otherwise) devices have long relied on compression techniques to mitigate data com- munication overheads [ 32 ,  33 ,  45 ]. How- ever, to unleash the remote deployment, and sustainable, yet pervasive, computing capabilities WSNs, development of ef- ficient  energy harvesting WSNs  (EH-WSNs), both for sensing and edge-analytics, plays an essential role.",
+      "type": "sliding_window_shuffled",
+      "tokens": 146,
+      "augmented": true
+    },
+    {
+      "text": "However, when applied to low-dimensional sensor data, classical lossy compression techniques tend to discard or distort some important fea- tures, which significantly degrades the inference accuracy. To mitigate the shortcomings of classical compression tech- niques, recent works [ 7 ,  36 ,  37 ] propose using  coresets , a data representation technique from computational geometry that preserves important, representative features when building a compressed form of the data, and thereby reducing the pay- load size while preserving data integrity for efficient edge communication. Although, with the help of coresets, one can efficiently offload minimal input representations to a more compute-capable device, performing accurate inference on coresets is non-trivial due to their low-dimensional nature.",
+      "type": "sliding_window_shuffled",
+      "tokens": 172,
+      "augmented": true
+    },
+    {
+      "text": "Although, with the help of coresets, one can efficiently offload minimal input representations to a more compute-capable device, performing accurate inference on coresets is non-trivial due to their low-dimensional nature. Towards this, we propose  Seeker , a novel approach that leverages and extends coresets to efficiently execute DNN inference across a set of EH sensor nodes and a host mobile device. From the aforementioned challenges, it is evident that we need a concoction of both hardware-driven and software optimized solutions to build next-generation EH-WSNs with the ability to perform fine-grained intermittent computing, while ensuring efficient network communication.",
+      "type": "sliding_window_shuffled",
+      "tokens": 157,
+      "augmented": true
+    },
+    {
+      "text": "Furthermore, it then applies innovative coreset techniques to efficiently and intelligently offload unfinished compute tasks to a more capable host to further increase the inferences that can be performed. Seeker  fo- cuses on building an efficient EH-WSN which can collabora- tively work to maximize the inferences performed at the EH- edge nodes. Towards this, we propose  Seeker , a novel approach that leverages and extends coresets to efficiently execute DNN inference across a set of EH sensor nodes and a host mobile device.",
+      "type": "sliding_window_shuffled",
+      "tokens": 127,
+      "augmented": true
+    },
+    {
+      "text": "Seeker  provides hardware acceleration support for coreset formation to make them computationally efficient, adaptive, and accuracy-preserving specifically for EH-WSNs. Particularly,  Seeker  aug- ments its coreset formation with  application-awareness  to form an energy aware, dynamically configured, and feature \npreserving payload with minimal communication footprint. Furthermore, it then applies innovative coreset techniques to efficiently and intelligently offload unfinished compute tasks to a more capable host to further increase the inferences that can be performed.",
+      "type": "sliding_window_shuffled",
+      "tokens": 112,
+      "augmented": true
+    },
+    {
+      "text": "The fol- lowing are the  primary contributions  of our work: •  Efficient Communication:  We enable low data volume communication by developing extensions to traditional coresets that enhances their applicability to EH-WSN in- ference scenarios. Seeker  provides hardware acceleration support for coreset formation to make them computationally efficient, adaptive, and accuracy-preserving specifically for EH-WSNs. Specifically, we introduce an  activity- aware coreset construction  technique to dynamically adapt to both activity and the available harvested energy, while conserving maximum features of the data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 121,
+      "augmented": true
+    },
+    {
+      "text": "9 × . This reduces the communication payload size by 8 . Specifically, we introduce an  activity- aware coreset construction  technique to dynamically adapt to both activity and the available harvested energy, while conserving maximum features of the data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 53,
+      "augmented": true
+    },
+    {
+      "text": "We also propose a  recoverable coreset construction  technique, which helps reconstruct the original data from the compressed form with minimum (as low as 0 . 9 × . 02%) accuracy loss.",
+      "type": "sliding_window_shuffled",
+      "tokens": 44,
+      "augmented": true
+    },
+    {
+      "text": "02%) accuracy loss. •  Efficient Computation:  We augment a state-of-the-art EH-sensor node with quantized DNNs to increase the num- ber of accurate inferences at the edge (by up to 40%). We leverage data memoization to skip unnecessary compute saving inference execution time and energy.",
+      "type": "sliding_window_shuffled",
+      "tokens": 75,
+      "augmented": true
+    },
+    {
+      "text": "We leverage data memoization to skip unnecessary compute saving inference execution time and energy. •  Efficient Hardware:  We propose simple, low power, and low latency hardware to efficiently build coresets, further increasing the number of samples that can be inferred or transmitted under EH budget, and thereby significantly improving the accuracy over the state-of-the-art ( ≈ 5%). We develop a non-volatile hardware accelerator, with mul- tiple quantization support, for efficient DNN inference.",
+      "type": "sliding_window_shuffled",
+      "tokens": 113,
+      "augmented": true
+    },
+    {
+      "text": "•  Adaptability:  Although  Seeker  is meant for EH-WSNs, the coreset based data representation can easily be used in any commercial device for efficient communication. We develop a non-volatile hardware accelerator, with mul- tiple quantization support, for efficient DNN inference. •  Detailed Evaluation:  We provide a detailed evaluation of our system and the proposed hardware design.",
+      "type": "sliding_window_shuffled",
+      "tokens": 87,
+      "augmented": true
+    },
+    {
+      "text": "Specifically,  Seeker  reaches 86.8% top-1 accuracy in com- parison to the 81.2% accuracy of the baseline system. Our evalu- ations show that, even when powered by an unreliable EH source,  Seeker ’s coreset-based optimizations result in bet- ter accuracy than that of a fully-powered system running a state-of-the-art classifier optimized for energy efficiency. •  Detailed Evaluation:  We provide a detailed evaluation of our system and the proposed hardware design.",
+      "type": "sliding_window_shuffled",
+      "tokens": 121,
+      "augmented": true
+    },
+    {
+      "text": "Specifically,  Seeker  reaches 86.8% top-1 accuracy in com- parison to the 81.2% accuracy of the baseline system. 2 BACKGROUND AND MOTIVATION \nIn this section, we provide a background of the current state- of-the-art in performing sensing and computations on EH- WSNs. We also describe the challenges in enabling complex compute on such devices and the need for hardware-software co-design to enable specialized intermittent computing in EH-WSNs.",
+      "type": "sliding_window_shuffled",
+      "tokens": 116,
+      "augmented": true
+    },
+    {
+      "text": "Figure 1a shows the basic building blocks of an energy har- vesting sensing/computing unit. We also describe the challenges in enabling complex compute on such devices and the need for hardware-software co-design to enable specialized intermittent computing in EH-WSNs. Finally, we define the scope of our work and focus on the problem specifics while alluding to probable solutions.",
+      "type": "sliding_window_shuffled",
+      "tokens": 87,
+      "augmented": true
+    },
+    {
+      "text": "The harvested energy is \n2 \ntypically stored in either an intermediate storage like a (su- per) capacitor [ 22 ], or used for charging. For building scalable and sustainable infrastructure of battery-free EH-WSNs, the former is more feasible and will be our focus for this work. Figure 1a shows the basic building blocks of an energy har- vesting sensing/computing unit.",
+      "type": "sliding_window_shuffled",
+      "tokens": 88,
+      "augmented": true
+    },
+    {
+      "text": "The fickle nature of harvested energy has posed a major chal- lenge in performing any useful computation, as any useful forward progress gets lost when the traditional computing systems lose power. For building scalable and sustainable infrastructure of battery-free EH-WSNs, the former is more feasible and will be our focus for this work. To tackle this, a significant amount of work has been done on check-pointing, and compiler level tweaks, which help maximize the forward progress on such devices [ 39 ,  43 ,  44 ].",
+      "type": "sliding_window_shuffled",
+      "tokens": 116,
+      "augmented": true
+    },
+    {
+      "text": "These solutions operate on augmented commercial off the shelf micro-controllers [ 66 ], or specialized products with traditional architecture [ 62 ], and rely on their efficient prediction of power failure. To tackle this, a significant amount of work has been done on check-pointing, and compiler level tweaks, which help maximize the forward progress on such devices [ 39 ,  43 ,  44 ]. While these software optimizations and judicious use of persistent storage works for smaller workloads like keyword spotting (e.g  \"Ok Google\" detection), they are inefficient for complex workloads (e.g.",
+      "type": "sliding_window_shuffled",
+      "tokens": 135,
+      "augmented": true
+    },
+    {
+      "text": "These software-based solutions exhibit inefficiencies with respect to energy and time due to performing multiple save- and-restore cycles [ 23 ,  56 ]: while some of these operations are necessary, unnecessary checkpoints will also be conser- vatively performed to ensure forward-progress. multi-sensor HAR, predictive maintenance etc.). While these software optimizations and judicious use of persistent storage works for smaller workloads like keyword spotting (e.g  \"Ok Google\" detection), they are inefficient for complex workloads (e.g.",
+      "type": "sliding_window_shuffled",
+      "tokens": 122,
+      "augmented": true
+    },
+    {
+      "text": "This reduces software overheads and latencies for handling power emergencies and hence can guarantee better QoS for complex and longer tasks even when power is deeply unreliable. These software-based solutions exhibit inefficiencies with respect to energy and time due to performing multiple save- and-restore cycles [ 23 ,  56 ]: while some of these operations are necessary, unnecessary checkpoints will also be conser- vatively performed to ensure forward-progress. Therefore, recent works [ 39 – 42 ,  56 ] propose the use of a NVP, where the non-volatility of the hardware itself takes care of saving and resuming the program execution.",
+      "type": "sliding_window_shuffled",
+      "tokens": 146,
+      "augmented": true
+    },
+    {
+      "text": "[ 56 ] demon- strates the possibility of performing complex DNN inference at the EH-Sensor itself. This reduces software overheads and latencies for handling power emergencies and hence can guarantee better QoS for complex and longer tasks even when power is deeply unreliable. Using an NVP and multiple harvested energy sources Qiu et al.",
+      "type": "sliding_window_shuffled",
+      "tokens": 85,
+      "augmented": true
+    },
+    {
+      "text": "As a result, it is difficult to reliably run these complex tasks standalone on the edge device. While an NVP ensures safe check- pointing for a given computation, current edge scenarios may require a device to be simultaneously performing multi- ple functionalities [ 3 – 5 ,  25 ] and might be at energy scarcity. [ 56 ] demon- strates the possibility of performing complex DNN inference at the EH-Sensor itself.",
+      "type": "sliding_window_shuffled",
+      "tokens": 105,
+      "augmented": true
+    },
+    {
+      "text": "Need for Specialized Hardware:  One of the major chal- lenges in deploying learning tasks using EH-WSNs is to find the proper hardware platform. Current devices adapt in one of three ways:  1) Send all the sensor data to a connected host device, or cloud, to offload the compute and act only as a sens- ing and display device; 2) Process data on the device itself, potentially dropping or delaying tasks due to energy short- falls; 3) A mix of the two models, where some computations do happen on the device while others are offloaded to balance compute, energy, and communication resources ; and typically, the latter is preferred, but it is non-trivial to find the optimal balance between what is to be done on the edge, what to be offloaded [20, 31, 65, 69], and  how to efficiently offload . As a result, it is difficult to reliably run these complex tasks standalone on the edge device.",
+      "type": "sliding_window_shuffled",
+      "tokens": 210,
+      "augmented": true
+    },
+    {
+      "text": "The current commercial- of-the-shelf (CotS) hardware capable of performing such \nHarvester \nAmbient Energy \nAC-DC Converter Impedance \nMatching \nDC-DC Converter \nController \nPower Management/\n \nConditioning \nEnergy Storage \n \nSensor/ Compute \n(a) High-level overview of an energy harvesting sys- tem. Need for Specialized Hardware:  One of the major chal- lenges in deploying learning tasks using EH-WSNs is to find the proper hardware platform. Communicate elsewhere \n0-50 50-500 500-1k 1k-10k > 10k Harvested/available power in the sensor node (µW) \nCompute at the edge \nCOTS high-end wearables  (bat.)",
+      "type": "sliding_window_shuffled",
+      "tokens": 158,
+      "augmented": true
+    },
+    {
+      "text": "Communicate elsewhere \n0-50 50-500 500-1k 1k-10k > 10k Harvested/available power in the sensor node (µW) \nCompute at the edge \nCOTS high-end wearables  (bat.) Seeker  (RF) \nAll compute at edge Partial compute at edge \nDesign space of  “Seeker” \n(b) Current state-of-the-art of EH-WSN. Bonito  (multiple) \nOrigin  (RF) ResiRCA  (RF/Piezo/Solar) Chinchilla  (RF) Ideal Solution  (Any) \nCOTS cheap wearables  (bat.)",
+      "type": "sliding_window_shuffled",
+      "tokens": 137,
+      "augmented": true
+    },
+    {
+      "text": "Seeker  (RF) \nAll compute at edge Partial compute at edge \nDesign space of  “Seeker” \n(b) Current state-of-the-art of EH-WSN. Figure 1: A primer on energy harvesting systems: Fig- ure 1a shows the basic building blocks of an EH node equipped with sensing and computation. Some of the units change according to the harvested energy source.",
+      "type": "sliding_window_shuffled",
+      "tokens": 88,
+      "augmented": true
+    },
+    {
+      "text": "Figure 1b shows the capabilities of the current SOTA. The size of the circle representing the solutions de- picts the compute capabilities of the sensor nodes, the shade shows the available power, and their position on the axes approximates the amount of compute done on the node and the amount of reliability on external communication. Some of the units change according to the harvested energy source.",
+      "type": "sliding_window_shuffled",
+      "tokens": 82,
+      "augmented": true
+    },
+    {
+      "text": "The power source is denoted in  (Red) (notations used in Figure 1b: COTS: Commercial-off- the-shelf, Bat. The size of the circle representing the solutions de- picts the compute capabilities of the sensor nodes, the shade shows the available power, and their position on the axes approximates the amount of compute done on the node and the amount of reliability on external communication. : Battery, Bonito [ 22 ], Chinchilla [ 43 ], ResiRCA [56], Origin [47]) \ncompute are not energy efficient to run with all modali- ties of harvested energy since all of them do not have the same energy income (see Figure 1b).",
+      "type": "sliding_window_shuffled",
+      "tokens": 159,
+      "augmented": true
+    },
+    {
+      "text": "To estimate the required energy, we ran simple HAR inferences (optimized version of [ 26 ] for edge deployment using [ 68 ]) on an Adafruit ItsyBitsy nRF52840 Express - Bluetooth LE [ 2 ] and found it to be consuming from 550mJ to 1.6J of energy (depending on the quantiza- tion). For example, there has been significant work on enabling solar powered smart farm- ing [ 63 ,  67 ], but the same can not be done for smart manufac- turing due to the lack of solar exposure and the low fidelity of the available EH sources such as vibration and RF (from WiFi or other sources). : Battery, Bonito [ 22 ], Chinchilla [ 43 ], ResiRCA [56], Origin [47]) \ncompute are not energy efficient to run with all modali- ties of harvested energy since all of them do not have the same energy income (see Figure 1b).",
+      "type": "sliding_window_shuffled",
+      "tokens": 230,
+      "augmented": true
+    },
+    {
+      "text": "Therefore, there has been a significant body of work [ 40 ,  42 ,  47 ,  56 ] on developing appropriate next generation hardware (most of \n3 \nthem on simulation). To estimate the required energy, we ran simple HAR inferences (optimized version of [ 26 ] for edge deployment using [ 68 ]) on an Adafruit ItsyBitsy nRF52840 Express - Bluetooth LE [ 2 ] and found it to be consuming from 550mJ to 1.6J of energy (depending on the quantiza- tion). Compared to this, body movement and WiFi sources (the possible modalities of harvesting for HAR) harvests in order of milliwatts [ 22 ,  56 ], making it almost impossible to have a feasible EH-WSN deployment, with the capabilities to perform modest learning tasks, using the CotS.",
+      "type": "sliding_window_shuffled",
+      "tokens": 197,
+      "augmented": true
+    },
+    {
+      "text": "Complex Compute on EH-WSNs:  To quantify the scope performing complex compute using EH-WSNs, we took hu- man activity recognition (HAR) as a workload 1 , and per- formed experiments on the MHEALTH data-set [9, 10] (see Section 5 for data-set details) using the DNNs proposed in [ 26 ,  60 ], an energy harvesting friendly DNN hardware accelerator [ 56 ] (to ensure that we are using the state of the art EH-WSN hardware) and recently proposed HAR- specific optimizations for EH systems [ 47 ]. Although, we evaluate and show the communication cost savings of  Seeker  on the battery backed CoTS hardware, we propose possible (simulated) hardware accelerator designs to fully deploying a EH-WSN capable of performing inference, compression and communication in harvested energy budget. Therefore, there has been a significant body of work [ 40 ,  42 ,  47 ,  56 ] on developing appropriate next generation hardware (most of \n3 \nthem on simulation).",
+      "type": "sliding_window_shuffled",
+      "tokens": 232,
+      "augmented": true
+    },
+    {
+      "text": "Our analysis (see Figure 2a) shows that the state-of-the-art system still only finishes  ≈ 58 . 7% of the inferences scheduled on a sensor. Complex Compute on EH-WSNs:  To quantify the scope performing complex compute using EH-WSNs, we took hu- man activity recognition (HAR) as a workload 1 , and per- formed experiments on the MHEALTH data-set [9, 10] (see Section 5 for data-set details) using the DNNs proposed in [ 26 ,  60 ], an energy harvesting friendly DNN hardware accelerator [ 56 ] (to ensure that we are using the state of the art EH-WSN hardware) and recently proposed HAR- specific optimizations for EH systems [ 47 ].",
+      "type": "sliding_window_shuffled",
+      "tokens": 179,
+      "augmented": true
+    },
+    {
+      "text": "We observe that the system used in [ 47 ] does not aggressively employ quantization, which is a commonly used technique [ 64 ] to reduce both compute and transmission energy in DNN tasks. Al- though accuracy can increase by further tuning duty-cycle, as shown in Figure 2b, the returns are diminishing, and in- definite increase of duty cycle is also not an option as that might lead to skipping important data to infer. 7% of the inferences scheduled on a sensor.",
+      "type": "sliding_window_shuffled",
+      "tokens": 109,
+      "augmented": true
+    },
+    {
+      "text": "The quantized DNNs benefit from lower compute and memory footprints, but need specialized fine-tuning and often suffer from lower ac- curacy. Our analysis, as shown in Figure 2c, shows accuracy as a function of quantization (we took the approach of perform- ing post training quantization and fine-tuned the DNN to work with reduced bit precision instead of training the DNN from scratch with a reduced precision). We observe that the system used in [ 47 ] does not aggressively employ quantization, which is a commonly used technique [ 64 ] to reduce both compute and transmission energy in DNN tasks.",
+      "type": "sliding_window_shuffled",
+      "tokens": 141,
+      "augmented": true
+    },
+    {
+      "text": "Similarly, other approximation-via-data-reduction techniques, such as sub-sampling, did not perform inference with a desirable accuracy. The quantized DNNs benefit from lower compute and memory footprints, but need specialized fine-tuning and often suffer from lower ac- curacy. Collectively, the aforementioned figures demonstrate that the harvested energy budget is insuf- ficient to perform  all  inferences with acceptable accuracy on currently proposed EH-WSN systems.",
+      "type": "sliding_window_shuffled",
+      "tokens": 114,
+      "augmented": true
+    },
+    {
+      "text": "a mobile phone), where sufficient resources are available to complete any remaining inference,  if the data can be sent from the sensor . Therefore, to complete all the scheduled computations, and thereby to improve ac- curacy, the system must rely on another device (e.g. Collectively, the aforementioned figures demonstrate that the harvested energy budget is insuf- ficient to perform  all  inferences with acceptable accuracy on currently proposed EH-WSN systems.",
+      "type": "sliding_window_shuffled",
+      "tokens": 106,
+      "augmented": true
+    },
+    {
+      "text": "The challenge here is to  send \n1 Throughout the paper we evaluate many of our motivation results using HAR as a workload as it is one such application, where the (EH-)WSN, used as body area network, fits perfectly with RF or body movement as the har- vesting source. Said coordinating device completes the rest of the computations and finally, aggregates them with the ones completed in the sensor nodes. a mobile phone), where sufficient resources are available to complete any remaining inference,  if the data can be sent from the sensor .",
+      "type": "sliding_window_shuffled",
+      "tokens": 124,
+      "augmented": true
+    },
+    {
+      "text": "HAR has been pervasive enough given the rise of smart wearables and has been studied well enough to have ample access to resources to make a judicious evaluation. The challenge here is to  send \n1 Throughout the paper we evaluate many of our motivation results using HAR as a workload as it is one such application, where the (EH-)WSN, used as body area network, fits perfectly with RF or body movement as the har- vesting source. HAR has the nuances of human introduced unpredictability and sensor induced noises.",
+      "type": "sliding_window_shuffled",
+      "tokens": 124,
+      "augmented": true
+    },
+    {
+      "text": "Algorithm Compression Ratio Accuracy Loss (%) Fourier Decomposition 3 - 5 9.1 - 18.3 DCT 3 - 5 5.8 - 16.2 DWT 3 - 6 5.3 - 12.7 Coreset 3 - 10 0.02 - 0.76 Table 1: Accuracy trade-off of different compression techniques: Low-dimensional data loses important fea- tures under lossy compression, dropping inference ac- curacy significantly compared to the original data. HAR has been pervasive enough given the rise of smart wearables and has been studied well enough to have ample access to resources to make a judicious evaluation. Further, we also evaluate one more emerging application from predictive maintenance domain.",
+      "type": "sliding_window_shuffled",
+      "tokens": 171,
+      "augmented": true
+    },
+    {
+      "text": "Algorithm Compression Ratio Accuracy Loss (%) Fourier Decomposition 3 - 5 9.1 - 18.3 DCT 3 - 5 5.8 - 16.2 DWT 3 - 6 5.3 - 12.7 Coreset 3 - 10 0.02 - 0.76 Table 1: Accuracy trade-off of different compression techniques: Low-dimensional data loses important fea- tures under lossy compression, dropping inference ac- curacy significantly compared to the original data. (Notations used: DCT: Discrete Cosine Transform, DWT: Discrete Wavelet Transform. De- tails on Coreset are available on Section 4.",
+      "type": "sliding_window_shuffled",
+      "tokens": 160,
+      "augmented": true
+    },
+    {
+      "text": "(Notations used: DCT: Discrete Cosine Transform, DWT: Discrete Wavelet Transform. 29.14 44.76 52.29 58.67 \n70.86 55.24 47.71 41.33 \n0 \n20 \n40 \n60 \n80 \n100 \nRR3 RR6 RR9 RR12 \n% Scheduled Computation \nCompleted Failed \n(a) Completion with ERR \n0 \n20 \n40 \n60 \n80 \n100 \nWalking Climbing Cycling Running Jogging Jumping \nAccuracy (%) \nRR3 RR6 RR9 RR12 Baseline \n(b) Accuracy of ERR \n0 10 20 30 40 50 60 70 80 \nWalking Climbing Cycling Running Jogging Jumping \nAccuracy (%) \nQuantization Level 16b Quantization Level 12b Quantization Level 8b \n(c) Accuracy vs quantiza- tions \n0 \n20 \n40 \n60 \n80 \n100 \nWalking Climbing Cycling Running Jogging Jumping \nAccuracy (%) \nSampling with Probability Weighted Sampling Baseline \n(d) Accuracy vs sub- sampling \nFigure 2: Accuracy comparison of various classical node-level optimization techniques. The Extended- Round-Robin policy (ERR) [ 47 ] takes a store-and- execute approach, and the number associated repre- sents the ratio of store cycles vs execute cycles (e.g.",
+      "type": "sliding_window_shuffled",
+      "tokens": 310,
+      "augmented": true
+    },
+    {
+      "text": "The Extended- Round-Robin policy (ERR) [ 47 ] takes a store-and- execute approach, and the number associated repre- sents the ratio of store cycles vs execute cycles (e.g. RR3 is 3 store cycles followed by 1 execute cycle). The ’Baseline’ model is a fully powered system with no energy restrictions, and the quantized model runs on harvested energy using a RR12 policy.",
+      "type": "sliding_window_shuffled",
+      "tokens": 100,
+      "augmented": true
+    },
+    {
+      "text": "The obvious solution is to reduce the communication data volume by compress- ing the data before transmitting. The ’Baseline’ model is a fully powered system with no energy restrictions, and the quantized model runs on harvested energy using a RR12 policy. the data efficiently , since communication is an expensive task and especially challenging for EH-WSNs [ 22 ] thanks to their fickle and ultra-low energy budget.",
+      "type": "sliding_window_shuffled",
+      "tokens": 95,
+      "augmented": true
+    },
+    {
+      "text": "Challenges with Data Compression: Using standard compression algorithms, like discrete cosine transform, dis- crete wavelet transform, and Fourier decomposition etc., to minimize the communication overhead is not a viable solu- tion [ 45 ]. The obvious solution is to reduce the communication data volume by compress- ing the data before transmitting. This also reduces energy footprint and the probability of data packet loss.",
+      "type": "sliding_window_shuffled",
+      "tokens": 94,
+      "augmented": true
+    },
+    {
+      "text": "This is partly because we need a very high compres- sion ratio with very low power. Secondly, these compression algorithms are not context-aware, and hence lose relevant \n4 \nfeatures during the process of compression resulting in de- graded inference accuracy (refer Table 1 for details). Challenges with Data Compression: Using standard compression algorithms, like discrete cosine transform, dis- crete wavelet transform, and Fourier decomposition etc., to minimize the communication overhead is not a viable solu- tion [ 45 ].",
+      "type": "sliding_window_shuffled",
+      "tokens": 123,
+      "augmented": true
+    },
+    {
+      "text": "A key insight is that, while these compression techniques work very well for high dimensional data (e.g. Secondly, these compression algorithms are not context-aware, and hence lose relevant \n4 \nfeatures during the process of compression resulting in de- graded inference accuracy (refer Table 1 for details). images), inference on low-dimensional sensor data (such as inertial measure- ment unit or IMU vibration data) is much more sensitive to lossy compression as separating between features might be difficult to do.",
+      "type": "sliding_window_shuffled",
+      "tokens": 112,
+      "augmented": true
+    },
+    {
+      "text": "Therefore, the standard data compression techniques are not very useful, let alone their energy efficient (such as quantized versions [ 33 ]) counterparts. And we will not achieve a sufficient com- pression ratio from lossless approaches either. images), inference on low-dimensional sensor data (such as inertial measure- ment unit or IMU vibration data) is much more sensitive to lossy compression as separating between features might be difficult to do.",
+      "type": "sliding_window_shuffled",
+      "tokens": 98,
+      "augmented": true
+    },
+    {
+      "text": "For data compression in EH-WSNs, we need the compression algorithm to be  1  light weight  (for energy efficiency),  2  feature preserving  (for higher accuracy),  3 having a high compression ratio  (for communication effi- ciency), and  4  context agnostic  (for better generalization); i.e., our deployment scenario demands a  smaller representa- tive form  of the data that still  preserves enough application- specific features to perform meaningful classifications in a given DNN . Therefore, the standard data compression techniques are not very useful, let alone their energy efficient (such as quantized versions [ 33 ]) counterparts. Why Coresets?",
+      "type": "sliding_window_shuffled",
+      "tokens": 147,
+      "augmented": true
+    },
+    {
+      "text": "Why Coresets? Coresets, primarily used in computational geometry [ 7 ], have been recently used [ 36 ,  37 ] for machine learning and sensor networks. The aforementioned requirements moti- vate us to consider  coresets  for forming representations of the original data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 65,
+      "augmented": true
+    },
+    {
+      "text": "Coresets, primarily used in computational geometry [ 7 ], have been recently used [ 36 ,  37 ] for machine learning and sensor networks. Furthermore, constructing core- sets do not need any application information, i.e. Since coresets were designed to preserve the geometry of the data, we believe that they can be crafted to preserve features, and therefore be use- ful for performing accurate inference in subsequent stages, and thereby satisfying  2  .",
+      "type": "sliding_window_shuffled",
+      "tokens": 101,
+      "augmented": true
+    },
+    {
+      "text": "they are application/data agnostic and can represent any form of data (IMU [ 36 ], Image [ 55 ], DNN feature map [ 17 ,  38 ,  46 ,  52 ]). This fulfils requirement  4  . Furthermore, constructing core- sets do not need any application information, i.e.",
+      "type": "sliding_window_shuffled",
+      "tokens": 74,
+      "augmented": true
+    },
+    {
+      "text": "This fulfils requirement  4  . For the DNNs in question, coresets can achieve sufficient compression ratios to make communication energy-competitive with computation, as well as opening up new opportunities for optimizing DNN in- ference on the coreset, rather than original data. They are also an effective way to con- struct a representation of the data set with high compression ratios [ 8 ,  17 ] without incurring unacceptable accuracy losses and thus useful for achieving  3  .",
+      "type": "sliding_window_shuffled",
+      "tokens": 107,
+      "augmented": true
+    },
+    {
+      "text": "Finally, most of the coreset construction algorithms are simple (hence can achieve  1  ) and do not need complex operations (like cosine, exponential, etc. For the DNNs in question, coresets can achieve sufficient compression ratios to make communication energy-competitive with computation, as well as opening up new opportunities for optimizing DNN in- ference on the coreset, rather than original data. [ 7 ,  8 ,  36 ,  37 ], they can also be quantized [ 37 ] to further reduce their computation and memory footprints.",
+      "type": "sliding_window_shuffled",
+      "tokens": 123,
+      "augmented": true
+    },
+    {
+      "text": "Motivated by this, we explore possibilities of designing an efficient synergistic sensor-host ecosystem (involving the EH-WSNs and host), where we try to maximize the compute at the sensor nodes, yet for the incomplete tasks, we use coresets to compress and send the data to the host where the rest of the computations could occur. H S/C \nM \nH: Harvest\n S/C: Sense & \nCompute\n M: Communicate \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nDecompress + Infer \n+ Ensemble  \nSensor state transition sensor \nHost Legend: \nFigure 3: An example of EH Sensor-Host ecosystem - the sensor transitions between multiple states and executes the compute as store and execute fashion [ 47 ]. [ 7 ,  8 ,  36 ,  37 ], they can also be quantized [ 37 ] to further reduce their computation and memory footprints.",
+      "type": "sliding_window_shuffled",
+      "tokens": 208,
+      "augmented": true
+    },
+    {
+      "text": "The host receives the data in compressed form for the unfinished portion, decompresses it, runs inference and finally ensembles the results from multiple sensors to improve accuracy and robustness. 3 DESIGN SPACE EXPLORATION Since data communication in a sensor host ecosystem (Fig- ure 3) consumes substantial power, we rely on coresets as an efficient way to lossily communicate the features with minimal information degradation. H S/C \nM \nH: Harvest\n S/C: Sense & \nCompute\n M: Communicate \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nDecompress + Infer \n+ Ensemble  \nSensor state transition sensor \nHost Legend: \nFigure 3: An example of EH Sensor-Host ecosystem - the sensor transitions between multiple states and executes the compute as store and execute fashion [ 47 ].",
+      "type": "sliding_window_shuffled",
+      "tokens": 193,
+      "augmented": true
+    },
+    {
+      "text": "The coreset construction techniques need to be extremely lightweight while preserv- ing key features to justify the computation-communication trade-offs in energy and latency. 3 DESIGN SPACE EXPLORATION Since data communication in a sensor host ecosystem (Fig- ure 3) consumes substantial power, we rely on coresets as an efficient way to lossily communicate the features with minimal information degradation. To this end, we explore two different kinds of coreset construction techniques.",
+      "type": "sliding_window_shuffled",
+      "tokens": 102,
+      "augmented": true
+    },
+    {
+      "text": "give more importance in choosing the data which are unique and, in our case, contribute significant to the inference (i.e. To this end, we explore two different kinds of coreset construction techniques. 3.1 Coreset Construction Techniques \nCoreset Construction Using Importance Sampling:  An easy way to build a representation from a data distribution is to perform importance sampling [ 7 ,  8 ], i.e.",
+      "type": "sliding_window_shuffled",
+      "tokens": 92,
+      "augmented": true
+    },
+    {
+      "text": "give more importance in choosing the data which are unique and, in our case, contribute significant to the inference (i.e. The intuition is that any importance sampling scheme produces an unbiased estimator [ 8 ]. having a high enough magnitude in the frequency response of the sensor signal).",
+      "type": "sliding_window_shuffled",
+      "tokens": 61,
+      "augmented": true
+    },
+    {
+      "text": "The intuition is that any importance sampling scheme produces an unbiased estimator [ 8 ]. To preserve the temporal and frequency features, we ensure sampling data which are far enough from each other to build a better representation. The entire process of importance sampling uses simple arithmetic operations and is therefore viable in energy-scarce situations.",
+      "type": "sliding_window_shuffled",
+      "tokens": 72,
+      "augmented": true
+    },
+    {
+      "text": "The caveat is to have a model trained on the sub-sampled data, which can be done as an one-time step. The entire process of importance sampling uses simple arithmetic operations and is therefore viable in energy-scarce situations. The host can take the sub-sampled data and perform inference.",
+      "type": "sliding_window_shuffled",
+      "tokens": 73,
+      "augmented": true
+    },
+    {
+      "text": "Figure 4 shows a toy example of importance sampling in a 2D data set. The caveat is to have a model trained on the sub-sampled data, which can be done as an one-time step. Although the sub-sampling might lead to poor inference accuracy, in our experiments, with iso-compression ratio, importance sampling based coresets still outperforms classical compression techniques.",
+      "type": "sliding_window_shuffled",
+      "tokens": 93,
+      "augmented": true
+    },
+    {
+      "text": "Observe that the selected points (in  red ) are approximating the original distribution. 5 \nr2 \nr1 \nr4 \nr3 \nr5 \nOriginal Data Coreset with imp-sampling Coreset with Clustering \nFigure 4: A toy example of the coreset construction techniques in  Seeker . Figure 4 shows a toy example of importance sampling in a 2D data set.",
+      "type": "sliding_window_shuffled",
+      "tokens": 90,
+      "augmented": true
+    },
+    {
+      "text": "In each case, the points/values in  red  are communicated to the host. Imp-sampling uses a probability based importance sampling; clustering preserves the geometric shape of the original data. 5 \nr2 \nr1 \nr4 \nr3 \nr5 \nOriginal Data Coreset with imp-sampling Coreset with Clustering \nFigure 4: A toy example of the coreset construction techniques in  Seeker .",
+      "type": "sliding_window_shuffled",
+      "tokens": 94,
+      "augmented": true
+    },
+    {
+      "text": "To address this, we also utilize coreset construction using k-means clustering [ 8 ,  36 ,  37 ], which separates the data points into a set of k (or fewer) N-spherical clusters and represents the geometric shape of the data by using the cluster centers and cluster radii (Fig. In each case, the points/values in  red  are communicated to the host. Coreset Construction Using Clustering:  Although im- portance sapling based coreset construction is computation- ally inexpensive, it suffers from accuracy loss because it doesn’t explicitly preserve the intricate structure of the data points.",
+      "type": "sliding_window_shuffled",
+      "tokens": 142,
+      "augmented": true
+    },
+    {
+      "text": "4). These are then communicated to the host device for inference. To address this, we also utilize coreset construction using k-means clustering [ 8 ,  36 ,  37 ], which separates the data points into a set of k (or fewer) N-spherical clusters and represents the geometric shape of the data by using the cluster centers and cluster radii (Fig.",
+      "type": "sliding_window_shuffled",
+      "tokens": 91,
+      "augmented": true
+    },
+    {
+      "text": "3.2 Communication vs Accuracy We can tune the aforementioned coreset construction tech- niques allow a variable number of features depending on the available energy, i.e. Since clus- tering better preserves the geometry of the distribution, we observe that inferences with coresets constructed using clus- tering are more accurate than using importance sampling, and therefore can be preferred over the former whenever there is enough energy. These are then communicated to the host device for inference.",
+      "type": "sliding_window_shuffled",
+      "tokens": 114,
+      "augmented": true
+    },
+    {
+      "text": "However, even after preserving important fea- tures, the constructed corests are lossy representation of the original data. 3.2 Communication vs Accuracy We can tune the aforementioned coreset construction tech- niques allow a variable number of features depending on the available energy, i.e. for importance sampling, we can limit the number of points to choose, and similarly, for clustering we can limit both the number of clusters and the number of iterations.",
+      "type": "sliding_window_shuffled",
+      "tokens": 109,
+      "augmented": true
+    },
+    {
+      "text": "This leaves an optimization space in trading between communication cost vs. accuracy, i.e. Therefore, when performing inference on the compressed coresets representation, the inference ac- curacy goes down, albeit not significant compared to other lossy compression methods (we can again refer to Table 1 for the relevant comparisons). However, even after preserving important fea- tures, the constructed corests are lossy representation of the original data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 103,
+      "augmented": true
+    },
+    {
+      "text": "This leaves an optimization space in trading between communication cost vs. accuracy, i.e. We perform an analysis on the MHELATH [ 9 ,  10 ] data set (we take a overlapping moving window of 60 data points sampled at 50Hz from 3 different IMUs, overlap size: 30 data points) to find a trade-off between the coreset size (directly related to the communication cost) and the inference accuracy. whether to construct strict and low-volume coresets and lose accuracy or to preserve maximum data points and pay for the communication cost .",
+      "type": "sliding_window_shuffled",
+      "tokens": 128,
+      "augmented": true
+    },
+    {
+      "text": "6) using clustering based techniques. Empirically, we observe that ac- curately preserving the features for each class requires  20 data points  using importance sampling or  12 clusters  (see Fig. We perform an analysis on the MHELATH [ 9 ,  10 ] data set (we take a overlapping moving window of 60 data points sampled at 50Hz from 3 different IMUs, overlap size: 30 data points) to find a trade-off between the coreset size (directly related to the communication cost) and the inference accuracy.",
+      "type": "sliding_window_shuffled",
+      "tokens": 125,
+      "augmented": true
+    },
+    {
+      "text": "This further motivates us to look for opportunities in the data distribution to improve the compression ratio. 6) using clustering based techniques. Going above 12 \nclusters did not significantly improve accuracy.",
+      "type": "sliding_window_shuffled",
+      "tokens": 40,
+      "augmented": true
+    },
+    {
+      "text": "As the coreset for- mation algorithms are fairly simple [ 7 ,  8 ,  36 ,  37 ], it does not take much latency or energy to convert the raw sensor data into the coreset form even while using a commercial-off- the-shelf micro-controller (like TI MSP430FR5969 [ 66 ]). This further motivates us to look for opportunities in the data distribution to improve the compression ratio. As the DNN models were designed to infer on the full data, we retrain the DNN models to recognize the compressed rep- resentation of the data and infer directly from that (both from the importance sampling and clustering).",
+      "type": "sliding_window_shuffled",
+      "tokens": 152,
+      "augmented": true
+    },
+    {
+      "text": "This allows the EH-sensor to opt for coreset formation followed by data communication to the host device as an energy-viable alternative to local DNN inference on the original data. In our example case, transmitting the raw data (60 data points, 32bit floating point data type) needs  240 Byte s of data trans- fer, and with coreset construction and quantization we can limit it to  36 Bytes  (for 12 clusters, each cluster center is represented by 2 Bytes of data, and radius represented by 1 Byte data), thereby  reducing the data communication volume by 85% . As the coreset for- mation algorithms are fairly simple [ 7 ,  8 ,  36 ,  37 ], it does not take much latency or energy to convert the raw sensor data into the coreset form even while using a commercial-off- the-shelf micro-controller (like TI MSP430FR5969 [ 66 ]).",
+      "type": "sliding_window_shuffled",
+      "tokens": 214,
+      "augmented": true
+    },
+    {
+      "text": "The host runs inference on the compressed data to detect the activity (with an accuracy of 76%). In our example case, transmitting the raw data (60 data points, 32bit floating point data type) needs  240 Byte s of data trans- fer, and with coreset construction and quantization we can limit it to  36 Bytes  (for 12 clusters, each cluster center is represented by 2 Bytes of data, and radius represented by 1 Byte data), thereby  reducing the data communication volume by 85% . However, due to this reduced accuracy, the sensor only takes this option iff it does not have enough energy to perform the inference at the edge device (either in the 16bit or 12bit variant of the DNN - more details on DNN design is presented in Sec- tion 4).",
+      "type": "sliding_window_shuffled",
+      "tokens": 180,
+      "augmented": true
+    },
+    {
+      "text": "However, due to this reduced accuracy, the sensor only takes this option iff it does not have enough energy to perform the inference at the edge device (either in the 16bit or 12bit variant of the DNN - more details on DNN design is presented in Sec- tion 4). This problem has not been explored in details, as coresets are typically considered as an  𝛼 − approximate representation of the data ( 𝛼 being the error/approximation parameter) [ 7 ] and never needed proper recovery. This raises a question:  is it possible to generate a more useful  approximation, via reconstruction, of the data that we lost while forming the coresets?",
+      "type": "sliding_window_shuffled",
+      "tokens": 152,
+      "augmented": true
+    },
+    {
+      "text": "This problem has not been explored in details, as coresets are typically considered as an  𝛼 − approximate representation of the data ( 𝛼 being the error/approximation parameter) [ 7 ] and never needed proper recovery. 3.2.1 Data Memoization:  Given our focus on ultra low power energy harvesting devices, any opportunities to re- duce computation and communication can noticeably aug- ment the performance and efficiency of the entire system. However, thanks to the low dimensional nature of many sensor data, reconstruction of original data from coresets becomes an essential step.",
+      "type": "sliding_window_shuffled",
+      "tokens": 123,
+      "augmented": true
+    },
+    {
+      "text": "For two instances of the same class, there should be a very high correlation in the sensor data. 3.2.1 Data Memoization:  Given our focus on ultra low power energy harvesting devices, any opportunities to re- duce computation and communication can noticeably aug- ment the performance and efficiency of the entire system. We look into data memoization as one such opportunity.",
+      "type": "sliding_window_shuffled",
+      "tokens": 78,
+      "augmented": true
+    },
+    {
+      "text": "We empirically measure this by testing for correlation between the sensor signatures of different classes. For two instances of the same class, there should be a very high correlation in the sensor data. Conservatively, we choose a correlation coefficient  ≥ 0 .",
+      "type": "sliding_window_shuffled",
+      "tokens": 55,
+      "augmented": true
+    },
+    {
+      "text": "Conservatively, we choose a correlation coefficient  ≥ 0 . We store ground truth sensor data pattern for all possible labels, and when new data arrives, we find the correlation of the sampled data against the ground truth data, and if any of the correlation coefficient \n6 \nPower-Pred \n+ Decision Logic (MCU) \nCorrelation \nSensor Data \n16bit DNN (x-bar) \n12bit DNN (x-bar \nCoreset: Imp \nSmp/Clust. 95 to predict that the two activities are the same, and hence skip the inference altogether and just com- municate only the results to the host.",
+      "type": "sliding_window_shuffled",
+      "tokens": 135,
+      "augmented": true
+    },
+    {
+      "text": "We store ground truth sensor data pattern for all possible labels, and when new data arrives, we find the correlation of the sampled data against the ground truth data, and if any of the correlation coefficient \n6 \nPower-Pred \n+ Decision Logic (MCU) \nCorrelation \nSensor Data \n16bit DNN (x-bar) \n12bit DNN (x-bar \nCoreset: Imp \nSmp/Clust. 95, we choose to ignore further infer- ence computation and only communicate the classification result to the host for further processing. Wireless \nCommunication \nH S/C \nM Harvestor \nSensor Node \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nEH + Sense \n+ Compute \nHost \nSeeker Ecosystem \nCoreset Reconstruct \nDNN for Recovery \nDNN for Inference \nEnsemble \nEngine \nCluster Recovery \nClassfied Results \nFigure 5: Overall system design of Seeker \ncomes out to be  ≥ 0 .",
+      "type": "sliding_window_shuffled",
+      "tokens": 197,
+      "augmented": true
+    },
+    {
+      "text": "95, we choose to ignore further infer- ence computation and only communicate the classification result to the host for further processing. Note that choosing the correlation threshold entirely depends on the application and user preference. 3.2.2 Recoverable Coreset Construction:  The primary reason the accuracy of inferring on coreset data is lower than that of the original model is the loss of features.",
+      "type": "sliding_window_shuffled",
+      "tokens": 78,
+      "augmented": true
+    },
+    {
+      "text": "Typically, the sensor data are low dimensional, and hence even with a good quality of coreset construction, it is difficult to preserve all the features. 3.2.2 Recoverable Coreset Construction:  The primary reason the accuracy of inferring on coreset data is lower than that of the original model is the loss of features. However, while inferring at the host, if we are able to recover the data or reconstruct it with minimum error, the accuracy can easily be increased.",
+      "type": "sliding_window_shuffled",
+      "tokens": 104,
+      "augmented": true
+    },
+    {
+      "text": "However, while inferring at the host, if we are able to recover the data or reconstruct it with minimum error, the accuracy can easily be increased. Clustering Coreset Recovery:  Clustering preserves the geometry of the original data by representing them as a set of N-spherical clusters represented with a center and a ra- dius. In the process of coreset construction we only preserve the coordinates of the centers and the radii of the clusters, and hence miss the coordinates of the points inside the clus- ters.",
+      "type": "sliding_window_shuffled",
+      "tokens": 126,
+      "augmented": true
+    },
+    {
+      "text": "However, to achieve this, we need some extra information about the clus- ters. In the process of coreset construction we only preserve the coordinates of the centers and the radii of the clusters, and hence miss the coordinates of the points inside the clus- ters. However, any random distribution of the lost points in the cluster could provide us with a 2 𝑟 − approximate repre- sentation of the original distribution (where  𝑟 is the radius of the cluster; refer Figure 7a for a toy example).",
+      "type": "sliding_window_shuffled",
+      "tokens": 120,
+      "augmented": true
+    },
+    {
+      "text": "However, to achieve this, we need some extra information about the clus- ters. Extending this with  the point count for each cluster  allows for recon- struction of data in the original form that can be processed by DNNs trained on full-size data. The standard method of clustering-based coreset con- struction keeps the cluster center and cluster radius, which gives the geometrical shape of the entire data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 94,
+      "augmented": true
+    },
+    {
+      "text": "Extending this with  the point count for each cluster  allows for recon- struction of data in the original form that can be processed by DNNs trained on full-size data. These reconstructed data sets can be synthesized simply by uniformly distributing the points within each cluster. Although the intra-cluster data distribution will be different from the original, it will still preserve the overall geometry with a certain degree of approximation which the DNN could learn to accommodate.",
+      "type": "sliding_window_shuffled",
+      "tokens": 104,
+      "augmented": true
+    },
+    {
+      "text": "Although the intra-cluster data distribution will be different from the original, it will still preserve the overall geometry with a certain degree of approximation which the DNN could learn to accommodate. Experimentally, on the MHELATH dataset, we observe that inferring on the synthesized reconstructions of cluster \n0 \n20 \n40 \n60 \n80 \n100 \nWalking Climbing Cycling Running Jogging Jumping \n% Accuracy \nk= 12 (Baseline) K= 15 k =10 k = 8 k=6 \nFigure 6: Accuracy with different #clusters (k). Clustering Recovery \nOriginal Data Coreset Recovered Data \n(a) Recovering a cluster with uniform random re-distribution.",
+      "type": "sliding_window_shuffled",
+      "tokens": 160,
+      "augmented": true
+    },
+    {
+      "text": "Finetune \n(b) Recovering a sub-sampling with GAN. Clustering Recovery \nOriginal Data Coreset Recovered Data \n(a) Recovering a cluster with uniform random re-distribution. Latent Space \nG \n \nGenerator \nNoise D \n \nDiscriminator \nGenerated Sample \nActual Sample \nRecovered Signal \nClose to \nactual?",
+      "type": "sliding_window_shuffled",
+      "tokens": 73,
+      "augmented": true
+    },
+    {
+      "text": "based coresets can achieve an accuracy of  ≈ 85%. Figure 7: Recovering data from the coresets. Finetune \n(b) Recovering a sub-sampling with GAN.",
+      "type": "sliding_window_shuffled",
+      "tokens": 49,
+      "augmented": true
+    },
+    {
+      "text": "The recon- struction feature at the host comes with little to no overhead for the host (given the host devices have considerably more compute than the sensor nodes). The addition of the recovery parameter (number of points per cluster) needs  4 more bits (in our experiments, we never observe any clusters having more than 16 data points) of data per cluster, bringing the total data communication volume to  42 Bytes , which is still a significant 5 . based coresets can achieve an accuracy of  ≈ 85%.",
+      "type": "sliding_window_shuffled",
+      "tokens": 114,
+      "augmented": true
+    },
+    {
+      "text": "7 ×  less in comparison to the original 240 Bytes needed to communicate the raw data in our setup. However, since clustering based coreset construction is more expensive than the importance sampling based coreset construction, it is not always possible to build a recoverable coreset at the edge, unless we figure out a to recover the lost points while we perform importance sampling. The addition of the recovery parameter (number of points per cluster) needs  4 more bits (in our experiments, we never observe any clusters having more than 16 data points) of data per cluster, bringing the total data communication volume to  42 Bytes , which is still a significant 5 .",
+      "type": "sliding_window_shuffled",
+      "tokens": 145,
+      "augmented": true
+    },
+    {
+      "text": "We hypothesize that the dropped sample should con- tain, although not important, sensor specific artifacts. Importance Sampling Coreset Recovery:  Unlike cluster- ing, when we construct a coreset with importance sampling, we typically have no information regarding the lost data points. However, since clustering based coreset construction is more expensive than the importance sampling based coreset construction, it is not always possible to build a recoverable coreset at the edge, unless we figure out a to recover the lost points while we perform importance sampling.",
+      "type": "sliding_window_shuffled",
+      "tokens": 125,
+      "augmented": true
+    },
+    {
+      "text": "Towards this, we designed and trained a generative adversarial network (GAN, see Figure 7b for the structural details) to recover the lost samples of the importance sampling. And these artifact must have some pattern, if modeled correctly, could represent the lost data. We hypothesize that the dropped sample should con- tain, although not important, sensor specific artifacts.",
+      "type": "sliding_window_shuffled",
+      "tokens": 90,
+      "augmented": true
+    },
+    {
+      "text": "As training parameters, we provide some statistical parameters (specifically mean and variance) \n7 \nof the signal and random noise to the generator, and the generator generates the lost signals. The discriminator tries to discriminate between the actual data and the synthesized data. Towards this, we designed and trained a generative adversarial network (GAN, see Figure 7b for the structural details) to recover the lost samples of the importance sampling.",
+      "type": "sliding_window_shuffled",
+      "tokens": 96,
+      "augmented": true
+    },
+    {
+      "text": "The discriminator tries to discriminate between the actual data and the synthesized data. Considering the fact that we do have access to the sensor data to train the learning algorithm, we can use the same data to train the GAN and with sufficient data, the discriminator could generate the lost signal with minimum error. We fine-tune the network until the discriminator is fooled sufficiently to distinguish between the original data and the recovered data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 94,
+      "augmented": true
+    },
+    {
+      "text": "Our experiments show that the deviation from the original signal, in most cases, is limited to  ≤ 15%. Considering the fact that we do have access to the sensor data to train the learning algorithm, we can use the same data to train the GAN and with sufficient data, the discriminator could generate the lost signal with minimum error. However, in some pathological cases, the error at times goes close to 60%, and we believe them to be generated artifacts which are common side effects of the GANs[ 11 ].",
+      "type": "sliding_window_shuffled",
+      "tokens": 112,
+      "augmented": true
+    },
+    {
+      "text": "However, in some pathological cases, the error at times goes close to 60%, and we believe them to be generated artifacts which are common side effects of the GANs[ 11 ]. Our experi- ments suggests that inference on the GAN recovered signal is almost as good as (about 2%  − 4% difference in accuracy) the inference on the recovered cluster signal. The recovery policy can be implemented as a simple generator network in the host.",
+      "type": "sliding_window_shuffled",
+      "tokens": 101,
+      "augmented": true
+    },
+    {
+      "text": "4 DESIGN IMPLEMENTATION OF  SEEKER \nBy leveraging the coreset construction techniques discussed in Section 3, we design  Seeker: A synergistic sensor host ecosys- tem . Although, the training of the GAN is complex and involves multiple networks as well as hyper-parameters tun- ing, the generator network itself is very small ( few hundred thousands  of parameters depending on the sensor data). The recovery policy can be implemented as a simple generator network in the host.",
+      "type": "sliding_window_shuffled",
+      "tokens": 108,
+      "augmented": true
+    },
+    {
+      "text": "4 DESIGN IMPLEMENTATION OF  SEEKER \nBy leveraging the coreset construction techniques discussed in Section 3, we design  Seeker: A synergistic sensor host ecosys- tem . Seeker  lever- ages the concept of NVP, and employs a flexible store and execute method using the state of the art ReRAM crossbar architecture [ 47 ] to perform inference at the edge. Figure 5 gives a pictorial representation of the overall design of  Seeker  and its various components.",
+      "type": "sliding_window_shuffled",
+      "tokens": 112,
+      "augmented": true
+    },
+    {
+      "text": "Prior studies [ 56 ,  64 ,  68 ] and our empirical analysis on the quantization vs accuracy trade-offs (see Fig. Seeker  lever- ages the concept of NVP, and employs a flexible store and execute method using the state of the art ReRAM crossbar architecture [ 47 ] to perform inference at the edge. It aug- ments the sensor nodes with two different quantized DNNs (16 bit and 12 bit) to increase the number of completed in- ferences at the sensor node itself.",
+      "type": "sliding_window_shuffled",
+      "tokens": 122,
+      "augmented": true
+    },
+    {
+      "text": "Moreover, we also implement the memoization option so that it does not have to repeat infer- ences if it encounters similar data, thereby saving substantial energy as well as delivering results with extremely low la- tency. Prior studies [ 56 ,  64 ,  68 ] and our empirical analysis on the quantization vs accuracy trade-offs (see Fig. 2c) indicate the 16 and 12bit precision to maximize the accuracy of the inferences while minimizing the energy consumption.",
+      "type": "sliding_window_shuffled",
+      "tokens": 113,
+      "augmented": true
+    },
+    {
+      "text": "Moreover, we also implement the memoization option so that it does not have to repeat infer- ences if it encounters similar data, thereby saving substantial energy as well as delivering results with extremely low la- tency. However, even with all these optimizations, due to the fickle nature of EH,  Seeker  cannot finish all the inferences at the edge and must communicate with a host device. To minimize the data communication overhead between the sensor-node and the host device,  Seeker  utilizes coresets to build representative, yet compressed, forms of the data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 130,
+      "augmented": true
+    },
+    {
+      "text": "Trans- mitting coresets rather than raw data greatly improves the \nenergy efficiency of communication to the host, when re- quired, and effectively increases the number of completed inferences, thereby increasing overall accuracy. To cater towards the fickle EH budget, we use the two dif- ferent coreset construction techniques, described in Section 3: a cheaper, less accurate formation (importance sampling) and a more expensive, yet accurate formation (K-means). To minimize the data communication overhead between the sensor-node and the host device,  Seeker  utilizes coresets to build representative, yet compressed, forms of the data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 142,
+      "augmented": true
+    },
+    {
+      "text": "Trans- mitting coresets rather than raw data greatly improves the \nenergy efficiency of communication to the host, when re- quired, and effectively increases the number of completed inferences, thereby increasing overall accuracy. The host, after obtaining information from multiple sensors, per- forms any further required computation and uses ensemble learning [ 47 ] to give an accurate classification result. Depending on the incoming data and the EH budget, the sensor decides whether to skip compute, perform an inference at the edge, or form a coreset to offload the inference to the host.",
+      "type": "sliding_window_shuffled",
+      "tokens": 127,
+      "augmented": true
+    },
+    {
+      "text": "In this section, we will explain, in detail, the overall execution workflow of the  Seeker  system, followed by the the detailed design of the hardware support to maximize its energy efficiency. The host, after obtaining information from multiple sensors, per- forms any further required computation and uses ensemble learning [ 47 ] to give an accurate classification result. Note that, unlike prior EH-WSN systems [ 47 ], the role of the host device here is not limited to just result aggregation; rather, the host participates and performs inference when the sen- sors do not have enough energy and choose to communicate the data (in the form of coresets) to the host.",
+      "type": "sliding_window_shuffled",
+      "tokens": 148,
+      "augmented": true
+    },
+    {
+      "text": "In this section, we will explain, in detail, the overall execution workflow of the  Seeker  system, followed by the the detailed design of the hardware support to maximize its energy efficiency. 4.1 Decision Flow: From Sensors to the Host Figure 8 depicts a flow chat showing the decision process taken in the sensor nodes to navigate between each compo- nents. Each sensor has a data buffer that collects the data points for classification (implemented using a 60  × 3 FIFO structure of 4Byte cells to store the floating point data.",
+      "type": "sliding_window_shuffled",
+      "tokens": 126,
+      "augmented": true
+    },
+    {
+      "text": "Each sensor has a data buffer that collects the data points for classification (implemented using a 60  × 3 FIFO structure of 4Byte cells to store the floating point data. The × 3 caters towards the multiple channels of the sensor. The moving window is designed using a counter to shift the streaming data.)",
+      "type": "sliding_window_shuffled",
+      "tokens": 75,
+      "augmented": true
+    },
+    {
+      "text": "The sensor computes the correlation (  1a  ) between the stored ground truth and the current data. The sensor also stores one ground truth trace for each activity. The moving window is designed using a counter to shift the streaming data.)",
+      "type": "sliding_window_shuffled",
+      "tokens": 50,
+      "augmented": true
+    },
+    {
+      "text": "Oth- erwise, the sensor prioritizes local computation and, with the help of a moving average power predictor [ 47 ], predicts whether it can finish the quantized DNN inference with the combination of stored energy and expected income (  2a  and \n2b  ). The sensor computes the correlation (  1a  ) between the stored ground truth and the current data. If the correlation coefficient is  ≥ 𝑡ℎ𝑟𝑒𝑠ℎ𝑜𝑙𝑑 (  1b  ) the sensor skips all computation and sends the result to the host.",
+      "type": "sliding_window_shuffled",
+      "tokens": 110,
+      "augmented": true
+    },
+    {
+      "text": "Since the clustering based coreset is typically more accurate then those formed by importance sampling, the former is pre- ferred, when possible. If energy is insufficient for DNN inference, the sensor will use coreset formation to communicate the important features to the host, which completes the inference. Oth- erwise, the sensor prioritizes local computation and, with the help of a moving average power predictor [ 47 ], predicts whether it can finish the quantized DNN inference with the combination of stored energy and expected income (  2a  and \n2b  ).",
+      "type": "sliding_window_shuffled",
+      "tokens": 126,
+      "augmented": true
+    },
+    {
+      "text": "Since the clustering based coreset is typically more accurate then those formed by importance sampling, the former is pre- ferred, when possible. With the help of an activity-aware and recoverable coreset construction and low-power hardware design, we can effi- ciently communicate inferences or compressed data to the host device with minimum power and latency overheads. We increase the frequency of cluster- based formation by using custom, energy efficient hardware.",
+      "type": "sliding_window_shuffled",
+      "tokens": 101,
+      "augmented": true
+    },
+    {
+      "text": "Else- vier. Seeker , accounting for the available energy budget, con- siders the following decisions:  D0:  Test for data similarity using correlation, and if similarity is found then communi- cate the results to the host;  D1:  DNN at sensor with raw data + Communicate the results to the host;  D2:  Try Quantized \n8 \nStart Current Data \nLast Data \nCorrelation \nPower Predictor\nAbstract to predictive maintenance . With the help of an activity-aware and recoverable coreset construction and low-power hardware design, we can effi- ciently communicate inferences or compressed data to the host device with minimum power and latency overheads.",
+      "type": "sliding_window_shuffled",
+      "tokens": 151,
+      "augmented": true
+    },
+    {
+      "text": "Else- vier. [49]  Reem E Mohamed, Ahmed I Saleh, Maher Abdelrazzak, and Ahmed S Samra. 2018.",
+      "type": "sliding_window_shuffled",
+      "tokens": 38,
+      "augmented": true
+    },
+    {
+      "text": "Survey on wireless sensor network applications and energy efficient routing protocols. Wireless Personal Communications 101, 2 (2018), 1019–1055. 2018.",
+      "type": "sliding_window_shuffled",
+      "tokens": 27,
+      "augmented": true
+    },
+    {
+      "text": "Wireless Personal Communications 101, 2 (2018), 1019–1055. 2020. [50]  Thaha Mohammed, Carlee Joe-Wong, Rohit Babbar, and Mario Di Francesco.",
+      "type": "sliding_window_shuffled",
+      "tokens": 42,
+      "augmented": true
+    },
+    {
+      "text": "In  IEEE INFOCOM 2020-IEEE Conference on Computer Communications . Distributed inference acceleration with adap- tive DNN partitioning and offloading. 2020.",
+      "type": "sliding_window_shuffled",
+      "tokens": 41,
+      "augmented": true
+    },
+    {
+      "text": "[51]  Mu Editor 2022. In  IEEE INFOCOM 2020-IEEE Conference on Computer Communications . IEEE, 854–863.",
+      "type": "sliding_window_shuffled",
+      "tokens": 31,
+      "augmented": true
+    },
+    {
+      "text": "[51]  Mu Editor 2022. https://codewith.mu/en/. Code with Mu a simple Python editor for beginner programmers.",
+      "type": "sliding_window_shuffled",
+      "tokens": 33,
+      "augmented": true
+    },
+    {
+      "text": "https://codewith.mu/en/. 2019. [52]  Ben Mussay, Margarita Osadchy, Vladimir Braverman, Samson Zhou, and Dan Feldman.",
+      "type": "sliding_window_shuffled",
+      "tokens": 44,
+      "augmented": true
+    },
+    {
+      "text": "2019. Data-independent neural pruning via coresets. arXiv preprint arXiv:1907.04018  (2019).",
+      "type": "sliding_window_shuffled",
+      "tokens": 31,
+      "augmented": true
+    },
+    {
+      "text": "[53]  Dhiraj Neupane and Jongwon Seok. 2020. arXiv preprint arXiv:1907.04018  (2019).",
+      "type": "sliding_window_shuffled",
+      "tokens": 39,
+      "augmented": true
+    },
+    {
+      "text": "IEEE Access  8 (2020), 93155–93178. 2020. Bearing fault detection and diagnosis using case western reserve university dataset with deep learning approaches: A review.",
+      "type": "sliding_window_shuffled",
+      "tokens": 35,
+      "augmented": true
+    },
+    {
+      "text": "[54]  Kyle Olszewski, Zimo Li, Chao Yang, Yi Zhou, Ronald Yu, Zeng Huang, Sitao Xiang, Shunsuke Saito, Pushmeet Kohli, and Hao Li. IEEE Access  8 (2020), 93155–93178. 2017.",
+      "type": "sliding_window_shuffled",
+      "tokens": 75,
+      "augmented": true
+    },
+    {
+      "text": "Re- alistic dynamic facial textures from a single image using gans. 2017. In Proceedings of the IEEE International Conference on Computer Vision .",
+      "type": "sliding_window_shuffled",
+      "tokens": 31,
+      "augmented": true
+    },
+    {
+      "text": "5429–5438. In Proceedings of the IEEE International Conference on Computer Vision . [55]  Rohan Paul, Dan Feldman, Daniela Rus, and Paul Newman.",
+      "type": "sliding_window_shuffled",
+      "tokens": 40,
+      "augmented": true
+    },
+    {
+      "text": "Visual precis generation using coresets. 2014. [55]  Rohan Paul, Dan Feldman, Daniela Rus, and Paul Newman.",
+      "type": "sliding_window_shuffled",
+      "tokens": 31,
+      "augmented": true
+    },
+    {
+      "text": "In  2014 IEEE International Conference on Robotics and Automation (ICRA) . 1304–1311. Visual precis generation using coresets.",
+      "type": "sliding_window_shuffled",
+      "tokens": 31,
+      "augmented": true
+    },
+    {
+      "text": "1304–1311. https://doi.org/10. 1109/ICRA.2014.6907021 [56]  K. Qiu, N. Jao, M. Zhao, C. S. Mishra, G. Gudukbay, S. Jose, J. Samp- son, M. T. Kandemir, and V. Narayanan.",
+      "type": "sliding_window_shuffled",
+      "tokens": 86,
+      "augmented": true
+    },
+    {
+      "text": "1109/ICRA.2014.6907021 [56]  K. Qiu, N. Jao, M. Zhao, C. S. Mishra, G. Gudukbay, S. Jose, J. Samp- son, M. T. Kandemir, and V. Narayanan. ResiRCA: A Resilient Energy Harvesting ReRAM Crossbar-Based Accelerator for Intelligent Embedded Processors. 2020.",
+      "type": "sliding_window_shuffled",
+      "tokens": 106,
+      "augmented": true
+    },
+    {
+      "text": "315–327. ResiRCA: A Resilient Energy Harvesting ReRAM Crossbar-Based Accelerator for Intelligent Embedded Processors. In  2020 HPCA .",
+      "type": "sliding_window_shuffled",
+      "tokens": 43,
+      "augmented": true
+    },
+    {
+      "text": "315–327. [57]  Attila Reiss and Didier Stricker. 2012.",
+      "type": "sliding_window_shuffled",
+      "tokens": 25,
+      "augmented": true
+    },
+    {
+      "text": "2012. Creating and benchmarking a new dataset for physical activity monitoring. In  PETRA , Fillia Makedon (Ed. ).",
+      "type": "sliding_window_shuffled",
+      "tokens": 32,
+      "augmented": true
+    },
+    {
+      "text": "2012. Creating and benchmarking a new dataset for physical activity monitoring.",
+      "type": "sliding_window_partial",
+      "tokens": 16,
+      "augmented": true
+    },
+    {
+      "text": "[58]  Attila Reiss and Didier Stricker. In  PETRA , Fillia Makedon (Ed.). ACM.",
+      "type": "sliding_window_shuffled",
+      "tokens": 36,
+      "augmented": true
+    },
+    {
+      "text": "2012. Introducing a New Benchmarked Dataset for Activity Monitoring. [58]  Attila Reiss and Didier Stricker.",
+      "type": "sliding_window_shuffled",
+      "tokens": 32,
+      "augmented": true
+    },
+    {
+      "text": "IEEE. In  ISWC . Introducing a New Benchmarked Dataset for Activity Monitoring.",
+      "type": "sliding_window_shuffled",
+      "tokens": 21,
+      "augmented": true
+    },
+    {
+      "text": "2018. IEEE. [59]  Mohammad Rostami, Jeremy Gummeson, Ali Kiaghadi, and Deepak Ganesan.",
+      "type": "sliding_window_shuffled",
+      "tokens": 35,
+      "augmented": true
+    },
+    {
+      "text": "In  Proceedings of the 2018 Conference of the ACM Special Interest Group on Data Communication . Polymorphic radios: A new design paradigm for ultra- low power communication. 2018.",
+      "type": "sliding_window_shuffled",
+      "tokens": 37,
+      "augmented": true
+    },
+    {
+      "text": "446–460. In  Proceedings of the 2018 Conference of the ACM Special Interest Group on Data Communication . [60]  Fernando Moya Rueda, René Grzeszick, Gernot A. Fink, Sascha Feld- horst, and Michael ten Hompel.",
+      "type": "sliding_window_shuffled",
+      "tokens": 70,
+      "augmented": true
+    },
+    {
+      "text": "2018. Convolutional Neural Networks for Human Activity Recognition Using Body-Worn Sensors. [60]  Fernando Moya Rueda, René Grzeszick, Gernot A. Fink, Sascha Feld- horst, and Michael ten Hompel.",
+      "type": "sliding_window_shuffled",
+      "tokens": 69,
+      "augmented": true
+    },
+    {
+      "text": "[61]  Rachid Saadane, Abdellah Chehri, Seunggil Jeon, et al . Convolutional Neural Networks for Human Activity Recognition Using Body-Worn Sensors. Informat- ics  (2018).",
+      "type": "sliding_window_shuffled",
+      "tokens": 61,
+      "augmented": true
+    },
+    {
+      "text": "[61]  Rachid Saadane, Abdellah Chehri, Seunggil Jeon, et al . 2022. AI-based modeling and data-driven evaluation for smart farming-oriented big data architecture using IoT with energy harvesting capabilities.",
+      "type": "sliding_window_shuffled",
+      "tokens": 62,
+      "augmented": true
+    },
+    {
+      "text": "Sus- tainable Energy Technologies and Assessments  52 (2022), 102093. AI-based modeling and data-driven evaluation for smart farming-oriented big data architecture using IoT with energy harvesting capabilities. [62]  Alanson P Sample, Daniel J Yeager, Pauline S Powledge, Alexander V Mamishev, and Joshua R Smith.",
+      "type": "sliding_window_shuffled",
+      "tokens": 82,
+      "augmented": true
+    },
+    {
+      "text": "[62]  Alanson P Sample, Daniel J Yeager, Pauline S Powledge, Alexander V Mamishev, and Joshua R Smith. 2008. Design of an RFID-based battery- free programmable sensing platform.",
+      "type": "sliding_window_shuffled",
+      "tokens": 51,
+      "augmented": true
+    },
+    {
+      "text": "[63]  Himanshu Sharma, Ahteshamul Haque, and Zainul Abdin Jaffery. Design of an RFID-based battery- free programmable sensing platform. IEEE transactions on instrumen- tation and measurement  57, 11 (2008), 2608–2615.",
+      "type": "sliding_window_shuffled",
+      "tokens": 65,
+      "augmented": true
+    },
+    {
+      "text": "2019. [63]  Himanshu Sharma, Ahteshamul Haque, and Zainul Abdin Jaffery. Maximization of wireless sensor network lifetime using solar energy harvesting for smart agriculture monitoring.",
+      "type": "sliding_window_shuffled",
+      "tokens": 45,
+      "augmented": true
+    },
+    {
+      "text": "Maximization of wireless sensor network lifetime using solar energy harvesting for smart agriculture monitoring. Ad Hoc Networks  94 (2019), 101966. [64]  Zhuoran Song, Bangqi Fu, Feiyang Wu, Zhaoming Jiang, Li Jiang, Naifeng Jing, and Xiaoyao Liang.",
+      "type": "sliding_window_shuffled",
+      "tokens": 82,
+      "augmented": true
+    },
+    {
+      "text": "[64]  Zhuoran Song, Bangqi Fu, Feiyang Wu, Zhaoming Jiang, Li Jiang, Naifeng Jing, and Xiaoyao Liang. 2020. DRQ: dynamic region-based quantization for deep neural network acceleration.",
+      "type": "sliding_window_shuffled",
+      "tokens": 68,
+      "augmented": true
+    },
+    {
+      "text": "DRQ: dynamic region-based quantization for deep neural network acceleration. In  ISCA . IEEE.",
+      "type": "sliding_window_shuffled",
+      "tokens": 24,
+      "augmented": true
+    },
+    {
+      "text": "2018. [65]  Ben Taylor, Vicent Sanz Marco, Willy Wolff, Yehia Elkhatib, and Zheng Wang. IEEE.",
+      "type": "sliding_window_shuffled",
+      "tokens": 37,
+      "augmented": true
+    },
+    {
+      "text": "2018. Adaptive deep learning model selection on embedded systems. ACM SIGPLAN Notices  53, 6 (2018), 31–43.",
+      "type": "sliding_window_shuffled",
+      "tokens": 29,
+      "augmented": true
+    },
+    {
+      "text": "16 MHz MCU with 64KB FRAM, 2KB SRAM, AES, 12-bit ADC, comparator, DMA, \n14 \nUART/SPI/I2C, timer. ACM SIGPLAN Notices  53, 6 (2018), 31–43. [66]  Texas Instrument Micro-controller with FRAM 2022.",
+      "type": "sliding_window_shuffled",
+      "tokens": 76,
+      "augmented": true
+    },
+    {
+      "text": "[67]  Rambabu Vatti, Nagarjuna Vatti, K Mahender, Prasanna Lakshmi Vatti, and B Krishnaveni. 16 MHz MCU with 64KB FRAM, 2KB SRAM, AES, 12-bit ADC, comparator, DMA, \n14 \nUART/SPI/I2C, timer. https://www.ti.com/product/MSP430FR5969.",
+      "type": "sliding_window_shuffled",
+      "tokens": 100,
+      "augmented": true
+    },
+    {
+      "text": "Solar energy harvesting for smart farming using nanomaterial and machine learning. [67]  Rambabu Vatti, Nagarjuna Vatti, K Mahender, Prasanna Lakshmi Vatti, and B Krishnaveni. 2020.",
+      "type": "sliding_window_shuffled",
+      "tokens": 54,
+      "augmented": true
+    },
+    {
+      "text": "In  IOP Conference Series: Materials Science and Engineering , Vol. Solar energy harvesting for smart farming using nanomaterial and machine learning. 981.",
+      "type": "sliding_window_shuffled",
+      "tokens": 32,
+      "augmented": true
+    },
+    {
+      "text": "981. [68]  Tien-Ju Yang, Andrew Howard, Bo Chen, Xiao Zhang, Alec Go, Mark Sandler, Vivienne Sze, and Hartwig Adam. IOP Publishing, 032009.",
+      "type": "sliding_window_shuffled",
+      "tokens": 53,
+      "augmented": true
+    },
+    {
+      "text": "NetAdapt: Platform- Aware Neural Network Adaptation for Mobile Applications. 2018. [68]  Tien-Ju Yang, Andrew Howard, Bo Chen, Xiao Zhang, Alec Go, Mark Sandler, Vivienne Sze, and Hartwig Adam.",
+      "type": "sliding_window_shuffled",
+      "tokens": 61,
+      "augmented": true
+    },
+    {
+      "text": "NetAdapt: Platform- Aware Neural Network Adaptation for Mobile Applications. In  ECCV . [69]  Zhuoran Zhao, Kamyar Mirzazad Barijough, and Andreas Gerstlauer.",
+      "type": "sliding_window_shuffled",
+      "tokens": 54,
+      "augmented": true
+    },
+    {
+      "text": "DeepThings: Distributed adaptive deep learning inference on resource-constrained IoT edge clusters. [69]  Zhuoran Zhao, Kamyar Mirzazad Barijough, and Andreas Gerstlauer. 2018.",
+      "type": "sliding_window_shuffled",
+      "tokens": 56,
+      "augmented": true
+    },
+    {
+      "text": "[70]  Tiago Zonta, Cristiano André da Costa, Rodrigo da Rosa Righi, Miro- mar Jose de Lima, Eduardo Silveira da Trindade, and Guann Pyng Li. IEEE Transactions on Computer- Aided Design of Integrated Circuits and Systems  37, 11 (2018), 2348– 2359. DeepThings: Distributed adaptive deep learning inference on resource-constrained IoT edge clusters.",
+      "type": "sliding_window_shuffled",
+      "tokens": 105,
+      "augmented": true
+    },
+    {
+      "text": "2020. [70]  Tiago Zonta, Cristiano André da Costa, Rodrigo da Rosa Righi, Miro- mar Jose de Lima, Eduardo Silveira da Trindade, and Guann Pyng Li. Predictive maintenance in the Industry 4.0: A systematic litera- ture review.",
+      "type": "sliding_window_shuffled",
+      "tokens": 75,
+      "augmented": true
+    },
+    {
+      "text": "Predictive maintenance in the Industry 4.0: A systematic litera- ture review. 15 \n0 \n20 \n40 \n60 \n0 \n0.1 \n0.2 \n0.3 \n0.4 \n1 \n4 \n7 \n10 \n13 \n16 \n19 \n22 \n25 \n28 \n31 \n34 \n37 \n40 \n43 \n46 \n49 \n% Reconstruction Error \nFFT Amplitude \nFrequency (Hz) Reconstructed Original % Error \nFigure 14: An example of generator based coreset re- covery \nFigure 15: % completion of the inference at the edge for bearing fault data with different EH source. Computers & Industrial Engineering  150 (2020), 106889.",
+      "type": "sliding_window_shuffled",
+      "tokens": 133,
+      "augmented": true
+    },
+    {
+      "text": "Figure 16: Communication data volume with different number of clusters. Component Spec Power Area(mm 2 ) \nSRAM Buffers \n1kB*256+ 8kB*256+ 64kB+16*256kB \n10.372W 117.164 \nMAC Unit (8*8) 256 8.46W 32.72 \nAdder Tree and Comparator 16*16bit + 256 2.4W 21.556 \nControl – 0.96W 12.2 Host ∼ Cortex A78 series 11W – Design at 592MHz with Synopsys AED 32nm library \nTotal 256 tiles 33.192W 183.64 Table 3: Area and power estimation of our design. 15 \n0 \n20 \n40 \n60 \n0 \n0.1 \n0.2 \n0.3 \n0.4 \n1 \n4 \n7 \n10 \n13 \n16 \n19 \n22 \n25 \n28 \n31 \n34 \n37 \n40 \n43 \n46 \n49 \n% Reconstruction Error \nFFT Amplitude \nFrequency (Hz) Reconstructed Original % Error \nFigure 14: An example of generator based coreset re- covery \nFigure 15: % completion of the inference at the edge for bearing fault data with different EH source.",
+      "type": "sliding_window_shuffled",
+      "tokens": 251,
+      "augmented": true
+    },
+    {
+      "text": "A APPENDIX A.1 Reconstructing Importance Sampling Coreset As discussed in Section 3.2.2, we use GANs to recover the data we lost while performing importance sampling. This was motivated from the observation that as we selected more number of points in importance sampling, the accuracy of the inference on the compressed data increased significantly (at times by 2%). Component Spec Power Area(mm 2 ) \nSRAM Buffers \n1kB*256+ 8kB*256+ 64kB+16*256kB \n10.372W 117.164 \nMAC Unit (8*8) 256 8.46W 32.72 \nAdder Tree and Comparator 16*16bit + 256 2.4W 21.556 \nControl – 0.96W 12.2 Host ∼ Cortex A78 series 11W – Design at 592MHz with Synopsys AED 32nm library \nTotal 256 tiles 33.192W 183.64 Table 3: Area and power estimation of our design.",
+      "type": "sliding_window_shuffled",
+      "tokens": 219,
+      "augmented": true
+    },
+    {
+      "text": "This was motivated from the observation that as we selected more number of points in importance sampling, the accuracy of the inference on the compressed data increased significantly (at times by 2%). Hence, the points which were not selected while performing importance sampling still had some impor- tance and can be represented as a function containing the low level nuances of the activity performed and the sensor state. The challenge was to learn this function, i.e.",
+      "type": "sliding_window_shuffled",
+      "tokens": 97,
+      "augmented": true
+    },
+    {
+      "text": "The challenge was to learn this function, i.e. A similar problem, in terms of generating faces, paintings etc. to de- vice a transformation function which can mimic the sensor signal given the aactivity and the sensor states.",
+      "type": "sliding_window_shuffled",
+      "tokens": 52,
+      "augmented": true
+    },
+    {
+      "text": "Motivated by this, we designed a GANs to regenerate the lost data points while performing importance sampling. A similar problem, in terms of generating faces, paintings etc. given some latent space has already been solved using GANs [ 54 ].",
+      "type": "sliding_window_shuffled",
+      "tokens": 56,
+      "augmented": true
+    },
+    {
+      "text": "The latent space takes the activity, and the first and second order moments of the data sample to recreate the signal, and the Discriminator tried to distinguish between the generated sig- nal and the actual signal. The generator is tuned repeatedly until the discriminator could not distinguish the original and the generated signal. Motivated by this, we designed a GANs to regenerate the lost data points while performing importance sampling.",
+      "type": "sliding_window_shuffled",
+      "tokens": 90,
+      "augmented": true
+    },
+    {
+      "text": "The GAN modeled the lost signals with a very high correlation ( ≥ 0 . The generator is tuned repeatedly until the discriminator could not distinguish the original and the generated signal. 9 in most cases and 0 .",
+      "type": "sliding_window_shuffled",
+      "tokens": 50,
+      "augmented": true
+    },
+    {
+      "text": "9 in most cases and 0 . 6 in some of the worst cases (refer Figure 14 for an example). In rare cases (once in over 2000 cases), the generator induced arti- facts which could result in wrong classifications.",
+      "type": "sliding_window_shuffled",
+      "tokens": 52,
+      "augmented": true
+    },
+    {
+      "text": "However, this error could be rectified with further fine tuning. In rare cases (once in over 2000 cases), the generator induced arti- facts which could result in wrong classifications. A.2 More Results on Bearing Fault Data We repeated our experiments with similar experimental setup on the bearing fault data set [ 53 ].",
+      "type": "sliding_window_shuffled",
+      "tokens": 68,
+      "augmented": true
+    },
+    {
+      "text": "The bearing fault data is sampled at a much higher frequency (48KHz) than the HAR data, and hence require a larger DNN, larger num- ber of importance sampling, and more number of clusters. A.2 More Results on Bearing Fault Data We repeated our experiments with similar experimental setup on the bearing fault data set [ 53 ]. We took the learning from multiple domain specific litera- tures [ 19 ,  29 ,  53 ] to isolate the frequency regions specific to the fault pattern to minimize the computations.",
+      "type": "sliding_window_shuffled",
+      "tokens": 119,
+      "augmented": true
+    },
+    {
+      "text": "But, because of the larger data volume, the number of computations per- formed at the edge diminished significantly (refer Figure 15). We also conducted an empirical study on number of clusters required, and found out that the bearing set data needs about 15 to 20 clusters to maintain the inference accuracy. We took the learning from multiple domain specific litera- tures [ 19 ,  29 ,  53 ] to isolate the frequency regions specific to the fault pattern to minimize the computations.",
+      "type": "sliding_window_shuffled",
+      "tokens": 104,
+      "augmented": true
+    },
+    {
+      "text": "The data volume communicated for different number of clusters is represented in Figure 13. B APPENDIX \n16 \n-0.45 \n-0.24 \n-0.02 \n-0.07 \n-0.14 \n-0.19 \n-0.50 \n-0.40 \n-0.30 \n-0.20 \n-0.10 \n0.00 \n0 \n50 \n100 \nWalking Climbing Cycling Running Jogging Jumping Geo Mean \nError \nAccuracy (%) \nCoreset: Compressed Coreset: Reconstructed Reconstructed with Larger Model Seeker Baseline: EAP Baseline: Origin Baseline: Large DNN Error vs Fully Powered \n(a) Accuracy with MHEALTH dataset \n-0.26 \n-0.19 \n-0.76 \n-0.28 \n-0.04 \n-0.80 \n-0.60 \n-0.40 \n-0.20 \n0.00 \n0 \n20 \n40 \n60 \n80 \n100 \nWalking Climbing Cycling Running Jumping Geo Mean \nError \nAccuracy (%) \nCoreset: Compressed Coreset: Reconstructed Reconstructed with Larger Model Seeker Baseline: EAP Baseline: Origin Baseline: Large DNN Error vs Fully Powered \n(b) Accuracy with PAMAP2 dataset \nFigure 17: Accuracy and communication efficiency of  Seeker  with different data sets and sensitivity study. We also conducted an empirical study on number of clusters required, and found out that the bearing set data needs about 15 to 20 clusters to maintain the inference accuracy.",
+      "type": "sliding_window_shuffled",
+      "tokens": 321,
+      "augmented": true
+    }
+  ]
+}
