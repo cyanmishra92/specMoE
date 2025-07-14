@@ -85,17 +85,17 @@ DISTRIBUTED_CONFIGS = {
         'router_weight_scale': 0.01
     },
     128: {
-        'base_batch_size': 3,
-        'learning_rate': 3e-6,
-        'gradient_accumulation_steps': 3,
+        'base_batch_size': 1,
+        'learning_rate': 2e-6,
+        'gradient_accumulation_steps': 4,
         'warmup_ratio': 0.15,
         'max_grad_norm': 0.6,
         'router_weight_scale': 0.01
     },
     256: {
-        'base_batch_size': 2,
-        'learning_rate': 2e-6,
-        'gradient_accumulation_steps': 4,
+        'base_batch_size': 1,
+        'learning_rate': 1e-6,
+        'gradient_accumulation_steps': 6,
         'warmup_ratio': 0.15,
         'max_grad_norm': 0.5,
         'router_weight_scale': 0.01
@@ -381,12 +381,21 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         torch_dtype=torch.float32,
         device_map=None,
         router_z_loss_coef=0.001,
-        router_aux_loss_coef=0.001
+        router_aux_loss_coef=0.001,
+        low_cpu_mem_usage=True
     )
     
     # Apply stabilization
     apply_switch_stabilization(model, args.experts)
+    
+    # Clear cache before moving model to device
+    torch.cuda.empty_cache()
+    
+    # Move model to device
     model = model.to(device)
+    
+    # Clear cache again after model move
+    torch.cuda.empty_cache()
     
     # Wrap model with DDP - use local device ID
     model = DDP(model, device_ids=[local_device_id], find_unused_parameters=False)
@@ -445,7 +454,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         report_to="wandb" if (rank == 0 and not args.disable_wandb) else None,
         run_name=f"switch-{args.experts}-{world_size}gpu-{datetime.now().strftime('%Y%m%d_%H%M%S')}",
         gradient_checkpointing=False,
-        dataloader_pin_memory=True,
+        dataloader_pin_memory=False,  # Disable pin memory for large models
         max_grad_norm=config['max_grad_norm'],
         seed=42,
         logging_first_step=True,
@@ -456,6 +465,9 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         ddp_backend="nccl",
         ddp_find_unused_parameters=False,
         dataloader_drop_last=True,
+        # Memory optimizations
+        dataloader_persistent_workers=False,
+        skip_memory_metrics=True,
     )
     
     # Callbacks
