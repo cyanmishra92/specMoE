@@ -397,8 +397,8 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
     # Clear cache again after model move
     torch.cuda.empty_cache()
     
-    # Wrap model with DDP - use local device ID
-    model = DDP(model, device_ids=[local_device_id], find_unused_parameters=False)
+    # Wrap model with DDP - use local device ID and allow unused parameters for Switch Transformers
+    model = DDP(model, device_ids=[local_device_id], find_unused_parameters=True)
     
     # Create datasets
     data_dir = Path(args.data_dir)
@@ -418,12 +418,12 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
     val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False)
     
-    # Data collator - pass the underlying model for DDP
+    # Data collator - simplified for distributed training
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
-        model=model.module if hasattr(model, 'module') else model,
         padding=True,
-        max_length=args.max_length
+        max_length=args.max_length,
+        return_tensors="pt"
     )
     
     # Training arguments
@@ -463,11 +463,13 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         # Distributed training specific
         local_rank=rank,
         ddp_backend="nccl",
-        ddp_find_unused_parameters=False,
+        ddp_find_unused_parameters=True,
         dataloader_drop_last=True,
         # Memory optimizations
         dataloader_persistent_workers=False,
         skip_memory_metrics=True,
+        # Ensure proper device handling
+        dispatch_batches=False,
     )
     
     # Callbacks
@@ -476,7 +478,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         SafetyCallback(patience=3, rank=rank)
     ]
     
-    # Initialize trainer
+    # Initialize trainer with distributed samplers
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -485,6 +487,9 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         data_collator=data_collator,
         processing_class=tokenizer,
         callbacks=callbacks,
+        # Pass the distributed samplers explicitly
+        train_sampler=train_sampler,
+        eval_sampler=val_sampler,
     )
     
     # Save training info (only from rank 0)
