@@ -4,6 +4,10 @@ Robust Trace Collection - Focus on What Works
 Maximize trace collection with fallbacks and synthetic data
 """
 
+# Fix threading issue
+import os
+os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
+
 import torch
 import numpy as np
 from transformers import AutoTokenizer, SwitchTransformersForConditionalGeneration
@@ -107,12 +111,24 @@ class RobustTraceCollector:
         """Collect from datasets we know work"""
         all_traces = []
         
-        # Test each dataset individually with reduced samples
+        # Use only available datasets with increased samples
         datasets_to_try = [
-            {'name': 'cnn_dailymail', 'config': '3.0.0', 'samples': 100},
-            {'name': 'imdb', 'config': None, 'samples': 50},
-            {'name': 'wikitext', 'config': 'wikitext-2-raw-v1', 'samples': 50},
-            {'name': 'squad', 'config': 'plain_text', 'samples': 50}
+            {'name': 'cnn_dailymail', 'config': '3.0.0', 'samples': 1000},
+            {'name': 'imdb', 'config': None, 'samples': 800},
+            {'name': 'wikitext', 'config': 'wikitext-2-raw-v1', 'samples': 800},
+            {'name': 'squad', 'config': 'plain_text', 'samples': 800},
+            {'name': 'billsum', 'config': None, 'samples': 600},
+            # Try some additional available datasets
+            {'name': 'glue', 'config': 'cola', 'samples': 400},
+            {'name': 'glue', 'config': 'sst2', 'samples': 400},
+            {'name': 'glue', 'config': 'mrpc', 'samples': 400},
+            {'name': 'glue', 'config': 'qqp', 'samples': 400},
+            {'name': 'glue', 'config': 'mnli', 'samples': 400},
+            {'name': 'glue', 'config': 'rte', 'samples': 200},
+            {'name': 'super_glue', 'config': 'cb', 'samples': 200},
+            {'name': 'super_glue', 'config': 'copa', 'samples': 200},
+            {'name': 'super_glue', 'config': 'boolq', 'samples': 200},
+            {'name': 'super_glue', 'config': 'wsc', 'samples': 200}
         ]
         
         for dataset_config in datasets_to_try:
@@ -205,16 +221,60 @@ class RobustTraceCollector:
                 context = sample.get('context', '')
                 question = sample.get('question', '')
                 text = f"{question} {context}" if question and context else context or question
+            elif dataset_name == 'xsum':
+                text = sample.get('document', '') or sample.get('summary', '')
+            elif dataset_name == 'multi_news':
+                text = sample.get('document', '') or sample.get('summary', '')
+            elif dataset_name == 'billsum':
+                text = sample.get('text', '') or sample.get('summary', '')
+            elif dataset_name == 'reddit_tifu':
+                text = sample.get('documents', '') or sample.get('tldr', '')
+            elif dataset_name == 'newsroom':
+                text = sample.get('text', '') or sample.get('summary', '')
+            elif dataset_name == 'scientific_papers':
+                text = sample.get('article', '') or sample.get('abstract', '')
+            elif dataset_name == 'booksum':
+                text = sample.get('chapter', '') or sample.get('summary_text', '')
+            elif dataset_name == 'gigaword':
+                text = sample.get('document', '') or sample.get('summary', '')
+            elif dataset_name == 'samsum':
+                text = sample.get('dialogue', '') or sample.get('summary', '')
+            elif dataset_name == 'dialogsum':
+                text = sample.get('dialogue', '') or sample.get('summary', '')
+            elif dataset_name == 'billsum':
+                text = sample.get('text', '') or sample.get('summary', '')
+            elif dataset_name == 'glue':
+                # GLUE dataset handling
+                text = sample.get('sentence', '') or sample.get('sentence1', '') or sample.get('sentence2', '')
+                if not text:
+                    sentence1 = sample.get('sentence1', '')
+                    sentence2 = sample.get('sentence2', '')
+                    if sentence1 and sentence2:
+                        text = f"{sentence1} {sentence2}"
+                    else:
+                        text = sentence1 or sentence2
+            elif dataset_name == 'super_glue':
+                # SuperGLUE dataset handling
+                text = sample.get('text', '') or sample.get('premise', '') or sample.get('passage', '')
+                if not text:
+                    premise = sample.get('premise', '')
+                    hypothesis = sample.get('hypothesis', '')
+                    if premise and hypothesis:
+                        text = f"{premise} {hypothesis}"
+                    else:
+                        text = premise or hypothesis
             else:
-                # Generic extraction
-                for field in ['text', 'article', 'content', 'context', 'question']:
+                # Generic extraction with expanded field list
+                for field in ['text', 'article', 'content', 'context', 'question', 'document', 'summary', 
+                             'dialogue', 'review_body', 'chapter', 'abstract', 'highlights', 'sentence',
+                             'sentence1', 'sentence2', 'premise', 'hypothesis', 'passage']:
                     if field in sample and sample[field]:
                         text = sample[field]
                         break
         
         # Validate text
         if text and isinstance(text, str) and len(text.strip()) > 20:
-            return text.strip()[:800]  # Limit length
+            return text.strip()[:600]  # Reduced from 800 to handle more diverse content
         
         return None
     
@@ -228,6 +288,32 @@ class RobustTraceCollector:
             return f"summarize: {text}"
         elif dataset_name == 'squad':
             return f"answer: {text}"
+        elif dataset_name == 'xsum':
+            return f"summarize: {text}"
+        elif dataset_name == 'multi_news':
+            return f"summarize: {text}"
+        elif dataset_name == 'billsum':
+            return f"summarize: {text}"
+        elif dataset_name == 'reddit_tifu':
+            return f"summarize: {text}"
+        elif dataset_name == 'newsroom':
+            return f"summarize: {text}"
+        elif dataset_name == 'scientific_papers':
+            return f"summarize: {text}"
+        elif dataset_name == 'booksum':
+            return f"summarize: {text}"
+        elif dataset_name == 'gigaword':
+            return f"summarize: {text}"
+        elif dataset_name == 'samsum':
+            return f"summarize dialogue: {text}"
+        elif dataset_name == 'dialogsum':
+            return f"summarize dialogue: {text}"
+        elif dataset_name == 'billsum':
+            return f"summarize: {text}"
+        elif dataset_name == 'glue':
+            return f"classify: {text}"
+        elif dataset_name == 'super_glue':
+            return f"classify: {text}"
         else:
             return f"process: {text}"
     
