@@ -1,0 +1,101 @@
+{
+  "cpu_to_gpu": {
+    "batch_1": {
+      "avg_time_ms": 3.428186991950497,
+      "std_time_ms": 0.10866398373111498,
+      "throughput_mb_s": 7875.8831018835735,
+      "size_mb": 27.0
+    },
+    "batch_3": {
+      "avg_time_ms": 11.660945980111137,
+      "std_time_ms": 0.21922352265726738,
+      "throughput_mb_s": 6946.263205245378,
+      "size_mb": 81.0
+    },
+    "batch_5": {
+      "avg_time_ms": 20.017969231121242,
+      "std_time_ms": 0.6496102887984679,
+      "throughput_mb_s": 6743.940828429298,
+      "size_mb": 135.0
+    },
+    "batch_10": {
+      "avg_time_ms": 40.04131746245548,
+      "std_time_ms": 0.7974715614880358,
+      "throughput_mb_s": 6743.034872745234,
+      "size_mb": 270.0
+    },
+    "batch_20": {
+      "avg_time_ms": 80.08469823980704,
+      "std_time_ms": 0.9949045370805601,
+      "throughput_mb_s": 6742.861144122869,
+      "size_mb": 540.0
+    }
+  },
+  "gpu_to_gpu": {
+    "batch_1": {
+      "avg_time_ms": 0.07475146907381713,
+      "std_time_ms": 0.0016436381288384187,
+      "throughput_mb_s": 361196.9147166523,
+      "size_mb": 27.0
+    },
+    "batch_3": {
+      "avg_time_ms": 0.2085181523580104,
+      "std_time_ms": 0.00037955464780377676,
+      "throughput_mb_s": 388455.38905854546,
+      "size_mb": 81.0
+    },
+    "batch_5": {
+      "avg_time_ms": 0.3427788324188441,
+      "std_time_ms": 0.0005999385499928056,
+      "throughput_mb_s": 393839.955190239,
+      "size_mb": 135.0
+    },
+    "batch_10": {
+      "avg_time_ms": 0.6786194565938786,
+      "std_time_ms": 0.000889878368259323,
+      "throughput_mb_s": 397866.5765865038,
+      "size_mb": 270.0
+    },
+    "batch_20": {
+      "avg_time_ms": 1.3524685392621905,
+      "std_time_ms": 0.01553693426105014,
+      "throughput_mb_s": 399269.91595278453,
+      "size_mb": 540.0
+    }
+  },
+  "gpu_allocation": {
+    "batch_1": {
+      "avg_time_ms": 0.04619066836312413,
+      "std_time_ms": 0.005133998958476319,
+      "size_mb": 27.0
+    },
+    "batch_3": {
+      "avg_time_ms": 0.11384526267647743,
+      "std_time_ms": 0.0027059860497957475,
+      "size_mb": 81.0
+    },
+    "batch_5": {
+      "avg_time_ms": 0.1827792194671929,
+      "std_time_ms": 0.002303444401652541,
+      "size_mb": 135.0
+    },
+    "batch_10": {
+      "avg_time_ms": 0.3573706414317712,
+      "std_time_ms": 0.0027335723475566303,
+      "size_mb": 270.0
+    },
+    "batch_20": {
+      "avg_time_ms": 0.7033092598430812,
+      "std_time_ms": 0.003285154814102114,
+      "size_mb": 540.0
+    }
+  },
+  "system_info": {
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 3090",
+    "gpu_memory_gb": 23.56072998046875,
+    "expert_size_mb": 27.0,
+    "model_dim": 768,
+    "ff_dim": 3072
+  }
+}
