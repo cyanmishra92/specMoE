@@ -295,6 +295,9 @@ def main():
     apply_switch_stabilization(model, args.experts)
     model = model.to(device)
     
+    # Force single GPU usage - no data parallelism
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    
     # Create datasets
     data_dir = Path(args.data_dir)
     train_dataset = SwitchDataset(
