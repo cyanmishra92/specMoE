@@ -183,8 +183,15 @@ class TransformerSpeculationModel(nn.Module):
         
         # Add position information
         if position is None:
-            position = torch.arange(seq_len, device=expert_sequence.device).unsqueeze(0).expand(batch_size, -1)
-        pos_emb = self.position_embedding(position % self.context_length)
+            pos_indices = torch.arange(seq_len, device=expert_sequence.device).unsqueeze(0).expand(batch_size, -1)
+        else:
+            # Create position sequence based on the single position value
+            pos_indices = torch.arange(seq_len, device=expert_sequence.device).unsqueeze(0).expand(batch_size, -1)
+            # Adjust based on actual position (subtract seq_len to get start position)
+            start_pos = position.unsqueeze(1) - seq_len + 1
+            pos_indices = pos_indices + start_pos
+        
+        pos_emb = self.position_embedding(pos_indices % self.context_length)
         
         # Combine embeddings
         combined_emb = expert_emb + layer_emb + pos_emb
