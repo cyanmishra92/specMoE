@@ -440,7 +440,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         metric_for_best_model="eval_loss",
         greater_is_better=False,
         save_total_limit=3,
-        dataloader_num_workers=4,
+        dataloader_num_workers=0,
         remove_unused_columns=False,
         report_to="wandb" if (rank == 0 and not args.disable_wandb) else None,
         run_name=f"switch-{args.experts}-{world_size}gpu-{datetime.now().strftime('%Y%m%d_%H%M%S')}",
