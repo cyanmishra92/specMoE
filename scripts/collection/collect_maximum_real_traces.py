@@ -115,7 +115,7 @@ class MaximumRealTraceCollector:
             
             # Question answering (100 each for diversity)
             {'name': 'squad_v2', 'config': None, 'samples': 100},
-            {'name': 'natural_questions', 'config': None, 'samples': 100},
+            # {'name': 'natural_questions', 'config': None, 'samples': 100},  # Too large - disabled
             {'name': 'ms_marco', 'config': 'v1.1', 'samples': 100},
             {'name': 'trivia_qa', 'config': 'rc', 'samples': 100},
             {'name': 'quac', 'config': None, 'samples': 100},

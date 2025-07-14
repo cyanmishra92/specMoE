@@ -42,17 +42,20 @@ python scripts/pipelines/run_working_pipeline.py
 Or run individual components:
 
 ```bash
-# Step 1: Collect routing traces from Switch Transformers
-python scripts/collection/collect_robust_traces.py --traces 3000
+# Step 1: Collect diverse routing traces from 60+ datasets (RECOMMENDED)
+python scripts/collection/collect_maximum_real_traces.py
 
-# Step 2: Analyze expert usage patterns
+# Step 2: Analyze expert usage patterns with comprehensive statistics
 python scripts/analysis/comprehensive_expert_analysis.py
 
-# Step 3: Visualize expert traces
+# Step 3: Visualize expert traces and routing patterns
 python scripts/analysis/visualize_expert_traces.py
 
-# Step 4: Train speculation models
+# Step 4: Train speculation models on diverse data
 python scripts/training/improved_speculation_training.py
+
+# Alternative: Basic collection with fewer datasets
+python scripts/collection/collect_robust_traces.py --traces 3000
 
 # Step 3: Test individual approaches
 python scripts/evaluation/test_individual_approaches.py

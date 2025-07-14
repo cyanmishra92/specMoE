@@ -43,9 +43,24 @@ python scripts/analysis/visualize_expert_traces.py
 ```
 
 ### Analysis Workflow
-1. **Collect traces**: Use `collect_robust_traces.py` to gather routing data
+1. **Collect diverse traces**: Use `collect_maximum_real_traces.py` to gather routing data from 60+ datasets
 2. **Analyze statistics**: Run `comprehensive_expert_analysis.py` for detailed metrics
 3. **Visualize patterns**: Use `visualize_expert_traces.py` for trace visualization
+
+### Basic Analysis
+```bash
+# 1. FIRST: Collect diverse real traces (RECOMMENDED)
+python scripts/collection/collect_maximum_real_traces.py
+
+# 2. Analyze comprehensive statistics with layer-wise metrics
+python scripts/analysis/comprehensive_expert_analysis.py
+
+# 3. Visualize expert traces and routing patterns
+python scripts/analysis/visualize_expert_traces.py
+
+# Alternative: Create small experimental dataset for testing
+python scripts/analysis/create_small_dataset.py
+```
 
 ## 📈 Generated Outputs
 

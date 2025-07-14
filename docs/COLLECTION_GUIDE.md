@@ -23,22 +23,45 @@ The collection system captures **real MoE routing traces** by running inference 
 
 ## 🚀 Quick Start
 
-### Basic Usage
+### **🎯 Recommended: Maximum Real Trace Collection**
 ```bash
-# Collect 3000 real traces from benchmark datasets (default)
-python scripts/collection/collect_robust_traces.py --traces 3000
+# Collect diverse real traces from 60+ datasets (RECOMMENDED)
+python scripts/collection/collect_maximum_real_traces.py
 
-# Large collection from 170+ papers
-python scripts/collection/collect_robust_traces.py --traces 10000
+# This collects from diverse NLP tasks:
+# - Core NLP: CNN/DailyMail, IMDB, WikiText, SQuAD, BillSum
+# - GLUE: CoLA, SST-2, MRPC, QQP, MNLI, QNLI, RTE, WNLI, STS-B
+# - SuperGLUE: CB, COPA, BoolQ, WSC, MultiRC, ReCoRD, WiC
+# - Classification: AG News, Yelp, Yahoo Answers, DBpedia, Amazon
+# - Question Answering: SQuAD v2, MS MARCO, TriviaQA, QuAC
+# - Summarization: XSum, NewsRoom, Multi-News, Reddit TIFU
+# - Dialogue: Daily Dialog, Empathetic Dialogues, Blended Skill Talk
+# - Reasoning: CosmosQA, CommonsenseQA, Social IQA, WinoGrande, HellaSwag
+# - Scientific: SciTail, PubMed QA, Scientific Papers
+# - Reviews: Amazon Reviews, App Reviews
+# - Misc: Emotion, Tweet Eval, Financial PhraseBank
+
+# Features:
+# - 100% real data (no synthetic traces)
+# - Randomized dataset order for diversity
+# - Balanced sampling (100-200 traces per dataset)
+# - ~10,000 traces from ~50 different datasets
+# - Authentic routing patterns across NLP tasks
+
+# After collection, analyze the diverse patterns
+python scripts/analysis/comprehensive_expert_analysis.py
+```
+
+### **Alternative: Basic Collection**
+```bash
+# Basic collection with fewer datasets
+python scripts/collection/collect_robust_traces.py --traces 3000
 
 # Mixed mode (real + synthetic)
 python scripts/collection/collect_robust_traces.py --traces 5000 --mode mixed --real-ratio 0.7
 
 # Real data only mode
 python scripts/collection/collect_robust_traces.py --traces 5000 --mode real
-
-# After collection, analyze the traces
-python scripts/analysis/comprehensive_expert_analysis.py
 
 # Quick test with smaller model
 python scripts/collection/collect_robust_traces.py --traces 100 --model google/switch-base-32
