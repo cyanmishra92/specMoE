@@ -1,0 +1,17 @@
+custom_queries:
+- cat:cs.LG
+- cat:cs.AI
+- cat:cs.AR
+- cat:cs.DC
+- cat:cs.PF
+description: Flexible configuration for general paper searches
+download_dir: ./papers
+max_papers: 100
+name: General ArXiv Paper Search
+relevance_filters:
+  architecture_keywords: []
+  ml_keywords: []
+  require_both_topics: false
+search_mode: general
+target_authors: []
+target_organizations: []

@@ -1,0 +1,92 @@
+{
+  "model_type": "switch",
+  "model_path": "../models/switch_stabilized/final_model",
+  "evaluation_timestamp": "2025-07-12T21:40:12.284321",
+  "test_data_size": 973,
+  "perplexity": 64.8583540698451,
+  "token_accuracy": 0.0,
+  "generated_samples": [
+    {
+      "prompt": "This research paper presents",
+      "generated": ". The authors are which are describing our these in pages.",
+      "length": 58
+    },
+    {
+      "prompt": "The main contribution of this work is",
+      "generated": "of the a gif. (An. Ay.",
+      "length": 22
+    },
+    {
+      "prompt": "Our experimental results show that",
+      "generated": "the we have. Our testing has the confirmed results which they are the corresponding with the results of our experiments.",
+      "length": 120
+    },
+    {
+      "prompt": "The proposed method achieves",
+      "generated": "The ACP..",
+      "length": 9
+    },
+    {
+      "prompt": "In conclusion, we demonstrate",
+      "generated": "by A. We propose to a re--statement of this, but each equation.",
+      "length": 63
+    }
+  ],
+  "research_understanding": {
+    "concept_coverage": 0.25,
+    "detailed_results": [
+      {
+        "prompt": "Machine learning models can be improved by",
+        "completion": "a machine learning model.",
+        "expected_concept": "optimization techniques",
+        "contains_concept": false
+      },
+      {
+        "prompt": "The experimental setup includes",
+        "completion": "ado to the 1530202020202020/2020-202000202020>202020.",
+        "expected_concept": "datasets and metrics",
+        "contains_concept": false
+      },
+      {
+        "prompt": "Our results demonstrate that",
+        "completion": "the onset of a re-- :>>>>>>>>>>>>>>>>>",
+        "expected_concept": "the proposed method",
+        "contains_concept": true
+      },
+      {
+        "prompt": "Compared to baseline methods",
+        "completion": "and (=]>(( > >",
+        "expected_concept": "our approach shows",
+        "contains_concept": false
+      },
+      {
+        "prompt": "The main limitation of this work",
+        "completion": "of [21] [20]28, and Xith yuan , Xiv , Xiv , Xiv , 1:",
+        "expected_concept": "is computational cost",
+        "contains_concept": false
+      },
+      {
+        "prompt": "Future work will focus on",
+        "completion": "to the the future of the science-the-type-and-the-type-streng-based field- a- t i-s-the-field-based approach.",
+        "expected_concept": "extending the approach",
+        "contains_concept": true
+      },
+      {
+        "prompt": "The dataset consists of",
+        "completion": "the data consists of a dataset consists of of a dataset has been used as a resource to provide a dataset .",
+        "expected_concept": "training and test samples",
+        "contains_concept": false
+      },
+      {
+        "prompt": "We evaluate performance using",
+        "completion": "performance using. .",
+        "expected_concept": "standard benchmarks",
+        "contains_concept": false
+      }
+    ]
+  },
+  "model_stats": {
+    "total_parameters": 619339008,
+    "vocabulary_size": 32100
+  }
+}

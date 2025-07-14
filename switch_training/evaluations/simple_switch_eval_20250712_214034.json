@@ -1,0 +1,35 @@
+{
+  "model_path": "../models/switch_stabilized/final_model",
+  "total_parameters": 619339008,
+  "evaluation_time": "2025-07-12T21:40:34.147220",
+  "generation_samples": [
+    {
+      "prompt": "continue: This research paper presents",
+      "generated": "the , as they are entitled to the the cited research paper.",
+      "success": true
+    },
+    {
+      "prompt": "continue: The experimental results show",
+      "generated": "the (show 5 experimental results results).",
+      "success": true
+    },
+    {
+      "prompt": "continue: Our method achieves",
+      "generated": "the the inversed value to a corresponding method.",
+      "success": true
+    },
+    {
+      "prompt": "continue: The main contribution is",
+      "generated": ", not available for scalable systems.",
+      "success": true
+    },
+    {
+      "prompt": "continue: We propose a novel",
+      "generated": "is a proposed to a new model for a proposed framework under which our proposed one.",
+      "success": true
+    }
+  ],
+  "avg_loss": 3.8961421251296997,
+  "perplexity": 49.212227799517855,
+  "valid_samples": 10
+}

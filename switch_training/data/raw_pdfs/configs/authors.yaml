@@ -1,0 +1,31 @@
+custom_queries: []
+description: Papers from leading researchers in ML and computer architecture
+download_dir: ./papers
+max_papers: 100
+name: Specific Authors in ML + Computer Architecture
+relevance_filters:
+  architecture_keywords: []
+  ml_keywords: []
+  require_both_topics: false
+search_mode: authors
+target_authors:
+- Song Han
+- Bill Dally
+- Krste Asanovic
+- David Patterson
+- Vivienne Sze
+- Joel Emer
+- Mark Horowitz
+- Kunle Olukotun
+- Margaret Martonosi
+- Luis Ceze
+- Onur Mutlu
+- Babak Falsafi
+- Gu-Yeon Wei
+- Hadi Esmaeilzadeh
+- Yann LeCun
+- Geoffrey Hinton
+- Fei-Fei Li
+- Andrew Ng
+- Yoshua Bengio
+target_organizations: []

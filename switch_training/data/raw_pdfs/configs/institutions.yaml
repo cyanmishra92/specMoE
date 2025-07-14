@@ -1,0 +1,56 @@
+custom_queries: []
+description: Papers from top universities and research labs in ML and computer architecture
+download_dir: ./papers
+max_papers: 200
+name: Leading Universities and Research Institutions
+relevance_filters:
+  architecture_keywords:
+  - architecture
+  - hardware
+  - accelerator
+  - fpga
+  - gpu
+  - processor
+  - chip
+  - performance
+  - parallel
+  - distributed
+  ml_keywords:
+  - machine learning
+  - deep learning
+  - neural network
+  - ai
+  - model
+  - inference
+  - training
+  require_both_topics: true
+search_mode: organizations
+target_authors: []
+target_organizations:
+- MIT
+- Stanford University
+- UC Berkeley
+- Carnegie Mellon University
+- Harvard University
+- Princeton University
+- University of Washington
+- University of Toronto
+- ETH Zurich
+- EPFL
+- UC San Diego
+- University of Michigan
+- Cornell University
+- University of Illinois
+- Georgia Institute of Technology
+- NVIDIA Research
+- Google Research
+- Microsoft Research
+- Facebook AI Research
+- Meta AI
+- Intel Labs
+- IBM Research
+- Apple Machine Learning Research
+- Amazon Science
+- OpenAI
+- DeepMind
+- Anthropic

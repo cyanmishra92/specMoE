@@ -1,0 +1,40 @@
+SIMPLE SWITCH TRANSFORMER EVALUATION
+==================================================
+
+Model: ../models/switch_stabilized/final_model
+Parameters: 619,339,008
+Evaluation Time: 2025-07-12T21:40:34.147220
+
+Average Loss: 3.8961
+Perplexity: 49.21
+Valid Samples: 10
+
+GENERATION SAMPLES
+------------------------------
+Successful generations: 5/5
+
+Sample 1:
+Prompt: continue: This research paper presents
+Generated: the , as they are entitled to the the cited research paper.
+Success: True
+
+Sample 2:
+Prompt: continue: The experimental results show
+Generated: the (show 5 experimental results results).
+Success: True
+
+Sample 3:
+Prompt: continue: Our method achieves
+Generated: the the inversed value to a corresponding method.
+Success: True
+
+Sample 4:
+Prompt: continue: The main contribution is
+Generated: , not available for scalable systems.
+Success: True
+
+Sample 5:
+Prompt: continue: We propose a novel
+Generated: is a proposed to a new model for a proposed framework under which our proposed one.
+Success: True
+

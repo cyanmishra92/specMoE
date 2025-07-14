@@ -468,8 +468,6 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         # Memory optimizations
         dataloader_persistent_workers=False,
         skip_memory_metrics=True,
-        # Ensure proper device handling
-        dispatch_batches=False,
     )
     
     # Callbacks

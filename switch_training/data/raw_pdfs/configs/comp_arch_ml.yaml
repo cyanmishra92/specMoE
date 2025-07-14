@@ -1,0 +1,68 @@
+custom_queries:
+- cat:cs.AR AND cat:cs.LG
+- cat:cs.AR AND cat:cs.AI
+- cat:cs.DC AND cat:cs.LG
+- cat:cs.PF AND cat:cs.LG
+- '"computer architecture" AND "machine learning"'
+- '"computer architecture" AND "deep learning"'
+- '"neural architecture" AND "hardware"'
+- '"accelerator" AND "deep learning"'
+- '"FPGA" AND "machine learning"'
+- '"GPU" AND "neural network"'
+- '"hardware acceleration" AND "AI"'
+- '"systolic array" AND "deep learning"'
+- '"neuromorphic" AND "architecture"'
+- '"inference acceleration"'
+- '"training acceleration"'
+- '"edge computing" AND "machine learning"'
+- '"TPU" AND "deep learning"'
+- '"tensor processing unit"'
+- '"neural processing unit"'
+- '"AI accelerator"'
+- '"dataflow architecture" AND "neural"'
+- '"quantization" AND "hardware"'
+- '"pruning" AND "acceleration"'
+- '"sparse neural networks" AND "hardware"'
+description: Papers combining computer architecture with ML/DL research
+download_dir: ./papers
+max_papers: 150
+name: Computer Architecture + Machine Learning + Deep Learning
+relevance_filters:
+  architecture_keywords:
+  - architecture
+  - hardware
+  - accelerator
+  - fpga
+  - gpu
+  - asic
+  - systolic
+  - neuromorphic
+  - processor
+  - chip
+  - circuit
+  - performance
+  - optimization
+  - parallel
+  - distributed
+  - edge computing
+  - inference
+  - training acceleration
+  - tpu
+  ml_keywords:
+  - machine learning
+  - deep learning
+  - neural network
+  - ai
+  - artificial intelligence
+  - model
+  - inference
+  - training
+  - cnn
+  - rnn
+  - transformer
+  - attention
+  - embedding
+  require_both_topics: true
+search_mode: general
+target_authors: []
+target_organizations: []
