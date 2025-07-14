@@ -328,7 +328,32 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
     if rank == 0:
         output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Test wandb initialization and disable if it fails
+    # Test wandb early and disable completely if it fails
+    if not args.disable_wandb:
+        try:
+            # Only test on rank 0
+            if rank == 0:
+                import wandb
+                # Test if wandb is configured
+                if not wandb.api.api_key:
+                    raise Exception("No wandb API key found")
+        except Exception as e:
+            if rank == 0:
+                logger.warning(f"Wandb not available: {e}")
+            args.disable_wandb = True
+            # Set environment variable to completely disable wandb
+            os.environ['WANDB_DISABLED'] = 'true'
+    
+    # Sync wandb status across all ranks early
+    disable_wandb_tensor = torch.tensor([args.disable_wandb], dtype=torch.bool, device=device)
+    dist.broadcast(disable_wandb_tensor, 0)
+    args.disable_wandb = disable_wandb_tensor.item()
+    
+    # Set environment variable on all ranks if disabled
+    if args.disable_wandb:
+        os.environ['WANDB_DISABLED'] = 'true'
+    
+    # Now initialize wandb properly if not disabled
     if rank == 0 and not args.disable_wandb:
         try:
             wandb.init(
@@ -338,12 +363,8 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
             )
         except Exception as e:
             logger.warning(f"Failed to initialize wandb: {e}")
-            args.disable_wandb = True  # Disable wandb for this run
-    
-    # Sync wandb status across all ranks
-    disable_wandb_tensor = torch.tensor([args.disable_wandb], dtype=torch.bool, device=device)
-    dist.broadcast(disable_wandb_tensor, 0)
-    args.disable_wandb = disable_wandb_tensor.item()
+            args.disable_wandb = True
+            os.environ['WANDB_DISABLED'] = 'true'
     
     # Load tokenizer and model
     if rank == 0:

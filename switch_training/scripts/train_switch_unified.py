@@ -256,9 +256,14 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Initialize wandb
+    # Test and initialize wandb
     if not args.disable_wandb:
         try:
+            # Test if wandb is configured
+            import wandb
+            if not wandb.api.api_key:
+                raise Exception("No wandb API key found")
+            
             wandb.init(
                 project="switch-transformer-unified",
                 config={**vars(args), **config},
@@ -266,6 +271,8 @@ def main():
             )
         except Exception as e:
             logger.warning(f"Failed to initialize wandb: {e}")
+            args.disable_wandb = True
+            os.environ['WANDB_DISABLED'] = 'true'
     
     # Load tokenizer and model
     logger.info(f"Loading Switch Transformer with {args.experts} experts...")
