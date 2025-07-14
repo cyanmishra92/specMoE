@@ -273,6 +273,10 @@ def main():
             args.disable_wandb = True
             os.environ['WANDB_DISABLED'] = 'true'
     
+    # Set environment variable if wandb is disabled
+    if args.disable_wandb:
+        os.environ['WANDB_DISABLED'] = 'true'
+    
     # Load tokenizer and model
     logger.info(f"Loading Switch Transformer with {args.experts} experts...")
     logger.info(f"Model: {model_name}")
@@ -345,7 +349,7 @@ def main():
         save_total_limit=3,
         dataloader_num_workers=4,
         remove_unused_columns=False,
-        report_to="wandb" if not args.disable_wandb else None,
+        report_to=None if args.disable_wandb else "wandb",
         run_name=f"switch-{args.experts}-{datetime.now().strftime('%Y%m%d_%H%M%S')}",
         gradient_checkpointing=False,
         dataloader_pin_memory=True,
