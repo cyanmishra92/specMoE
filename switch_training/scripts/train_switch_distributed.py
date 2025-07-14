@@ -328,7 +328,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
     if rank == 0:
         output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Initialize wandb on rank 0 only
+    # Test wandb initialization and disable if it fails
     if rank == 0 and not args.disable_wandb:
         try:
             wandb.init(
@@ -339,6 +339,11 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         except Exception as e:
             logger.warning(f"Failed to initialize wandb: {e}")
             args.disable_wandb = True  # Disable wandb for this run
+    
+    # Sync wandb status across all ranks
+    disable_wandb_tensor = torch.tensor([args.disable_wandb], dtype=torch.bool, device=device)
+    dist.broadcast(disable_wandb_tensor, 0)
+    args.disable_wandb = disable_wandb_tensor.item()
     
     # Load tokenizer and model
     if rank == 0:
