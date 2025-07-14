@@ -75,96 +75,96 @@ class MaximumRealTraceCollector:
             return False
     
     def get_comprehensive_dataset_list(self):
-        """Get comprehensive list of all available datasets"""
+        """Get comprehensive list of all available datasets with balanced sampling"""
         datasets_to_try = [
-            # Core NLP datasets
-            {'name': 'cnn_dailymail', 'config': '3.0.0', 'samples': 2000},
-            {'name': 'imdb', 'config': None, 'samples': 2000},
-            {'name': 'wikitext', 'config': 'wikitext-2-raw-v1', 'samples': 2000},
-            {'name': 'squad', 'config': 'plain_text', 'samples': 2000},
-            {'name': 'billsum', 'config': None, 'samples': 1000},
+            # Core NLP datasets (200 each for diversity)
+            {'name': 'cnn_dailymail', 'config': '3.0.0', 'samples': 200},
+            {'name': 'imdb', 'config': None, 'samples': 200},
+            {'name': 'wikitext', 'config': 'wikitext-2-raw-v1', 'samples': 200},
+            {'name': 'squad', 'config': 'plain_text', 'samples': 200},
+            {'name': 'billsum', 'config': None, 'samples': 200},
             
-            # GLUE benchmark
-            {'name': 'glue', 'config': 'cola', 'samples': 1000},
-            {'name': 'glue', 'config': 'sst2', 'samples': 1000},
-            {'name': 'glue', 'config': 'mrpc', 'samples': 1000},
-            {'name': 'glue', 'config': 'qqp', 'samples': 1000},
-            {'name': 'glue', 'config': 'mnli', 'samples': 1000},
-            {'name': 'glue', 'config': 'qnli', 'samples': 1000},
-            {'name': 'glue', 'config': 'rte', 'samples': 500},
-            {'name': 'glue', 'config': 'wnli', 'samples': 500},
-            {'name': 'glue', 'config': 'stsb', 'samples': 500},
+            # GLUE benchmark (150 each for diversity)
+            {'name': 'glue', 'config': 'cola', 'samples': 150},
+            {'name': 'glue', 'config': 'sst2', 'samples': 150},
+            {'name': 'glue', 'config': 'mrpc', 'samples': 150},
+            {'name': 'glue', 'config': 'qqp', 'samples': 150},
+            {'name': 'glue', 'config': 'mnli', 'samples': 150},
+            {'name': 'glue', 'config': 'qnli', 'samples': 150},
+            {'name': 'glue', 'config': 'rte', 'samples': 150},
+            {'name': 'glue', 'config': 'wnli', 'samples': 150},
+            {'name': 'glue', 'config': 'stsb', 'samples': 150},
             
-            # SuperGLUE
-            {'name': 'super_glue', 'config': 'cb', 'samples': 500},
-            {'name': 'super_glue', 'config': 'copa', 'samples': 500},
-            {'name': 'super_glue', 'config': 'boolq', 'samples': 500},
-            {'name': 'super_glue', 'config': 'wsc', 'samples': 500},
-            {'name': 'super_glue', 'config': 'multirc', 'samples': 500},
-            {'name': 'super_glue', 'config': 'record', 'samples': 500},
-            {'name': 'super_glue', 'config': 'rte', 'samples': 500},
-            {'name': 'super_glue', 'config': 'wic', 'samples': 500},
+            # SuperGLUE (100 each for diversity)
+            {'name': 'super_glue', 'config': 'cb', 'samples': 100},
+            {'name': 'super_glue', 'config': 'copa', 'samples': 100},
+            {'name': 'super_glue', 'config': 'boolq', 'samples': 100},
+            {'name': 'super_glue', 'config': 'wsc', 'samples': 100},
+            {'name': 'super_glue', 'config': 'multirc', 'samples': 100},
+            {'name': 'super_glue', 'config': 'record', 'samples': 100},
+            {'name': 'super_glue', 'config': 'rte', 'samples': 100},
+            {'name': 'super_glue', 'config': 'wic', 'samples': 100},
             
-            # Additional text datasets
-            {'name': 'ag_news', 'config': None, 'samples': 1000},
-            {'name': 'yelp_review_full', 'config': None, 'samples': 1000},
-            {'name': 'yahoo_answers_topics', 'config': None, 'samples': 1000},
-            {'name': 'dbpedia_14', 'config': None, 'samples': 1000},
-            {'name': 'amazon_polarity', 'config': None, 'samples': 1000},
-            {'name': 'sogou_news', 'config': None, 'samples': 500},
+            # Additional text datasets (150 each)
+            {'name': 'ag_news', 'config': None, 'samples': 150},
+            {'name': 'yelp_review_full', 'config': None, 'samples': 150},
+            {'name': 'yahoo_answers_topics', 'config': None, 'samples': 150},
+            {'name': 'dbpedia_14', 'config': None, 'samples': 150},
+            {'name': 'amazon_polarity', 'config': None, 'samples': 150},
+            {'name': 'sogou_news', 'config': None, 'samples': 100},
             
-            # Question answering
-            {'name': 'squad_v2', 'config': None, 'samples': 1000},
-            {'name': 'natural_questions', 'config': None, 'samples': 500},
-            {'name': 'ms_marco', 'config': 'v1.1', 'samples': 500},
-            {'name': 'trivia_qa', 'config': 'rc', 'samples': 500},
-            {'name': 'quac', 'config': None, 'samples': 500},
+            # Question answering (100 each for diversity)
+            {'name': 'squad_v2', 'config': None, 'samples': 100},
+            {'name': 'natural_questions', 'config': None, 'samples': 100},
+            {'name': 'ms_marco', 'config': 'v1.1', 'samples': 100},
+            {'name': 'trivia_qa', 'config': 'rc', 'samples': 100},
+            {'name': 'quac', 'config': None, 'samples': 100},
             
-            # Summarization
-            {'name': 'xsum', 'config': None, 'samples': 1000},
-            {'name': 'newsroom', 'config': None, 'samples': 500},
-            {'name': 'multi_news', 'config': None, 'samples': 500},
-            {'name': 'reddit_tifu', 'config': 'short', 'samples': 500},
-            {'name': 'gigaword', 'config': None, 'samples': 500},
+            # Summarization (100 each for diversity)
+            {'name': 'xsum', 'config': None, 'samples': 100},
+            {'name': 'newsroom', 'config': None, 'samples': 100},
+            {'name': 'multi_news', 'config': None, 'samples': 100},
+            {'name': 'reddit_tifu', 'config': 'short', 'samples': 100},
+            {'name': 'gigaword', 'config': None, 'samples': 100},
             
-            # Dialogue
-            {'name': 'daily_dialog', 'config': None, 'samples': 500},
-            {'name': 'empathetic_dialogues', 'config': None, 'samples': 500},
-            {'name': 'blended_skill_talk', 'config': None, 'samples': 500},
-            {'name': 'conv_ai_2', 'config': None, 'samples': 500},
+            # Dialogue (100 each for diversity)
+            {'name': 'daily_dialog', 'config': None, 'samples': 100},
+            {'name': 'empathetic_dialogues', 'config': None, 'samples': 100},
+            {'name': 'blended_skill_talk', 'config': None, 'samples': 100},
+            {'name': 'conv_ai_2', 'config': None, 'samples': 100},
             
-            # Reasoning
-            {'name': 'cosmos_qa', 'config': None, 'samples': 500},
-            {'name': 'commonsense_qa', 'config': None, 'samples': 500},
-            {'name': 'social_i_qa', 'config': None, 'samples': 500},
-            {'name': 'winogrande', 'config': 'winogrande_xl', 'samples': 500},
-            {'name': 'hellaswag', 'config': None, 'samples': 500},
+            # Reasoning (100 each for diversity)
+            {'name': 'cosmos_qa', 'config': None, 'samples': 100},
+            {'name': 'commonsense_qa', 'config': None, 'samples': 100},
+            {'name': 'social_i_qa', 'config': None, 'samples': 100},
+            {'name': 'winogrande', 'config': 'winogrande_xl', 'samples': 100},
+            {'name': 'hellaswag', 'config': None, 'samples': 100},
             
-            # Multilingual
-            {'name': 'paws', 'config': 'labeled_final', 'samples': 500},
-            {'name': 'xnli', 'config': 'en', 'samples': 500},
-            {'name': 'tydiqa', 'config': 'secondary_task', 'samples': 500},
+            # Multilingual (100 each for diversity)
+            {'name': 'paws', 'config': 'labeled_final', 'samples': 100},
+            {'name': 'xnli', 'config': 'en', 'samples': 100},
+            {'name': 'tydiqa', 'config': 'secondary_task', 'samples': 100},
             
-            # Code
-            {'name': 'code_search_net', 'config': 'python', 'samples': 500},
-            {'name': 'great_code', 'config': None, 'samples': 300},
+            # Code (100 each for diversity)
+            {'name': 'code_search_net', 'config': 'python', 'samples': 100},
+            {'name': 'great_code', 'config': None, 'samples': 100},
             
-            # Scientific
-            {'name': 'scitail', 'config': None, 'samples': 500},
-            {'name': 'pubmed_qa', 'config': 'pqa_labeled', 'samples': 500},
-            {'name': 'scientific_papers', 'config': 'arxiv', 'samples': 500},
+            # Scientific (100 each for diversity)
+            {'name': 'scitail', 'config': None, 'samples': 100},
+            {'name': 'pubmed_qa', 'config': 'pqa_labeled', 'samples': 100},
+            {'name': 'scientific_papers', 'config': 'arxiv', 'samples': 100},
             
-            # Reviews
-            {'name': 'amazon_reviews_multi', 'config': 'en', 'samples': 500},
-            {'name': 'app_reviews', 'config': None, 'samples': 500},
-            {'name': 'amazon_us_reviews', 'config': 'Books_v1_00', 'samples': 500},
+            # Reviews (100 each for diversity)
+            {'name': 'amazon_reviews_multi', 'config': 'en', 'samples': 100},
+            {'name': 'app_reviews', 'config': None, 'samples': 100},
+            {'name': 'amazon_us_reviews', 'config': 'Books_v1_00', 'samples': 100},
             
-            # Misc
-            {'name': 'emotion', 'config': None, 'samples': 500},
-            {'name': 'hate_speech18', 'config': None, 'samples': 300},
-            {'name': 'tweet_eval', 'config': 'emotion', 'samples': 500},
-            {'name': 'financial_phrasebank', 'config': 'sentences_allagree', 'samples': 300},
-            {'name': 'ethos', 'config': 'binary', 'samples': 300}
+            # Misc (100 each for diversity)
+            {'name': 'emotion', 'config': None, 'samples': 100},
+            {'name': 'hate_speech18', 'config': None, 'samples': 100},
+            {'name': 'tweet_eval', 'config': 'emotion', 'samples': 100},
+            {'name': 'financial_phrasebank', 'config': 'sentences_allagree', 'samples': 100},
+            {'name': 'ethos', 'config': 'binary', 'samples': 100}
         ]
         
         return datasets_to_try
@@ -387,25 +387,47 @@ class MaximumRealTraceCollector:
         return traces
     
     def collect_maximum_real_traces(self, target_traces=10000):
-        """Collect maximum real traces from all available datasets"""
+        """Collect maximum real traces from all available datasets with diversity"""
         logger.info(f"🎯 Target: {target_traces} real traces")
         
         all_traces = []
         datasets_to_try = self.get_comprehensive_dataset_list()
         
-        logger.info(f"Trying {len(datasets_to_try)} datasets...")
+        # Randomize dataset order
+        import random
+        random.shuffle(datasets_to_try)
+        
+        # Ensure reasonable limits for diversity (already set in dataset list)
+        for dataset_config in datasets_to_try:
+            dataset_config['samples'] = min(dataset_config['samples'], 200)  # Max 200 per dataset
+        
+        logger.info(f"Trying {len(datasets_to_try)} datasets with diverse sampling...")
+        
+        # Collect from multiple datasets in batches
+        traces_per_round = []
         
         for dataset_config in datasets_to_try:
             if len(all_traces) >= target_traces:
                 break
             
+            # Collect smaller batch from each dataset
             dataset_traces = self.collect_from_single_dataset(dataset_config)
-            all_traces.extend(dataset_traces)
+            if dataset_traces:
+                all_traces.extend(dataset_traces)
+                traces_per_round.append({
+                    'dataset': dataset_config['name'],
+                    'traces': len(dataset_traces)
+                })
             
             logger.info(f"Progress: {len(all_traces)}/{target_traces} traces collected")
             
             # Memory cleanup
             torch.cuda.empty_cache()
+        
+        # Log dataset diversity
+        logger.info(f"\n📊 Dataset diversity achieved:")
+        for entry in traces_per_round:
+            logger.info(f"  {entry['dataset']}: {entry['traces']} traces")
         
         return all_traces
     
