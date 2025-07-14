@@ -21,26 +21,20 @@ wheels/
 *.egg
 MANIFEST
 
-# PyTorch & Model files
-*.pth
+# PyTorch Models (too large for git)
 *.pt
-*.bin
-*.safetensors
-training_state.pth
-model_state.pth
-training_args.bin
+*.pth
+*.ckpt
+checkpoints/
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Large data files (use Git LFS or exclude)
+routing_data/*.pkl
 
-# Environment
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+# Training results and logs
+*.log
+logs/
+wandb/
+*_results_*.json
 
 # IDE
 .vscode/
@@ -58,35 +52,23 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Logs and outputs
-logs/
-*.log
-outputs/
-results/
-checkpoints/
-wandb/
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.yml
 
-# Model directories with large files
-switch_training/models/*/
-!switch_training/models/.gitkeep
+# Jupyter
+.ipynb_checkpoints/
 
-# Benchmark results
-benchmark_results_*.json
-benchmark_report_*.md
-benchmark_plots_*/
-quick_benchmark_results.json
-quick_benchmark_plots/
-speculation_mode_comparison.json
-model_comparison.json
-
-# Cache
-.cache/
-.pytest_cache/
+# Claude settings
+.claude/
 
 # Temporary files
-*.tmp
-*.temp
-
-# Large data files (tracked by Git LFS)
-routing_data/*.pkl
-*.pkl
+tmp/
+temp/
+EOF < /dev/null
