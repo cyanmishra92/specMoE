@@ -26,10 +26,19 @@ The collection system captures **real MoE routing traces** by running inference 
 ### Basic Usage
 ```bash
 # Collect 3000 real traces from benchmark datasets (default)
-python scripts/collection/collect_robust_traces.py
+python scripts/collection/collect_robust_traces.py --traces 3000
 
-# Collect specific number of traces
-python scripts/collection/collect_robust_traces.py --traces 1000
+# Large collection from 170+ papers
+python scripts/collection/collect_robust_traces.py --traces 10000
+
+# Mixed mode (real + synthetic)
+python scripts/collection/collect_robust_traces.py --traces 5000 --mode mixed --real-ratio 0.7
+
+# Real data only mode
+python scripts/collection/collect_robust_traces.py --traces 5000 --mode real
+
+# After collection, analyze the traces
+python scripts/analysis/comprehensive_expert_analysis.py
 
 # Quick test with smaller model
 python scripts/collection/collect_robust_traces.py --traces 100 --model google/switch-base-32

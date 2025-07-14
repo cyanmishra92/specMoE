@@ -1,0 +1,147 @@
+{
+  "1": [
+    {
+      "sample_id": "sent_11_layer_1",
+      "expert_sequence": [
+        5,
+        59,
+        123,
+        21,
+        4,
+        82,
+        100,
+        59,
+        17,
+        29,
+        101,
+        64,
+        7
+      ],
+      "sequence_length": 13,
+      "dataset_name": "small_experimental"
+    }
+  ],
+  "3": [
+    {
+      "sample_id": "sent_11_layer_3",
+      "expert_sequence": [
+        27,
+        8,
+        8,
+        27,
+        8,
+        8,
+        3,
+        3,
+        3,
+        27,
+        8,
+        3,
+        8
+      ],
+      "sequence_length": 13,
+      "dataset_name": "small_experimental"
+    }
+  ],
+  "5": [
+    {
+      "sample_id": "sent_1_layer_5",
+      "expert_sequence": [
+        15,
+        21,
+        15,
+        15,
+        15,
+        21,
+        23,
+        111,
+        15,
+        111,
+        21,
+        111,
+        23,
+        111,
+        15
+      ],
+      "sequence_length": 15,
+      "dataset_name": "small_experimental"
+    }
+  ],
+  "7": [
+    {
+      "sample_id": "sent_11_layer_7",
+      "expert_sequence": [
+        43,
+        76,
+        58,
+        1,
+        123,
+        58,
+        58,
+        1,
+        76,
+        123,
+        58,
+        43,
+        92
+      ],
+      "sequence_length": 13,
+      "dataset_name": "small_experimental"
+    }
+  ],
+  "9": [
+    {
+      "sample_id": "sent_10_layer_9",
+      "expert_sequence": [
+        35,
+        14,
+        98,
+        11,
+        35,
+        17,
+        14,
+        11,
+        35,
+        17,
+        98,
+        9,
+        17,
+        9,
+        98,
+        14,
+        64,
+        98,
+        11,
+        9,
+        64
+      ],
+      "sequence_length": 21,
+      "dataset_name": "small_experimental"
+    }
+  ],
+  "11": [
+    {
+      "sample_id": "sent_5_layer_11",
+      "expert_sequence": [
+        93,
+        100,
+        20,
+        48,
+        24,
+        66,
+        66,
+        65,
+        65,
+        99,
+        80,
+        15,
+        24,
+        65,
+        93,
+        20
+      ],
+      "sequence_length": 16,
+      "dataset_name": "small_experimental"
+    }
+  ]
+}

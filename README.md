@@ -42,11 +42,17 @@ python scripts/pipelines/run_working_pipeline.py
 Or run individual components:
 
 ```bash
-# Step 1: Collect routing traces (128 experts - takes time!)
-python scripts/collection/collect_robust_traces.py
+# Step 1: Collect routing traces from Switch Transformers
+python scripts/collection/collect_robust_traces.py --traces 3000
 
-# Step 2: Train and test speculation models
-python scripts/training/proper_train_test.py
+# Step 2: Analyze expert usage patterns
+python scripts/analysis/comprehensive_expert_analysis.py
+
+# Step 3: Visualize expert traces
+python scripts/analysis/visualize_expert_traces.py
+
+# Step 4: Train speculation models
+python scripts/training/improved_speculation_training.py
 
 # Step 3: Test individual approaches
 python scripts/evaluation/test_individual_approaches.py
@@ -75,29 +81,36 @@ specMoE/
 │       └── device_profiler.py
 ├── 🛠️ Scripts (Working Pipeline)
 │   ├── collection/                 # Data collection
-│   │   ├── collect_robust_traces.py      # 128-expert traces
-│   │   └── collect_working_final.py      # Confirmed working collector
+│   │   └── collect_robust_traces.py      # 128-expert traces from Switch Transformers
+│   ├── analysis/                   # Expert analysis & visualization
+│   │   ├── comprehensive_expert_analysis.py  # Statistical analysis
+│   │   ├── visualize_expert_traces.py         # Trace visualization
+│   │   └── create_small_dataset.py            # Small experimental dataset
 │   ├── training/                   # Model training
-│   │   └── proper_train_test.py          # Robust train/test splits
-│   ├── evaluation/                 # Testing & comparison
-│   │   ├── test_individual_approaches.py
-│   │   └── compare_all_approaches.py
-│   ├── pipelines/                  # Complete pipelines
-│   │   └── run_working_pipeline.py       # Main pipeline
-│   └── check_current_status.py    # Status checker
+│   │   └── improved_speculation_training.py   # Main training script
+│   ├── benchmarks/                 # Performance benchmarks
+│   │   ├── memory_transfer_benchmark.py       # Memory transfer analysis
+│   │   └── run_memory_benchmarks.py           # Comprehensive benchmarks
+│   └── visualization/              # Plot generation
+│       └── latency_analysis_plots.py          # Publication-quality plots
 ├── 🎯 Applications
 │   ├── main.py                     # Custom model demo
 │   └── main_pretrained.py          # Pre-trained model demo
 ├── 📊 Data & Results
-│   ├── routing_data/               # Collected routing traces
-│   ├── trained_models/             # Trained speculation models
-│   ├── benchmark_results/          # Performance results
-│   └── evaluation_results/         # Evaluation outputs
+│   ├── routing_data/               # Collected routing traces & statistics
+│   │   ├── comprehensive_expert_statistics.json  # Layer-wise statistics
+│   │   ├── expert_statistics_3d.json             # 3D structure (layer→expert→freq)
+│   │   └── sample_trace_paths.json               # Sample expert sequences
+│   ├── benchmark_results/          # Performance benchmarks
+│   ├── plots/                      # Generated visualizations
+│   └── simulation_results/         # Memory simulation results
 ├── 📖 Documentation
 │   ├── README.md                   # This file
-│   ├── QUICK_START.md             # Quick start guide
-│   ├── TRAINING_RESULTS_SUMMARY.md
-│   └── docs/                      # Additional documentation
+│   ├── docs/
+│   │   ├── COLLECTION_GUIDE.md     # Trace collection guide
+│   │   ├── EXPERT_ANALYSIS_GUIDE.md # Expert analysis guide
+│   │   ├── FINAL_PERFORMANCE_REPORT.md # Performance analysis
+│   │   └── MEMORY_MANAGEMENT_GUIDE.md  # Memory optimization guide
 └── 🗃️ Archive
     └── archive_unused/            # Unused/broken scripts
 ```
