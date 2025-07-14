@@ -107,12 +107,12 @@ class RobustTraceCollector:
         """Collect from datasets we know work"""
         all_traces = []
         
-        # Test each dataset individually
+        # Test each dataset individually with reduced samples
         datasets_to_try = [
-            {'name': 'cnn_dailymail', 'config': '3.0.0', 'samples': 500},
-            {'name': 'imdb', 'config': None, 'samples': 300},
-            {'name': 'wikitext', 'config': 'wikitext-2-raw-v1', 'samples': 200},
-            {'name': 'squad', 'config': 'plain_text', 'samples': 200}
+            {'name': 'cnn_dailymail', 'config': '3.0.0', 'samples': 100},
+            {'name': 'imdb', 'config': None, 'samples': 50},
+            {'name': 'wikitext', 'config': 'wikitext-2-raw-v1', 'samples': 50},
+            {'name': 'squad', 'config': 'plain_text', 'samples': 50}
         ]
         
         for dataset_config in datasets_to_try:
@@ -234,10 +234,10 @@ class RobustTraceCollector:
     def _process_single_text_robust(self, input_text, dataset_name, sample_id):
         """Process single text with robust error handling"""
         try:
-            # Tokenize
+            # Tokenize with smaller max length to avoid memory issues
             inputs = self.tokenizer(
                 input_text,
-                max_length=256,
+                max_length=128,  # Reduced from 256
                 truncation=True,
                 padding=True,
                 return_tensors="pt"
@@ -246,8 +246,10 @@ class RobustTraceCollector:
             device = next(self.model.parameters()).device
             inputs = {k: v.to(device) for k, v in inputs.items()}
             
-            # Forward pass
+            # Forward pass with memory management
             with torch.no_grad():
+                torch.cuda.empty_cache()  # Clear cache before inference
+                
                 outputs = self.model(
                     input_ids=inputs['input_ids'],
                     attention_mask=inputs['attention_mask'],
@@ -258,15 +260,27 @@ class RobustTraceCollector:
             # Extract traces
             if hasattr(outputs, 'encoder_router_logits') and outputs.encoder_router_logits is not None:
                 logger.debug(f"Found encoder router logits for {sample_id}")
-                return self._extract_traces_from_outputs(
+                traces = self._extract_traces_from_outputs(
                     inputs, 
                     outputs.encoder_router_logits, 
                     dataset_name, 
                     sample_id
                 )
+                
+                # Clean up memory
+                del outputs
+                torch.cuda.empty_cache()
+                
+                return traces
             else:
                 logger.warning(f"No encoder_router_logits found for {sample_id}")
             
+        except torch.cuda.OutOfMemoryError:
+            logger.error(f"CUDA OOM for {sample_id}, clearing cache and skipping")
+            torch.cuda.empty_cache()
+        except KeyboardInterrupt:
+            logger.info(f"Interrupted during {sample_id}")
+            raise
         except Exception as e:
             logger.error(f"Text processing failed for {sample_id}: {e}")
         
@@ -274,10 +288,23 @@ class RobustTraceCollector:
     
     def _extract_traces_from_outputs(self, inputs, encoder_router_logits, dataset_name, sample_id):
         """Extract traces from model outputs"""
-        import sys
-        import os
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-        from training.gating_data_collector import GatingDataPoint
+        # Simple dataclass to represent gating data points
+        from dataclasses import dataclass
+        from typing import List, Optional
+        
+        @dataclass
+        class GatingDataPoint:
+            """Represents a single gating data point for training"""
+            layer_id: int
+            hidden_states: torch.Tensor
+            input_embeddings: torch.Tensor
+            target_routing: torch.Tensor
+            target_top_k: torch.Tensor
+            prev_layer_gates: List[torch.Tensor]
+            sequence_length: int
+            token_ids: Optional[torch.Tensor]
+            dataset_name: str
+            sample_id: str
         
         traces = []
         logger.debug(f"Processing {len(encoder_router_logits)} layers for sample {sample_id}")
@@ -337,10 +364,23 @@ class RobustTraceCollector:
     
     def _generate_synthetic_traces(self, num_traces):
         """Generate synthetic traces with maximum expert diversity"""
-        import sys
-        import os
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-        from training.gating_data_collector import GatingDataPoint
+        # Simple dataclass to represent gating data points
+        from dataclasses import dataclass
+        from typing import List, Optional
+        
+        @dataclass
+        class GatingDataPoint:
+            """Represents a single gating data point for training"""
+            layer_id: int
+            hidden_states: torch.Tensor
+            input_embeddings: torch.Tensor
+            target_routing: torch.Tensor
+            target_top_k: torch.Tensor
+            prev_layer_gates: List[torch.Tensor]
+            sequence_length: int
+            token_ids: Optional[torch.Tensor]
+            dataset_name: str
+            sample_id: str
         
         logger.info(f"Generating {num_traces} synthetic traces...")
         
@@ -506,6 +546,9 @@ def main(trace_count=3000, mode='real', real_ratio=0.5):
             traces = collector._collect_from_working_datasets()
             if len(traces) < trace_count:
                 logger.warning(f"Only collected {len(traces)} real traces, requested {trace_count}")
+                logger.info(f"Falling back to synthetic traces for remaining {trace_count - len(traces)} traces")
+                synthetic_traces = collector._generate_synthetic_traces(trace_count - len(traces))
+                traces.extend(synthetic_traces)
         elif mode == 'synthetic':
             # Synthetic only
             traces = collector._generate_synthetic_traces(trace_count)
