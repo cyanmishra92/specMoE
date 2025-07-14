@@ -5,132 +5,259 @@ This document provides comprehensive instructions for training and evaluating Sw
 ## 📋 Table of Contents
 
 1. [Quick Start](#quick-start)
-2. [Training Options](#training-options)
-3. [Evaluation Methods](#evaluation-methods)
-4. [Hardware Requirements](#hardware-requirements)
-5. [Troubleshooting](#troubleshooting)
-6. [Results Interpretation](#results-interpretation)
+2. [Data Preparation](#data-preparation)
+3. [Training Options](#training-options)
+4. [Evaluation Methods](#evaluation-methods)
+5. [Hardware Requirements](#hardware-requirements)
+6. [Troubleshooting](#troubleshooting)
+7. [Results Interpretation](#results-interpretation)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 ```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install PyPDF2 PyMuPDF pdfplumber nltk transformers torch wandb
 
 # Ensure you're in the scripts directory
 cd switch_training/scripts
 ```
 
-### Basic Training
+### Complete Workflow
+1. **Process PDFs → Generate Dataset**
+2. **Train Switch Transformer**
+3. **Evaluate Model**
+
+## 📄 Data Preparation
+
+### PDF Processing Pipeline
+
+The data preparation follows this workflow:
+1. **Raw PDFs** → Individual processed JSONs → **Combined train/val/test datasets**
+
+### Step 1: Process PDFs
 ```bash
-# Stable Switch Transformer training (recommended)
-python train_switch_stabilized.py \
-  --model_name google/switch-base-8 \
-  --batch_size 2 \
-  --learning_rate 1e-5 \
-  --num_epochs 5 \
-  --patience 10
+# Process all PDFs in raw_pdfs directory
+python process_pdfs.py --raw_pdf_dir ../data/raw_pdfs --output_dir ../data
 ```
 
-### Basic Evaluation
-```bash
-# Quick evaluation
-python simple_switch_eval.py --model_path ../models/switch_stabilized/final_model
+**What this does**:
+- Extracts text from PDFs using PyMuPDF, pdfplumber, and PyPDF2
+- Cleans and normalizes text (removes URLs, page numbers, etc.)
+- Segments text into training-suitable chunks
+- Creates train/val/test splits (80%/10%/10%)
+- Generates both JSON and TXT files for inspection
 
-# Comprehensive evaluation
-python evaluate_model.py --model_path ../models/switch_stabilized/final_model --model_type switch
+**Output Structure**:
+```
+data/
+├── processed/          # Individual PDF processing results
+│   ├── paper1.txt     # Raw extracted text
+│   └── paper1_processed.json  # Processed segments
+├── train/
+│   ├── train_data.json    # Training dataset
+│   └── train_data.txt     # Human-readable version
+├── val/
+│   ├── val_data.json      # Validation dataset
+│   └── val_data.txt       # Human-readable version
+└── test/
+    ├── test_data.json     # Test dataset
+    └── test_data.txt      # Human-readable version
+```
+
+### Step 2: Verify Data Quality
+```bash
+# Check dataset statistics
+wc -l ../data/train/train_data.json
+wc -l ../data/val/val_data.json
+wc -l ../data/test/test_data.json
+
+# Inspect samples
+head -n 10 ../data/train/train_data.txt
 ```
 
 ## 🎯 Training Options
 
-### 1. Stabilized Switch Transformer (Primary Method)
+### 1. Easy Training Launcher (Recommended)
 
-**Purpose**: Fine-tune pre-trained Switch Transformers with extensive stability measures.
+**Purpose**: Simple launcher with automatic GPU detection and selection.
 
-**Script**: `train_switch_stabilized.py`
+**Script**: `launch_training.py`
+
+**Features**:
+- Automatic GPU detection and selection
+- Single GPU and multi-GPU support
+- Data availability checking
+- GPU status display
+- Confirmation prompts
+
+**Usage**:
+```bash
+# Check GPU status
+python launch_training.py --status
+
+# Train with 1 GPU (single GPU training)
+python launch_training.py --experts 128 --gpus 1
+
+# Train with 2 GPUs (distributed training)
+python launch_training.py --experts 128 --gpus 2
+
+# Train with 4 GPUs (distributed training)
+python launch_training.py --experts 256 --gpus 4 --num_epochs 5
+```
+
+### 2. Distributed Training (Multi-GPU)
+
+**Purpose**: Multi-GPU distributed training with automatic GPU selection.
+
+**Script**: `train_switch_distributed.py`
+
+**Features**:
+- Intelligent GPU selection based on memory and utilization
+- Automatic fallback to fewer GPUs if requested count unavailable
+- Linear learning rate scaling for multi-GPU
+- Distributed data loading and synchronization
+- Proper cleanup and error handling
+
+**Usage**:
+```bash
+# Auto-select 4 best GPUs
+python train_switch_distributed.py --experts 128 --gpus 4
+
+# Train with 2 GPUs, custom settings
+python train_switch_distributed.py --experts 256 --gpus 2 \
+  --batch_size 4 --learning_rate 4e-6 --num_epochs 5
+
+# Force single GPU training
+python train_switch_distributed.py --experts 128 --single_gpu
+```
+
+### 3. Single GPU Training (Unified)
+
+**Purpose**: Single GPU training with auto-optimized settings.
+
+**Script**: `train_switch_unified.py`
+
+**Available Models**:
+- `switch-base-8` (8 experts, ~7.4B params)
+- `switch-base-16` (16 experts, ~7.4B params)
+- `switch-base-32` (32 experts, ~7.4B params)
+- `switch-base-64` (64 experts, ~7.4B params)
+- `switch-base-128` (128 experts, ~7.4B params)
+- `switch-base-256` (256 experts, ~7.4B params) ← **Largest base model**
 
 **Key Features**:
-- Router weight stabilization to prevent routing chaos
-- Ultra-safe data filtering (ASCII only, proper sentence structure)
-- FP32 training for maximum numerical stability
-- Aggressive gradient clipping and NaN detection
-- Emergency checkpointing
-
-**Basic Usage**:
-```bash
-python train_switch_stabilized.py [OPTIONS]
-```
-
-**Available Options**:
-- `--model_name`: Switch model to use (default: `google/switch-base-8`)
-- `--batch_size`: Training batch size (default: 1)
-- `--learning_rate`: Learning rate (default: 5e-6)
-- `--num_epochs`: Number of training epochs (default: 2)
-- `--max_length`: Maximum sequence length (default: 256)
-- `--patience`: Early stopping patience (default: 3)
-- `--warmup_ratio`: Warmup ratio for scheduler (default: 0.2)
-- `--weight_decay`: Weight decay for optimizer (default: 0.001)
-- `--data_dir`: Directory containing training data (default: "../data")
-- `--output_dir`: Output directory for trained models (default: "../models/switch_stabilized")
-
-### 2. Small MoE Model (Alternative)
-
-**Purpose**: Train a custom MoE model based on GPT-2 with added expert layers.
-
-**Script**: `train_small_moe.py`
+- Auto-optimized settings per expert count
+- Router weight stabilization
+- FP32 training for maximum stability
+- Gradient clipping and NaN detection
+- Progressive difficulty handling
 
 **Usage**:
 ```bash
-python train_small_moe.py \
+# Train Switch with 128 experts (auto-optimized)
+python train_switch_unified.py --experts 128
+
+# Train Switch with 256 experts (largest base model)
+python train_switch_unified.py --experts 256
+
+# Override auto-optimization if needed
+python train_switch_unified.py --experts 128 \
   --batch_size 4 \
-  --learning_rate 2e-5 \
-  --num_epochs 3
+  --learning_rate 3e-6 \
+  --num_epochs 5
 ```
 
-### 3. Mixtral MoE (Large Scale)
+**Expert-Specific Auto-Optimization**:
+| Experts | Batch Size | Learning Rate | Grad Accum | Warmup | Max Grad Norm |
+|---------|------------|---------------|------------|---------|---------------|
+| 8       | 6          | 5e-6         | 2          | 0.1     | 1.0          |
+| 16      | 5          | 4e-6         | 3          | 0.1     | 1.0          |
+| 32      | 4          | 3e-6         | 4          | 0.12    | 0.8          |
+| 64      | 4          | 3e-6         | 4          | 0.12    | 0.8          |
+| 128     | 3          | 2e-6         | 5          | 0.15    | 0.6          |
+| 256     | 3          | 2e-6         | 6          | 0.15    | 0.5          |
 
-**Purpose**: Fine-tune Mixtral models (requires significant memory).
+### 2. Legacy Training Scripts
 
-**Script**: `train_mixtral_moe.py`
+**For specific models**:
+- `train_switch_128.py` - Switch-128 specific
+- `train_switch_256.py` - Switch-256 specific
+- `train_switch_stabilized.py` - Original stabilized training
 
-**Usage**:
+### 3. Alternative Models
+
+**Small MoE**: `train_small_moe.py`
 ```bash
-python train_mixtral_moe.py \
-  --model_name mistralai/Mixtral-8x7B-v0.1 \
-  --batch_size 1
+python train_small_moe.py --batch_size 4 --learning_rate 2e-5 --num_epochs 3
+```
+
+**Mixtral MoE**: `train_mixtral_moe.py`
+```bash
+python train_mixtral_moe.py --model_name mistralai/Mixtral-8x7B-v0.1 --batch_size 1
 ```
 
 ## 🎛️ Hardware-Specific Configurations
 
-### RTX 3090 (24GB VRAM)
+### Single GPU Systems
+
+#### RTX 3090 (24GB VRAM)
 ```bash
 # Conservative settings for stability
-python train_switch_stabilized.py \
-  --model_name google/switch-base-8 \
-  --batch_size 2 \
-  --learning_rate 1e-5 \
-  --num_epochs 5 \
-  --patience 10
+python launch_training.py --experts 32 --gpus 1 \
+  --batch_size 2 --learning_rate 4e-6 --num_epochs 3
 ```
 
-### A6000 (48GB VRAM)
+#### A6000 (48GB VRAM)
 ```bash
-# Larger model with higher batch size
-CUDA_VISIBLE_DEVICES=0 python train_switch_stabilized.py \
-  --model_name google/switch-base-16 \
-  --batch_size 4 \
-  --learning_rate 8e-6 \
-  --num_epochs 4 \
-  --patience 8 \
-  --max_length 512 \
-  --output_dir ../models/switch_large
+# Larger model with optimized settings
+python launch_training.py --experts 128 --gpus 1 \
+  --num_epochs 5 --disable_wandb
 ```
 
-### Multi-GPU Systems
+#### A100 (80GB VRAM)
 ```bash
-# Force single GPU to avoid peer mapping issues
-CUDA_VISIBLE_DEVICES=0 python train_switch_stabilized.py [OPTIONS]
+# Largest base model
+python launch_training.py --experts 256 --gpus 1 \
+  --num_epochs 5
+```
+
+### Multi-GPU Systems (Distributed Training)
+
+#### 2x RTX 3090 (48GB total)
+```bash
+# Distributed training with moderate model
+python launch_training.py --experts 64 --gpus 2 \
+  --num_epochs 5 --disable_wandb
+```
+
+#### 2x A6000 (96GB total)
+```bash
+# Large model distributed training
+python launch_training.py --experts 128 --gpus 2 \
+  --num_epochs 5 --disable_wandb
+```
+
+#### 4x A6000 (192GB total)
+```bash
+# Largest model with maximum parallelism
+python launch_training.py --experts 256 --gpus 4 \
+  --num_epochs 5 --disable_wandb
+```
+
+#### 4x A100 (320GB total)
+```bash
+# Maximum performance configuration
+python launch_training.py --experts 256 --gpus 4 \
+  --num_epochs 5 --batch_size 4
+```
+
+### Advanced Multi-GPU Configuration
+```bash
+# Manual GPU selection and custom settings
+python train_switch_distributed.py --experts 128 --gpus 4 \
+  --batch_size 3 --learning_rate 6e-6 --num_epochs 5 \
+  --gradient_accumulation_steps 2 --disable_wandb
 ```
 
 ## 📊 Evaluation Methods
@@ -141,20 +268,16 @@ CUDA_VISIBLE_DEVICES=0 python train_switch_stabilized.py [OPTIONS]
 
 **Script**: `simple_switch_eval.py`
 
-**What it measures**:
-- Basic text generation capability
-- Perplexity on training data format
-- Model loading verification
-- Generation success rate
-
 **Usage**:
 ```bash
-python simple_switch_eval.py --model_path PATH_TO_MODEL
+python simple_switch_eval.py --model_path ../models/switch_128_experts
 ```
 
-**Output**: 
-- JSON results file with detailed metrics
-- Text summary with human-readable results
+**What it measures**:
+- Basic text generation capability
+- Perplexity on test data
+- Model loading verification
+- Generation success rate
 
 ### 2. Comprehensive Evaluation
 
@@ -162,246 +285,236 @@ python simple_switch_eval.py --model_path PATH_TO_MODEL
 
 **Script**: `evaluate_model.py`
 
-**What it measures**:
-- Perplexity calculation with proper seq2seq handling
-- Token-level prediction accuracy
-- Research domain concept understanding
-- Text generation quality assessment
-- Model parameter statistics
-
 **Usage**:
 ```bash
 python evaluate_model.py \
-  --model_path PATH_TO_MODEL \
-  --model_type MODEL_TYPE
+  --model_path ../models/switch_128_experts \
+  --model_type switch
 ```
+
+**What it measures**:
+- Perplexity with proper seq2seq handling
+- Research domain concept understanding
+- Text generation quality assessment
+- Model parameter statistics
 
 **Supported Model Types**:
 - `switch`: Switch Transformer models
 - `small_moe`: Custom small MoE models
 - `mixtral`: Mixtral-based models
 
-### 3. Custom Evaluation
+## 📈 Model Specifications
 
-**Purpose**: Evaluate specific aspects or create custom metrics.
+### Switch Transformer Models Comparison
 
-**Example**:
-```python
-from simple_switch_eval import simple_evaluation
+| Model | Experts | Parameters | Memory Req | Recommended Hardware |
+|-------|---------|------------|------------|---------------------|
+| `switch-base-8` | 8 | ~7.4B | ~8GB | RTX 3090+ |
+| `switch-base-16` | 16 | ~7.4B | ~10GB | RTX 3090+ |
+| `switch-base-32` | 32 | ~7.4B | ~14GB | RTX 3090+ |
+| `switch-base-64` | 64 | ~7.4B | ~20GB | A6000+ |
+| `switch-base-128` | 128 | ~7.4B | ~32GB | A6000+ |
+| `switch-base-256` | 256 | ~7.4B | ~48GB | A6000+ |
 
-# Custom evaluation
-results = simple_evaluation("../models/switch_stabilized/final_model")
-print(f"Perplexity: {results.get('perplexity', 'N/A')}")
-```
+### Training Time Estimates (30K samples)
 
-## 📈 Model Configurations
-
-### Available Switch Transformer Models
-
-| Model | Parameters | Experts | Memory Req | Recommended Hardware |
-|-------|------------|---------|------------|---------------------|
-| `google/switch-base-8` | 619M | 8 | ~6GB | RTX 3090+ |
-| `google/switch-base-16` | 1.07B | 16 | ~10GB | A6000+ |
-| `google/switch-base-32` | 2.1B | 32 | ~18GB | A100+ |
-
-### Training Time Estimates
-
-| Model | Hardware | Batch Size | Estimated Time |
-|-------|----------|------------|----------------|
-| switch-base-8 | RTX 3090 | 2 | 15-30 min |
-| switch-base-16 | A6000 | 4 | 30-60 min |
-| switch-base-32 | A100 | 6 | 60-120 min |
+| Model | Hardware | Estimated Time |
+|-------|----------|----------------|
+| switch-base-8 | RTX 3090 | 45-90 min |
+| switch-base-32 | RTX 3090 | 60-120 min |
+| switch-base-128 | A6000 | 90-180 min |
+| switch-base-256 | A6000 | 120-240 min |
 
 ## 🔧 Troubleshooting
 
 ### Common Issues and Solutions
 
-#### 1. NaN Loss During Training
-**Symptoms**: Loss becomes NaN, training stops
-**Causes**: Learning rate too high, numerical instability
-**Solutions**:
-- Reduce learning rate (try 5e-6 instead of 1e-5)
-- Ensure FP32 training (avoid mixed precision)
-- Check router weight initialization
+#### 1. PDF Processing Issues
+**NLTK punkt_tab not found**:
+```bash
+python -c "import nltk; nltk.download('punkt_tab')"
+```
 
-#### 2. CUDA Out of Memory
-**Symptoms**: `RuntimeError: CUDA out of memory`
-**Solutions**:
+**PDFs not processing**:
+```bash
+pip install PyPDF2 PyMuPDF pdfplumber
+```
+
+#### 2. Training Issues
+
+**NaN Loss During Training**:
+- Router weights become unstable
+- **Solution**: Use unified script (auto-applies stabilization)
+- **Manual fix**: Reduce learning rate, ensure FP32 training
+
+**CUDA Out of Memory**:
 ```bash
 # Reduce batch size
---batch_size 1
-
-# Increase gradient accumulation
---gradient_accumulation 8
+python train_switch_unified.py --experts 128 --batch_size 2
 
 # Use smaller model
---model_name google/switch-base-8
+python train_switch_unified.py --experts 64
 ```
 
-#### 3. Multi-GPU Issues
-**Symptoms**: `peer mapping resources exhausted`
-**Solutions**:
+**Multi-GPU Issues**:
 ```bash
 # Force single GPU
-CUDA_VISIBLE_DEVICES=0 python train_switch_stabilized.py [OPTIONS]
+CUDA_VISIBLE_DEVICES=0 python train_switch_unified.py --experts 128
 ```
 
-#### 4. Poor Generation Quality
-**Symptoms**: Gibberish output, repetitive text
-**Causes**: Insufficient training, poor data quality
-**Solutions**:
-- Increase training epochs
-- Reduce early stopping patience
-- Check data filtering settings
-
-#### 5. Slow Training
-**Symptoms**: Very slow iteration speed
-**Solutions**:
-- Increase batch size if memory allows
-- Use mixed precision (but less stable)
-- Check for CPU bottlenecks in data loading
-
-### Data Issues
-
-#### File Not Found Errors
+**Wandb Import Error**:
 ```bash
-# Ensure correct directory structure
-ls ../data/train/finetuning_train.json
-ls ../data/val/finetuning_val.json
-ls ../data/test/finetuning_test.json
+# Disable wandb
+python train_switch_unified.py --experts 128 --disable_wandb
 ```
 
-#### Empty or Insufficient Data
-**Check data statistics**:
+#### 3. Data Issues
+
+**Empty Dataset**:
 ```bash
-python debug_data.py
+# Check if PDFs were processed
+ls -la ../data/train/
+wc -l ../data/train/train_data.json
+```
+
+**Poor Quality Data**:
+```bash
+# Re-process PDFs with better filtering
+python process_pdfs.py --raw_pdf_dir ../data/raw_pdfs --output_dir ../data
 ```
 
 ## 📋 Results Interpretation
+
+### Dataset Statistics (Current)
+- **Total PDFs**: ~166 research papers
+- **Training samples**: ~30,000 text segments
+- **Validation samples**: ~3,000 text segments
+- **Test samples**: ~3,000 text segments
 
 ### Perplexity Guidelines
 
 | Perplexity Range | Quality | Interpretation |
 |------------------|---------|----------------|
-| 10-30 | Excellent | Well-trained, coherent generation |
-| 30-80 | Good | Reasonable performance, some issues |
-| 80-200 | Poor | Undertrained, many coherence problems |
-| 200+ | Very Poor | Severe training issues, mostly gibberish |
+| 10-40 | Excellent | Well-trained, coherent generation |
+| 40-80 | Good | Reasonable performance |
+| 80-200 | Poor | Undertrained, needs more epochs |
+| 200+ | Very Poor | Severe training issues |
 
 ### Generation Quality Assessment
 
 **Good Signs**:
-- Coherent sentence structure
-- Research paper terminology usage
+- Coherent research paper language
+- Proper technical terminology
 - Logical flow of ideas
 - Minimal repetition
 
 **Warning Signs**:
 - Repetitive phrases
-- Broken sentence structure
-- Random punctuation
+- Broken grammar
 - Non-English output
+- Random symbols
 
-### Training Progress Indicators
+## 🔄 Complete Workflow Example
 
-**Healthy Training**:
-- Decreasing loss over time
-- Stable gradient norms
-- No NaN occurrences
-- Validation loss tracking training loss
+### Full Training Pipeline
 
-**Problematic Training**:
-- Loss plateaus immediately
-- Frequent NaN warnings
-- Extremely high or low gradient norms
-- Large gap between training and validation loss
+1. **Process PDFs**:
+```bash
+python process_pdfs.py --raw_pdf_dir ../data/raw_pdfs --output_dir ../data
+```
+
+2. **Train Switch Model**:
+```bash
+# For A6000
+CUDA_VISIBLE_DEVICES=0 python train_switch_unified.py --experts 128 --disable_wandb
+```
+
+3. **Quick Evaluation**:
+```bash
+python simple_switch_eval.py --model_path ../models/switch_128_experts
+```
+
+4. **Comprehensive Evaluation**:
+```bash
+python evaluate_model.py \
+  --model_path ../models/switch_128_experts \
+  --model_type switch
+```
+
+5. **Review Results**:
+```bash
+ls ../evaluations/
+cat ../evaluations/simple_switch_eval_*.txt
+```
 
 ## 🗂️ File Structure
 
 ```
 switch_training/
 ├── scripts/
-│   ├── train_switch_stabilized.py    # Main training script
-│   ├── simple_switch_eval.py         # Quick evaluation
-│   ├── evaluate_model.py             # Comprehensive evaluation
-│   ├── train_small_moe.py           # Alternative MoE training
-│   ├── train_mixtral_moe.py         # Mixtral training
-│   ├── debug_data.py                # Data debugging
-│   └── config.yaml                  # Configuration file
+│   ├── process_pdfs.py              # PDF processing pipeline
+│   ├── train_switch_unified.py      # Main training script (NEW)
+│   ├── train_switch_128.py          # Switch-128 specific
+│   ├── train_switch_256.py          # Switch-256 specific
+│   ├── train_switch_stabilized.py   # Original stabilized training
+│   ├── simple_switch_eval.py        # Quick evaluation
+│   ├── evaluate_model.py            # Comprehensive evaluation
+│   └── train_small_moe.py          # Alternative MoE training
 ├── data/
-│   ├── train/finetuning_train.json  # Training data
-│   ├── val/finetuning_val.json      # Validation data
-│   └── test/finetuning_test.json    # Test data
+│   ├── raw_pdfs/                    # Original PDF files
+│   ├── processed/                   # Individual PDF processing
+│   ├── train/train_data.json        # Training dataset
+│   ├── val/val_data.json           # Validation dataset
+│   └── test/test_data.json         # Test dataset
 ├── models/                          # Saved models (gitignored)
 ├── evaluations/                     # Evaluation results
-├── requirements.txt                 # Python dependencies
 └── TRAINING_GUIDE.md               # This document
 ```
 
-## 🔄 Workflow Example
+## 🛠️ Advanced Usage
 
-### Complete Training and Evaluation Workflow
-
-1. **Prepare Environment**:
+### Custom Data Processing
 ```bash
-cd switch_training/scripts
-pip install -r ../requirements.txt
+# Process with custom settings
+python process_pdfs.py \
+  --raw_pdf_dir ../data/raw_pdfs \
+  --output_dir ../data \
+  --max_length 1024 \
+  --min_length 50
 ```
 
-2. **Start Training**:
+### Multi-Model Training
 ```bash
-python train_switch_stabilized.py \
-  --model_name google/switch-base-8 \
-  --batch_size 2 \
-  --learning_rate 1e-5 \
-  --num_epochs 5 \
-  --patience 10
+# Train multiple models in sequence
+for experts in 32 64 128; do
+  python train_switch_unified.py --experts $experts --disable_wandb
+done
 ```
 
-3. **Quick Evaluation**:
+### Batch Evaluation
 ```bash
-python simple_switch_eval.py --model_path ../models/switch_stabilized/final_model
-```
-
-4. **Comprehensive Evaluation**:
-```bash
-python evaluate_model.py \
-  --model_path ../models/switch_stabilized/final_model \
-  --model_type switch
-```
-
-5. **Review Results**:
-```bash
-# Check evaluation outputs
-ls ../evaluations/
-cat ../evaluations/simple_switch_eval_*.txt
-```
-
-6. **Iterate if Needed**:
-```bash
-# If results are poor, retrain with different settings
-python train_switch_stabilized.py \
-  --learning_rate 5e-6 \
-  --num_epochs 8 \
-  --patience 15
+# Evaluate all trained models
+for model_dir in ../models/switch_*_experts; do
+  python simple_switch_eval.py --model_path $model_dir
+done
 ```
 
 ## 📚 Additional Resources
 
 - **Switch Transformer Paper**: [Switch Transformer: Scaling to Trillion Parameter Models](https://arxiv.org/abs/2101.03961)
 - **HuggingFace Documentation**: [Switch Transformers](https://huggingface.co/docs/transformers/model_doc/switch_transformers)
-- **MoE Training Best Practices**: [Mixture of Experts Guide](https://huggingface.co/blog/moe)
+- **Available Models**: [Switch Transformer Collection](https://huggingface.co/collections/google/switch-transformers-release-6548c35c6507968374b56d1f)
 
-## 🐛 Bug Reports and Issues
+## 🐛 Support
 
-If you encounter issues not covered in this guide:
+If you encounter issues:
 
-1. Check the emergency checkpoint directory for partial training state
-2. Review the full error traceback
+1. Check the auto-generated `training_info.json` in model output directory
+2. Review error logs in the `logs/` subdirectory
 3. Verify hardware compatibility and memory requirements
-4. Test with smaller models or reduced batch sizes
+4. Test with smaller expert counts first
 5. Ensure all dependencies are correctly installed
 
 ---
 
-*Last updated: July 12, 2025*
+*Last updated: July 14, 2025*
