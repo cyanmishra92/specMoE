@@ -362,7 +362,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
     model = model.to(device)
     
     # Wrap model with DDP
-    model = DDP(model, device_ids=[gpu_ids[rank]], find_unused_parameters=True)
+    model = DDP(model, device_ids=[gpu_ids[rank]], find_unused_parameters=False)
     
     # Create datasets
     data_dir = Path(args.data_dir)
@@ -417,7 +417,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         remove_unused_columns=False,
         report_to="wandb" if (rank == 0 and not args.disable_wandb) else None,
         run_name=f"switch-{args.experts}-{world_size}gpu-{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        gradient_checkpointing=True,
+        gradient_checkpointing=False,
         dataloader_pin_memory=True,
         max_grad_norm=config['max_grad_norm'],
         seed=42,
@@ -427,7 +427,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         # Distributed training specific
         local_rank=rank,
         ddp_backend="nccl",
-        ddp_find_unused_parameters=True,
+        ddp_find_unused_parameters=False,
         dataloader_drop_last=True,
     )
     
@@ -444,7 +444,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         data_collator=data_collator,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         callbacks=callbacks,
     )
     

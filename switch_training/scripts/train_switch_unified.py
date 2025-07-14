@@ -338,7 +338,7 @@ def main():
         remove_unused_columns=False,
         report_to="wandb" if not args.disable_wandb else None,
         run_name=f"switch-{args.experts}-{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        gradient_checkpointing=True,
+        gradient_checkpointing=False,
         dataloader_pin_memory=True,
         max_grad_norm=config['max_grad_norm'],
         seed=42,
@@ -360,7 +360,7 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         data_collator=data_collator,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         callbacks=callbacks,
     )
     
