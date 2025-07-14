@@ -311,9 +311,10 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
     # Setup distributed training
     setup_distributed(rank, world_size)
     
-    # Set GPU device
-    device = torch.device(f'cuda:{gpu_ids[rank]}')
-    torch.cuda.set_device(device)
+    # Set GPU device - use local rank for device mapping
+    local_device_id = rank  # Use rank as local device ID
+    device = torch.device(f'cuda:{local_device_id}')
+    torch.cuda.set_device(local_device_id)
     
     # Get model configuration
     model_name = SWITCH_MODELS[args.experts]
@@ -387,8 +388,8 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
     apply_switch_stabilization(model, args.experts)
     model = model.to(device)
     
-    # Wrap model with DDP
-    model = DDP(model, device_ids=[gpu_ids[rank]], find_unused_parameters=False)
+    # Wrap model with DDP - use local device ID
+    model = DDP(model, device_ids=[local_device_id], find_unused_parameters=False)
     
     # Create datasets
     data_dir = Path(args.data_dir)
@@ -405,13 +406,13 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
     )
     
     # Create distributed samplers
-    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank)
-    val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank)
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+    val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False)
     
-    # Data collator
+    # Data collator - pass the underlying model for DDP
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
-        model=model,
+        model=model.module if hasattr(model, 'module') else model,
         padding=True,
         max_length=args.max_length
     )
@@ -608,10 +609,12 @@ def main():
     # Set environment variables for distributed training
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(map(str, gpu_ids))
     
-    # Launch distributed training
+    # Launch distributed training - pass reindexed gpu_ids
+    # After setting CUDA_VISIBLE_DEVICES, GPU indices start from 0
+    reindexed_gpu_ids = list(range(world_size))
     mp.spawn(
         train_distributed,
-        args=(world_size, gpu_ids, args),
+        args=(world_size, reindexed_gpu_ids, args),
         nprocs=world_size,
         join=True
     )
