@@ -127,7 +127,7 @@ def analyze_layer_statistics(traces, num_experts=128):
     return layer_statistics, layer_expert_usage
 
 def create_expert_frequency_plots(layer_expert_usage, layer_statistics, output_dir="routing_data"):
-    """Create frequency plots for each layer"""
+    """Create frequency plots for each layer - showing only frequency vs expertID"""
     print("\n📈 Creating expert frequency plots...")
     
     output_dir = Path(output_dir)
@@ -135,17 +135,17 @@ def create_expert_frequency_plots(layer_expert_usage, layer_statistics, output_d
     
     # Create individual plots for each layer
     for layer_id in sorted(layer_expert_usage.keys()):
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 6))
         
         expert_counts = [layer_expert_usage[layer_id].get(i, 0) for i in range(128)]
         stats = layer_statistics[layer_id]
         
-        # Plot 1: Bar chart of expert usage
-        ax1.bar(range(128), expert_counts, alpha=0.7, color='skyblue')
-        ax1.set_title(f'Layer {layer_id} - Expert Usage Frequency', fontsize=14)
-        ax1.set_xlabel('Expert ID', fontsize=12)
-        ax1.set_ylabel('Usage Count', fontsize=12)
-        ax1.grid(True, alpha=0.3)
+        # Bar chart of expert usage frequency
+        ax.bar(range(128), expert_counts, alpha=0.7, color='skyblue')
+        ax.set_title(f'Layer {layer_id} - Expert Usage Frequency', fontsize=14)
+        ax.set_xlabel('Expert ID', fontsize=12)
+        ax.set_ylabel('Usage Count', fontsize=12)
+        ax.grid(True, alpha=0.3)
         
         # Add statistics text
         stats_text = f"""Statistics:
@@ -156,22 +156,8 @@ Entropy: {stats['entropy_bits']:.2f} bits
 Active: {stats['active_experts']}/128
 Skewness: {stats['skewness']:.3f}"""
         
-        ax1.text(0.02, 0.98, stats_text, transform=ax1.transAxes, 
+        ax.text(0.02, 0.98, stats_text, transform=ax.transAxes, 
                 verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-        
-        # Plot 2: Histogram of usage distribution
-        non_zero_counts = [c for c in expert_counts if c > 0]
-        if non_zero_counts:
-            ax2.hist(non_zero_counts, bins=20, alpha=0.7, color='lightcoral', edgecolor='black')
-            ax2.set_title(f'Layer {layer_id} - Usage Distribution (Non-zero)', fontsize=14)
-            ax2.set_xlabel('Usage Count', fontsize=12)
-            ax2.set_ylabel('Number of Experts', fontsize=12)
-            ax2.grid(True, alpha=0.3)
-            
-            # Add mean line
-            ax2.axvline(stats['mean'], color='red', linestyle='--', linewidth=2, label=f'Mean: {stats["mean"]:.2f}')
-            ax2.axvline(stats['median'], color='green', linestyle='--', linewidth=2, label=f'Median: {stats["median"]:.2f}')
-            ax2.legend()
         
         plt.tight_layout()
         plt.savefig(output_dir / f"layer_{layer_id}_expert_frequency.png", dpi=300, bbox_inches='tight')

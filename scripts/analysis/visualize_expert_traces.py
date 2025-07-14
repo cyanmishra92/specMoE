@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Visualize expert selection traces to understand routing patterns
+Visualize expert selection traces to understand token routing patterns across layers
 """
 
 import pickle
@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 import random
+from collections import defaultdict
 
 def load_traces(pkl_path="routing_data/maximum_real_traces.pkl"):
     """Load traces from pickle file"""
@@ -20,134 +21,148 @@ def load_traces(pkl_path="routing_data/maximum_real_traces.pkl"):
     print(f"Loaded {len(traces)} traces")
     return traces
 
-def extract_expert_sequences(traces, n_traces=10):
-    """Extract expert selection sequences from random traces"""
-    print(f"Extracting expert sequences from {n_traces} random traces...")
+def extract_token_journeys(traces, n_tokens=10):
+    """Extract token journeys across layers (1,3,5,7,9,11)"""
+    print(f"Extracting token journeys for {n_tokens} random tokens...")
     
-    # Group traces by layer for better visualization
-    traces_by_layer = {}
+    # Group traces by sample_id and layer
+    traces_by_sample = defaultdict(dict)
     for trace in traces:
+        sample_id = trace['sample_id']
         layer_id = trace['layer_id']
-        if layer_id not in traces_by_layer:
-            traces_by_layer[layer_id] = []
-        traces_by_layer[layer_id].append(trace)
+        traces_by_sample[sample_id][layer_id] = trace
     
-    # Select random traces from each layer
-    selected_traces = {}
-    for layer_id in sorted(traces_by_layer.keys()):
-        layer_traces = traces_by_layer[layer_id]
-        # Select fewer traces per layer to get total n_traces
-        n_per_layer = max(1, n_traces // len(traces_by_layer))
-        selected = random.sample(layer_traces, min(n_per_layer, len(layer_traces)))
-        selected_traces[layer_id] = selected
+    # Find samples that have all required layers
+    target_layers = [1, 3, 5, 7, 9, 11]
+    complete_samples = []
     
-    # Extract expert sequences
-    expert_sequences = {}
-    for layer_id, layer_traces in selected_traces.items():
-        expert_sequences[layer_id] = []
-        for trace in layer_traces:
-            target_routing = trace['target_routing']
-            expert_sequence = np.argmax(target_routing, axis=1)
-            expert_sequences[layer_id].append({
-                'sequence': expert_sequence,
-                'sample_id': trace['sample_id'],
-                'sequence_length': len(expert_sequence)
+    for sample_id, layer_traces in traces_by_sample.items():
+        if all(layer in layer_traces for layer in target_layers):
+            complete_samples.append(sample_id)
+    
+    print(f"Found {len(complete_samples)} complete samples with all layers")
+    
+    # Select random samples
+    selected_samples = random.sample(complete_samples, min(n_tokens, len(complete_samples)))
+    
+    # Extract token journeys
+    token_journeys = []
+    for sample_id in selected_samples:
+        layer_traces = traces_by_sample[sample_id]
+        
+        # Get sequence length (assume same for all layers)
+        seq_length = len(layer_traces[1]['target_routing'])
+        
+        # For each token position, extract expert journey across layers
+        for token_pos in range(min(seq_length, 20)):  # Limit to first 20 tokens
+            journey = {}
+            for layer_id in target_layers:
+                target_routing = layer_traces[layer_id]['target_routing']
+                expert_id = np.argmax(target_routing[token_pos])
+                journey[layer_id] = expert_id
+            
+            token_journeys.append({
+                'sample_id': sample_id,
+                'token_position': token_pos,
+                'journey': journey
             })
     
-    return expert_sequences
+    return token_journeys
 
-def visualize_expert_traces(expert_sequences, output_dir="routing_data"):
-    """Create visualizations of expert traces"""
-    print("Creating expert trace visualizations...")
+def visualize_token_journeys(token_journeys, output_dir="routing_data"):
+    """Create visualization of token journeys across layers"""
+    print("Creating token journey visualizations...")
     
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True)
     
     # Set up the plotting style
     plt.style.use('seaborn-v0_8-whitegrid')
-    colors = sns.color_palette("husl", 128)
     
-    # Create subplot for each layer
-    fig, axes = plt.subplots(2, 3, figsize=(20, 12))
-    axes = axes.flatten()
+    # Create figure
+    fig, ax = plt.subplots(1, 1, figsize=(14, 10))
     
-    for i, layer_id in enumerate(sorted(expert_sequences.keys())):
-        ax = axes[i]
-        layer_traces = expert_sequences[layer_id]
+    # Select a subset of journeys for visualization
+    selected_journeys = random.sample(token_journeys, min(50, len(token_journeys)))
+    
+    target_layers = [1, 3, 5, 7, 9, 11]
+    layer_positions = {layer: i for i, layer in enumerate(target_layers)}
+    
+    # Plot each token journey
+    for i, journey_data in enumerate(selected_journeys):
+        journey = journey_data['journey']
         
-        # Plot each trace
-        for j, trace_data in enumerate(layer_traces):
-            expert_seq = trace_data['sequence']
-            positions = range(len(expert_seq))
-            
-            # Use different line styles for different traces
-            linestyle = ['-', '--', '-.', ':'][j % 4]
-            alpha = 0.7
-            
-            ax.plot(positions, expert_seq, 
-                   linestyle=linestyle, 
-                   alpha=alpha,
-                   linewidth=2,
-                   label=f"{trace_data['sample_id'][:15]}...")
+        # Extract x and y coordinates
+        x_coords = [layer_positions[layer] for layer in target_layers]
+        y_coords = [journey[layer] for layer in target_layers]
         
-        ax.set_title(f'Layer {layer_id} - Expert Selection Traces', fontsize=14)
-        ax.set_xlabel('Token Position', fontsize=12)
-        ax.set_ylabel('Expert ID', fontsize=12)
-        ax.set_ylim(-5, 133)
-        ax.grid(True, alpha=0.3)
+        # Use different colors for different tokens
+        color = plt.cm.tab20(i % 20)
+        alpha = 0.7
         
-        # Add legend for first few traces
-        if len(layer_traces) <= 4:
-            ax.legend(fontsize=8, loc='upper right')
+        # Plot the journey
+        ax.plot(x_coords, y_coords, 
+               marker='o', 
+               markersize=4,
+               alpha=alpha,
+               color=color,
+               linewidth=1.5)
+    
+    # Customize the plot
+    ax.set_xticks(range(len(target_layers)))
+    ax.set_xticklabels([f'Layer {layer}' for layer in target_layers])
+    ax.set_ylabel('Expert ID', fontsize=12)
+    ax.set_title('Token Journeys Across MoE Layers', fontsize=14)
+    ax.set_ylim(-5, 133)
+    ax.grid(True, alpha=0.3)
+    
+    # Add some statistics
+    ax.text(0.02, 0.98, f'Showing {len(selected_journeys)} token journeys', 
+            transform=ax.transAxes, verticalalignment='top',
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
     
     plt.tight_layout()
     plt.savefig(output_dir / "expert_selection_traces.png", dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"✅ Saved trace visualization: {output_dir}/expert_selection_traces.png")
+    print(f"✅ Saved token journey visualization: {output_dir}/expert_selection_traces.png")
 
-def create_expert_transition_heatmap(expert_sequences, output_dir="routing_data"):
-    """Create heatmap of expert transitions"""
-    print("Creating expert transition heatmap...")
+def create_journey_transition_heatmap(token_journeys, output_dir="routing_data"):
+    """Create heatmap showing transitions between layers"""
+    print("Creating journey transition heatmap...")
     
     output_dir = Path(output_dir)
     
-    # Collect all transitions
-    all_transitions = {}
+    target_layers = [1, 3, 5, 7, 9, 11]
+    layer_pairs = [(target_layers[i], target_layers[i+1]) for i in range(len(target_layers)-1)]
     
-    for layer_id, layer_traces in expert_sequences.items():
-        layer_transitions = []
-        
-        for trace_data in layer_traces:
-            expert_seq = trace_data['sequence']
-            for i in range(len(expert_seq) - 1):
-                from_expert = expert_seq[i]
-                to_expert = expert_seq[i + 1]
-                layer_transitions.append((from_expert, to_expert))
-        
-        all_transitions[layer_id] = layer_transitions
-    
-    # Create transition matrix for each layer
-    fig, axes = plt.subplots(2, 3, figsize=(24, 16))
+    # Create subplots for each layer transition
+    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
     axes = axes.flatten()
     
-    for i, layer_id in enumerate(sorted(all_transitions.keys())):
+    for i, (from_layer, to_layer) in enumerate(layer_pairs):
         ax = axes[i]
-        transitions = all_transitions[layer_id]
         
-        # Create transition matrix (limited to most common experts)
-        transition_matrix = np.zeros((50, 50))  # Top 50 experts only
+        # Collect transitions between these layers
+        transitions = []
+        for journey_data in token_journeys:
+            journey = journey_data['journey']
+            from_expert = journey[from_layer]
+            to_expert = journey[to_layer]
+            transitions.append((from_expert, to_expert))
         
-        # Get most common experts in this layer
-        expert_counts = {}
+        # Create transition matrix (limited to most active experts)
+        expert_counts = defaultdict(int)
         for from_exp, to_exp in transitions:
-            expert_counts[from_exp] = expert_counts.get(from_exp, 0) + 1
-            expert_counts[to_exp] = expert_counts.get(to_exp, 0) + 1
+            expert_counts[from_exp] += 1
+            expert_counts[to_exp] += 1
         
-        top_experts = sorted(expert_counts.items(), key=lambda x: x[1], reverse=True)[:50]
+        # Get top 40 experts
+        top_experts = sorted(expert_counts.items(), key=lambda x: x[1], reverse=True)[:40]
         expert_to_idx = {expert: idx for idx, (expert, _) in enumerate(top_experts)}
         
-        # Fill transition matrix
+        # Create transition matrix
+        transition_matrix = np.zeros((40, 40))
         for from_exp, to_exp in transitions:
             if from_exp in expert_to_idx and to_exp in expert_to_idx:
                 from_idx = expert_to_idx[from_exp]
@@ -162,9 +177,9 @@ def create_expert_transition_heatmap(expert_sequences, output_dir="routing_data"
                    xticklabels=False,
                    yticklabels=False)
         
-        ax.set_title(f'Layer {layer_id} - Expert Transitions\n(Top 50 experts)', fontsize=12)
-        ax.set_xlabel('To Expert', fontsize=10)
-        ax.set_ylabel('From Expert', fontsize=10)
+        ax.set_title(f'Layer {from_layer} → Layer {to_layer}\nToken Transitions', fontsize=12)
+        ax.set_xlabel(f'Expert in Layer {to_layer}', fontsize=10)
+        ax.set_ylabel(f'Expert in Layer {from_layer}', fontsize=10)
     
     plt.tight_layout()
     plt.savefig(output_dir / "expert_transition_heatmap.png", dpi=300, bbox_inches='tight')
@@ -172,128 +187,62 @@ def create_expert_transition_heatmap(expert_sequences, output_dir="routing_data"
     
     print(f"✅ Saved transition heatmap: {output_dir}/expert_transition_heatmap.png")
 
-def create_expert_usage_timeline(expert_sequences, output_dir="routing_data"):
-    """Create timeline visualization of expert usage"""
-    print("Creating expert usage timeline...")
-    
-    output_dir = Path(output_dir)
-    
-    fig, axes = plt.subplots(2, 3, figsize=(20, 12))
-    axes = axes.flatten()
-    
-    for i, layer_id in enumerate(sorted(expert_sequences.keys())):
-        ax = axes[i]
-        layer_traces = expert_sequences[layer_id]
-        
-        # Create timeline data
-        all_positions = []
-        all_experts = []
-        all_traces = []
-        
-        for trace_idx, trace_data in enumerate(layer_traces):
-            expert_seq = trace_data['sequence']
-            positions = range(len(expert_seq))
-            
-            all_positions.extend(positions)
-            all_experts.extend(expert_seq)
-            all_traces.extend([trace_idx] * len(expert_seq))
-        
-        # Create scatter plot
-        scatter = ax.scatter(all_positions, all_experts, 
-                           c=all_traces, 
-                           cmap='tab10',
-                           alpha=0.7,
-                           s=30)
-        
-        ax.set_title(f'Layer {layer_id} - Expert Usage Timeline', fontsize=14)
-        ax.set_xlabel('Token Position', fontsize=12)
-        ax.set_ylabel('Expert ID', fontsize=12)
-        ax.set_ylim(-5, 133)
-        ax.grid(True, alpha=0.3)
-        
-        # Add colorbar
-        cbar = plt.colorbar(scatter, ax=ax)
-        cbar.set_label('Trace ID', fontsize=10)
-    
-    plt.tight_layout()
-    plt.savefig(output_dir / "expert_usage_timeline.png", dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    print(f"✅ Saved usage timeline: {output_dir}/expert_usage_timeline.png")
-
-def analyze_expert_patterns(expert_sequences):
-    """Analyze patterns in expert selection"""
-    print("\n📊 Analyzing Expert Selection Patterns")
+def analyze_journey_patterns(token_journeys):
+    """Analyze patterns in token journeys"""
+    print("\n📊 Analyzing Token Journey Patterns")
     print("=" * 50)
     
-    for layer_id in sorted(expert_sequences.keys()):
-        layer_traces = expert_sequences[layer_id]
+    target_layers = [1, 3, 5, 7, 9, 11]
+    layer_pairs = [(target_layers[i], target_layers[i+1]) for i in range(len(target_layers)-1)]
+    
+    for from_layer, to_layer in layer_pairs:
+        print(f"\nLayer {from_layer} → Layer {to_layer}:")
         
-        print(f"\nLayer {layer_id}:")
+        # Collect transitions
+        transitions = []
+        expert_persistence = 0
         
-        # Collect all expert sequences for this layer
-        all_experts = []
-        all_transitions = []
-        
-        for trace_data in layer_traces:
-            expert_seq = trace_data['sequence']
-            all_experts.extend(expert_seq)
+        for journey_data in token_journeys:
+            journey = journey_data['journey']
+            from_expert = journey[from_layer]
+            to_expert = journey[to_layer]
+            transitions.append((from_expert, to_expert))
             
-            # Get transitions
-            for i in range(len(expert_seq) - 1):
-                all_transitions.append((expert_seq[i], expert_seq[i + 1]))
+            if from_expert == to_expert:
+                expert_persistence += 1
         
         # Calculate statistics
-        unique_experts = set(all_experts)
-        expert_counts = {}
-        for exp in all_experts:
-            expert_counts[exp] = expert_counts.get(exp, 0) + 1
-        
-        # Most common experts
-        top_experts = sorted(expert_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-        
-        print(f"  Active experts: {len(unique_experts)}/128")
-        print(f"  Total expert selections: {len(all_experts)}")
-        print(f"  Top 5 experts: {top_experts}")
-        
-        # Transition analysis
-        unique_transitions = len(set(all_transitions))
-        total_transitions = len(all_transitions)
+        unique_transitions = len(set(transitions))
+        total_transitions = len(transitions)
+        persistence_rate = expert_persistence / total_transitions if total_transitions > 0 else 0
         
         print(f"  Unique transitions: {unique_transitions}")
         print(f"  Total transitions: {total_transitions}")
         print(f"  Transition diversity: {unique_transitions/total_transitions:.2%}")
-        
-        # Calculate expert persistence (how often same expert is used consecutively)
-        same_expert_count = sum(1 for from_exp, to_exp in all_transitions if from_exp == to_exp)
-        persistence_rate = same_expert_count / total_transitions if total_transitions > 0 else 0
-        
         print(f"  Expert persistence: {persistence_rate:.2%}")
 
 def main():
     """Main visualization function"""
-    print("🎨 Visualizing Expert Selection Traces")
+    print("🎨 Visualizing Token Journeys Across MoE Layers")
     print("=" * 50)
     
     # Load traces
     traces = load_traces()
     
-    # Extract expert sequences
-    expert_sequences = extract_expert_sequences(traces, n_traces=12)
+    # Extract token journeys
+    token_journeys = extract_token_journeys(traces, n_tokens=500)
     
     # Create visualizations
-    visualize_expert_traces(expert_sequences)
-    create_expert_transition_heatmap(expert_sequences)
-    create_expert_usage_timeline(expert_sequences)
+    visualize_token_journeys(token_journeys)
+    create_journey_transition_heatmap(token_journeys)
     
     # Analyze patterns
-    analyze_expert_patterns(expert_sequences)
+    analyze_journey_patterns(token_journeys)
     
     print(f"\n✅ Visualization complete!")
     print(f"Generated files:")
-    print(f"  - expert_selection_traces.png: Line plots of expert sequences")
-    print(f"  - expert_transition_heatmap.png: Heatmap of expert transitions")
-    print(f"  - expert_usage_timeline.png: Timeline scatter plot")
+    print(f"  - expert_selection_traces.png: Token journeys across layers")
+    print(f"  - expert_transition_heatmap.png: Layer-to-layer transition heatmaps")
 
 if __name__ == "__main__":
     main()
