@@ -205,7 +205,7 @@ def train_improved_speculation():
     logger.info(f"Using device: {device}")
     
     # Load data
-    traces = load_traces("routing_data/robust_traces.pkl")
+    traces = load_traces("routing_data/maximum_real_traces.pkl")
     if traces is None:
         raise ValueError("Could not load traces")
     

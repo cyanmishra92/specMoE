@@ -10,7 +10,7 @@ import seaborn as sns
 from pathlib import Path
 import random
 
-def load_traces(pkl_path="routing_data/small_experimental_traces.pkl"):
+def load_traces(pkl_path="routing_data/maximum_real_traces.pkl"):
     """Load traces from pickle file"""
     print(f"Loading traces from {pkl_path}...")
     

@@ -234,7 +234,7 @@ def train_speculative_expert_model():
     
     # Load data
     logger.info("Loading routing traces...")
-    traces = load_traces("routing_data/robust_traces.pkl")
+    traces = load_traces("routing_data/maximum_real_traces.pkl")
     if traces is None:
         raise ValueError("Could not load traces")
     
