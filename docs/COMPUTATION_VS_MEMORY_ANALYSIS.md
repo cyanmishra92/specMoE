@@ -145,6 +145,7 @@ These insights directly inform the development of efficient MoE inference system
 **Technical Details:**
 - GPU: NVIDIA RTX 3090 (24GB)
 - Expert size: 27.00 MB (768 dim, 3072 FF)
+- Memory transfer: 3.41ms (CPU→GPU), 0.07ms (GPU→GPU)
 - Trials: 100 per configuration
 - Statistical significance: p < 0.05 for all comparisons
 - Confidence interval: 95%

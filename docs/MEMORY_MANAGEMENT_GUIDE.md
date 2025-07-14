@@ -24,9 +24,9 @@ python scripts/benchmarks/memory_transfer_benchmark.py
 
 **Key Results** (RTX 3090):
 - Expert size: 27.00 MB (768 dim, 3072 FF)
-- CPU → GPU (single): 3.73 ms
-- GPU → GPU (single): 1.37 ms
-- Top-10 prefetch: 40.82 ms (CPU), 2.74 ms (GPU)
+- CPU → GPU (single): 3.41 ms
+- GPU → GPU (single): 0.07 ms
+- Top-10 prefetch: 40.73 ms (CPU), 0.68 ms (GPU)
 
 ### 2. Virtual Memory Manager (`scripts/simulation/virtual_memory_manager.py`)
 
@@ -95,9 +95,9 @@ VirtualMemoryManager(
 
 | Operation | Single Expert | Top-10 Batch | Throughput |
 |-----------|---------------|--------------|------------|
-| CPU → GPU | 3.73 ms | 40.82 ms | 6.6 GB/s |
-| GPU → GPU | 1.37 ms | 2.74 ms | 98.5 GB/s |
-| Allocation | 0.98 ms | 2.61 ms | - |
+| CPU → GPU | 3.41 ms | 40.73 ms | 6.6 GB/s |
+| GPU → GPU | 0.07 ms | 0.68 ms | 398.0 GB/s |
+| Allocation | 0.05 ms | 0.36 ms | - |
 
 ### Virtual Memory Performance
 

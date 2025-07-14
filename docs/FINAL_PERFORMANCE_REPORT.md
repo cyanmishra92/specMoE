@@ -13,7 +13,7 @@ This report presents comprehensive benchmark results for the MoE expert prefetch
 
 ### **Memory Transfer Performance (RTX 3090)**
 - **Expert Size**: 27.00 MB per expert
-- **CPU → GPU**: 3.43 ms (single), 40.04 ms (top-10 batch)
+- **CPU → GPU**: 3.41 ms (single), 40.73 ms (top-10 batch)
 - **GPU → GPU**: 0.07 ms (single), 0.68 ms (top-10 batch)
 - **GPU Allocation**: 0.05 ms (single), 0.36 ms (top-10 batch)
 
@@ -29,14 +29,14 @@ This report presents comprehensive benchmark results for the MoE expert prefetch
 
 | Operation | Single Expert | Top-10 Batch | Throughput |
 |-----------|---------------|--------------|------------|
-| CPU → GPU | 3.43 ms | 40.04 ms | 6.7 GB/s |
-| GPU → GPU | 0.07 ms | 0.68 ms | 397.9 GB/s |
+| CPU → GPU | 3.41 ms | 40.73 ms | 6.6 GB/s |
+| GPU → GPU | 0.07 ms | 0.68 ms | 398.0 GB/s |
 | Allocation | 0.05 ms | 0.36 ms | - |
 
 **Key Insights**:
-- GPU → GPU transfers are **49× faster** than CPU → GPU
+- GPU → GPU transfers are **49× faster** than CPU → GPU (3.41ms vs 0.07ms)
 - Batch transfers are highly efficient (10 experts in 0.68ms vs 0.7ms individually)
-- Memory allocation overhead is minimal
+- Memory allocation overhead is minimal (0.05ms per expert)
 
 ### 2. **Computation vs Memory Transfer Analysis**
 
@@ -126,8 +126,9 @@ Based on benchmark results, the optimized system could achieve:
 - **Expert deduplication**: 11.8-62.6% memory savings
 
 **Projected Performance**:
-- **Optimized inference time**: ~8,000-10,000 ms (500 tokens)
-- **Potential speedup**: 1.4-1.8×
+- **Current baseline**: 40.73ms CPU→GPU miss penalty per expert
+- **Optimized with prefetching**: 0.68ms GPU→GPU per expert
+- **Potential speedup with 93.5% hit rate**: 1.4-1.8×
 - **Memory efficiency**: 70-80% utilization
 
 ## 📈 **Production Deployment Recommendations**
