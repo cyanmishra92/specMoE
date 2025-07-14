@@ -185,8 +185,9 @@ def calculate_accuracies(predictions, targets, confidences=None):
         accuracies[f'top_{k}_accuracy'] = top_k_correct[k] / total_samples * 100
     
     if confidences is not None:
-        valid_confidences = confidences.cpu().numpy()[valid_mask]
-        accuracies['avg_confidence'] = np.mean(valid_confidences)
+        # Confidence is per-sequence, not per-token, so take mean directly
+        confidences_np = confidences.cpu().numpy()
+        accuracies['avg_confidence'] = np.mean(confidences_np)
     
     return accuracies
 
