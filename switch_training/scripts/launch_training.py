@@ -166,7 +166,7 @@ def launch_training(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Switch Transformer Training Launcher")
-    parser.add_argument("--experts", type=int, required=True, choices=[8, 16, 32, 64, 128, 256], 
+    parser.add_argument("--experts", type=int, choices=[8, 16, 32, 64, 128, 256], 
                         help="Number of experts (8, 16, 32, 64, 128, 256)")
     parser.add_argument("--gpus", type=int, default=1, help="Number of GPUs to use (default: 1)")
     parser.add_argument("--force-single", action="store_true", help="Force single GPU training")
@@ -183,6 +183,11 @@ def main():
     # Show GPU status if requested
     if args.status:
         show_gpu_status()
+        return
+    
+    # Check if experts is provided (required for training)
+    if args.experts is None:
+        logger.error("--experts is required for training")
         return
     
     # Check GPU availability

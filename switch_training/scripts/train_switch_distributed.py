@@ -600,8 +600,25 @@ def main():
     
     if world_size == 1:
         logger.info("Only 1 GPU available, using single GPU training")
-        args.single_gpu = True
-        main()  # Recursive call with single_gpu=True
+        # Import and run the unified script
+        from train_switch_unified import main as unified_main
+        
+        # Modify sys.argv to match unified script expectations
+        sys.argv = [sys.argv[0], '--experts', str(args.experts)]
+        if args.data_dir != "../data":
+            sys.argv.extend(['--data_dir', args.data_dir])
+        if args.output_dir:
+            sys.argv.extend(['--output_dir', args.output_dir])
+        if args.batch_size:
+            sys.argv.extend(['--batch_size', str(args.batch_size)])
+        if args.learning_rate:
+            sys.argv.extend(['--learning_rate', str(args.learning_rate)])
+        if args.num_epochs != 3:
+            sys.argv.extend(['--num_epochs', str(args.num_epochs)])
+        if args.disable_wandb:
+            sys.argv.append('--disable_wandb')
+        
+        unified_main()
         return
     
     logger.info(f"Starting distributed training on {world_size} GPUs: {gpu_ids}")
