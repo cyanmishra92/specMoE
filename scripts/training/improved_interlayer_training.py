@@ -331,8 +331,7 @@ def train_enhanced_interlayer():
             optimizer.zero_grad()
             
             # Forward pass
-            outputs = model(context_experts, context_layers)
-            expert_logits = outputs['expert_logits']
+            expert_logits, confidence, pattern_weights = model(context_experts, context_layers)
             
             # Reshape for loss calculation
             batch_size, seq_len, num_experts = expert_logits.shape
@@ -385,9 +384,7 @@ def train_enhanced_interlayer():
                 context_layers = batch['context_layers'].to(device)
                 seq_lengths = batch['seq_lengths'].to(device)
                 
-                outputs = model(context_experts, context_layers)
-                expert_logits = outputs['expert_logits']
-                confidence = outputs.get('confidence', None)
+                expert_logits, confidence, pattern_weights = model(context_experts, context_layers)
                 
                 # Reshape for loss calculation
                 batch_size, seq_len, num_experts = expert_logits.shape
