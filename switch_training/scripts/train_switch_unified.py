@@ -151,8 +151,7 @@ class SwitchDataset(Dataset):
         return {
             'input_ids': input_encoding['input_ids'].flatten(),
             'attention_mask': input_encoding['attention_mask'].flatten(),
-            'labels': target_encoding['input_ids'].flatten(),
-            'source': item.get('source', 'unknown')
+            'labels': target_encoding['input_ids'].flatten()
         }
 
 class SafetyCallback(TrainerCallback):
