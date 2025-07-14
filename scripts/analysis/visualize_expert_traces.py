@@ -70,7 +70,7 @@ def extract_token_journeys(traces, n_tokens=10):
     return token_journeys
 
 def visualize_token_journeys(token_journeys, output_dir="routing_data"):
-    """Create visualization of token journeys across layers"""
+    """Create clean visualization of 4 token journeys across layers"""
     print("Creating token journey visualizations...")
     
     output_dir = Path(output_dir)
@@ -79,47 +79,76 @@ def visualize_token_journeys(token_journeys, output_dir="routing_data"):
     # Set up the plotting style
     plt.style.use('seaborn-v0_8-whitegrid')
     
-    # Create figure
-    fig, ax = plt.subplots(1, 1, figsize=(14, 10))
+    # Create figure with larger size for better clarity
+    fig, ax = plt.subplots(1, 1, figsize=(16, 10))
     
-    # Select a subset of journeys for visualization
-    selected_journeys = random.sample(token_journeys, min(50, len(token_journeys)))
+    # Select only 4 journeys for clear visualization
+    selected_journeys = random.sample(token_journeys, min(4, len(token_journeys)))
     
     target_layers = [1, 3, 5, 7, 9, 11]
-    layer_positions = {layer: i for i, layer in enumerate(target_layers)}
+    layer_positions = {layer: i * 2.5 for i, layer in enumerate(target_layers)}  # More spacing
+    
+    # Define distinct colors for each token journey
+    colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4']
     
     # Plot each token journey
     for i, journey_data in enumerate(selected_journeys):
         journey = journey_data['journey']
+        color = colors[i % len(colors)]
         
-        # Extract x and y coordinates
+        # Extract coordinates
         x_coords = [layer_positions[layer] for layer in target_layers]
         y_coords = [journey[layer] for layer in target_layers]
         
-        # Use different colors for different tokens
-        color = plt.cm.tab20(i % 20)
-        alpha = 0.7
-        
-        # Plot the journey
+        # Plot the journey line
         ax.plot(x_coords, y_coords, 
-               marker='o', 
-               markersize=4,
-               alpha=alpha,
                color=color,
-               linewidth=1.5)
+               linewidth=3,
+               alpha=0.8,
+               zorder=1,
+               label=f'Token {i+1}')
+        
+        # Plot expert nodes as large circles with expert IDs
+        for j, (x, y) in enumerate(zip(x_coords, y_coords)):
+            # Large circle for expert node
+            ax.scatter(x, y, 
+                      s=800,  # Large circle
+                      c=color,
+                      alpha=0.9,
+                      edgecolors='black',
+                      linewidth=2,
+                      zorder=2)
+            
+            # Add expert ID number inside the circle
+            ax.text(x, y, str(y), 
+                   ha='center', va='center',
+                   fontsize=10, 
+                   fontweight='bold',
+                   color='white' if y > 64 else 'black',  # Contrast based on expert ID
+                   zorder=3)
     
     # Customize the plot
-    ax.set_xticks(range(len(target_layers)))
-    ax.set_xticklabels([f'Layer {layer}' for layer in target_layers])
-    ax.set_ylabel('Expert ID', fontsize=12)
-    ax.set_title('Token Journeys Across MoE Layers', fontsize=14)
-    ax.set_ylim(-5, 133)
+    ax.set_xticks([layer_positions[layer] for layer in target_layers])
+    ax.set_xticklabels([f'Layer {layer}' for layer in target_layers], fontsize=14)
+    ax.set_ylabel('Expert ID', fontsize=14)
+    ax.set_title('Token Journeys Across MoE Layers', fontsize=16, fontweight='bold')
+    ax.set_ylim(-10, 135)
+    ax.set_xlim(-0.5, max(layer_positions.values()) + 0.5)
     ax.grid(True, alpha=0.3)
     
-    # Add some statistics
-    ax.text(0.02, 0.98, f'Showing {len(selected_journeys)} token journeys', 
+    # Add legend
+    ax.legend(loc='upper right', fontsize=12)
+    
+    # Add informative text
+    info_text = f"""Graph shows routing paths for {len(selected_journeys)} tokens
+Each colored line represents one token's journey
+Numbers in circles show which expert handles the token
+Layers: {' → '.join(map(str, target_layers))}"""
+    
+    ax.text(0.02, 0.98, info_text, 
             transform=ax.transAxes, verticalalignment='top',
-            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.9),
+            fontsize=10)
     
     plt.tight_layout()
     plt.savefig(output_dir / "expert_selection_traces.png", dpi=300, bbox_inches='tight')
