@@ -338,6 +338,7 @@ def train_distributed(rank: int, world_size: int, gpu_ids: List[int], args):
             )
         except Exception as e:
             logger.warning(f"Failed to initialize wandb: {e}")
+            args.disable_wandb = True  # Disable wandb for this run
     
     # Load tokenizer and model
     if rank == 0:
