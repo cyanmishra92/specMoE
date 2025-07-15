@@ -366,12 +366,12 @@ class MixtralTraceCollector:
             batch_sample_ids = sample_ids[i:i + batch_size]
             
             try:
-                # Tokenize batch
+                # Tokenize batch - use shorter sequences for faster processing
                 inputs = self.tokenizer(
                     batch_texts,
                     return_tensors="pt",
                     truncation=True,
-                    max_length=512,
+                    max_length=256,  # Reduced from 512 for faster processing
                     padding=True
                 ).to(self.device)
                 
@@ -381,13 +381,16 @@ class MixtralTraceCollector:
                     continue
                     
                 with torch.no_grad():
+                    import time
+                    start_time = time.time()
                     logger.info(f"🔥 Running model inference on {len(batch_texts)} samples...")
                     outputs = self.model(
                         **inputs,
                         output_hidden_states=True,
                         output_router_logits=True
                     )
-                    logger.info(f"✅ Model inference completed")
+                    inference_time = time.time() - start_time
+                    logger.info(f"✅ Model inference completed in {inference_time:.2f}s ({inference_time/len(batch_texts):.2f}s per sample)")
                     
                 # Extract routing information
                 routing_data = self.extract_expert_routing(outputs, inputs)
@@ -432,16 +435,16 @@ class MixtralTraceCollector:
     def collect_from_datasets(self, target_total_traces=50000, max_traces_per_sample=200):
         """Collect traces from multiple datasets with balanced sampling"""
         
-        # Dataset selection optimized for Mixtral - using working datasets only
+        # Dataset selection optimized for Mixtral - start with cleanest datasets
         dataset_configs = [
-            ("wikitext", "wikitext-2-raw-v1", "train"),
-            ("squad", None, "train"), 
-            ("imdb", None, "train"),
-            ("yelp_review_full", None, "train"),
-            ("ag_news", None, "train"),
-            ("dbpedia_14", None, "train"),
-            ("amazon_polarity", None, "train"),
-            ("yahoo_answers_topics", None, "train")
+            ("imdb", None, "train"),                    # Clean movie reviews
+            ("yelp_review_full", None, "train"),        # Clean user reviews  
+            ("ag_news", None, "train"),                 # Clean news articles
+            ("squad", None, "train"),                   # Clean Q&A context
+            ("amazon_polarity", None, "train"),         # Clean product reviews
+            ("dbpedia_14", None, "train"),              # Clean structured text
+            ("yahoo_answers_topics", None, "train"),    # Clean Q&A
+            ("wikitext", "wikitext-2-raw-v1", "train"), # Move problematic WikiText to last
         ]
         
         # Calculate target traces per dataset
@@ -489,6 +492,12 @@ class MixtralTraceCollector:
                 
                 # Process samples until we have enough traces from this dataset
                 sample_idx = 0
+                dataset_progress = tqdm(
+                    total=traces_per_dataset, 
+                    desc=f"Collecting {dataset_name} traces",
+                    unit="traces"
+                )
+                
                 while len(dataset_traces) < traces_per_dataset and sample_idx < len(indices):
                     # Get batch of samples
                     current_batch_indices = indices[sample_idx:sample_idx + batch_size]
@@ -534,16 +543,26 @@ class MixtralTraceCollector:
                     if batch_samples:
                         texts, names, ids = zip(*batch_samples)
                         logger.info(f"🚀 Starting GPU inference for batch of {len(batch_samples)} samples...")
+                        start_batch_time = time.time()
                         traces = self.collect_traces_from_text_batch(
                             list(texts), 
                             list(names), 
                             list(ids),
                             len(batch_samples)
                         )
+                        batch_time = time.time() - start_batch_time
                         
                         # Limit traces per sample to avoid over-sampling
                         limited_traces = traces[:max_traces_per_sample * len(batch_samples)]
                         dataset_traces.extend(limited_traces)
+                        
+                        # Update progress bar
+                        dataset_progress.update(len(limited_traces))
+                        dataset_progress.set_postfix({
+                            'batch_size': len(batch_samples),
+                            'traces_collected': len(limited_traces),
+                            'rate': f"{len(limited_traces)/batch_time:.1f} traces/s"
+                        })
                         
                         logger.info(f"Processed batch of {len(batch_samples)} samples from {dataset_name}, collected {len(limited_traces)} traces (total: {len(dataset_traces)}/{traces_per_dataset})")
                         
@@ -564,6 +583,9 @@ class MixtralTraceCollector:
                             )
                             indices.extend([int(idx) for idx in new_indices])
                             logger.info(f"Expanding sample set for {dataset_name}: added {additional_samples} samples")
+                
+                # Close progress bar
+                dataset_progress.close()
                 
                 # Add dataset traces to overall collection
                 all_traces.extend(dataset_traces)
@@ -635,8 +657,8 @@ def main():
     collector = MixtralTraceCollector()
     collector.load_model()
     
-    # Collect traces with balanced sampling
-    traces = collector.collect_from_datasets(target_total_traces=50000, max_traces_per_sample=200)
+    # Collect traces with balanced sampling - reduced target for faster testing
+    traces = collector.collect_from_datasets(target_total_traces=25000, max_traces_per_sample=200)
     
     # Save results
     collector.save_traces(traces)
