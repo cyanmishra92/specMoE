@@ -1,0 +1,51 @@
+# Mixtral 8x7B specific ignores
+
+# Model files (will be downloaded during runtime)
+models/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+
+# Large trace data files
+routing_data/*.pkl
+routing_data/*.json.gz
+routing_data/*.parquet
+
+# HuggingFace cache
+.cache/
+**/*safetensors*
+**/*pytorch_model.bin*
+**/*model*.bin*
+**/*tokenizer*.json*
+**/*config.json*
+**/*generation_config.json*
+**/*special_tokens_map.json*
+**/*tokenizer*.model*
+**/*vocab.json*
+**/*merges.txt*
+**/*added_tokens.json*
+
+# Training logs and results
+logs/
+*.log
+*_history_*.json
+*_results_*.json
+
+# Temporary files
+tmp/
+temp/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+
+# Environment
+.env
+.venv
+env/
+venv/

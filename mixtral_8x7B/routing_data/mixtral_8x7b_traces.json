@@ -1,0 +1,11 @@
+{
+  "model": "microsoft/DialoGPT-medium",
+  "num_traces": 0,
+  "collection_time": 1752597150.1648707,
+  "num_experts": 8,
+  "routing_type": "top-2",
+  "total_parameters": "45B",
+  "active_parameters": "14B",
+  "file_size_mb": 4.76837158203125e-06,
+  "gpu_optimized": "RTX 3090"
+}
