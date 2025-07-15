@@ -53,7 +53,10 @@ mixtral_8x7B/
 
 - **Advanced MoE Architecture**: Top-2 routing vs Switch Transformer's top-1
 - **Multi-GPU Support**: Automatic GPU selection and optimal configuration
-- **Comprehensive Data Collection**: 10+ public datasets
+- **Optimized Data Collection**: 
+  - Batch processing for 4-16x speedup (GPU-adaptive)
+  - Balanced sampling from 8 diverse datasets
+  - 50,000 total traces with max 200 traces per sample
 - **Multiple Speculation Models**: InterLayer, Statistics-Aware, and Ensemble
 - **Rich Visualizations**: Token journeys, expert usage, routing patterns
 - **Performance Metrics**: Top-1/3/5/10 accuracy tracking

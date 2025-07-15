@@ -349,62 +349,80 @@ class MixtralTraceCollector:
         
         return routing_data
 
-    def collect_traces_from_text(self, text: str, dataset_name: str, sample_id: str):
-        """Collect traces from a single text sample"""
-        try:
-            # Tokenize input
-            inputs = self.tokenizer(
-                text,
-                return_tensors="pt",
-                truncation=True,
-                max_length=512,
-                padding=True
-            ).to(self.device)
+    def collect_traces_from_text_batch(self, texts: List[str], dataset_names: List[str], sample_ids: List[str], batch_size: int = 8):
+        """Collect traces from multiple text samples in batches for better GPU utilization"""
+        all_traces = []
+        
+        # Process texts in batches
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            batch_dataset_names = dataset_names[i:i + batch_size]
+            batch_sample_ids = sample_ids[i:i + batch_size]
             
-            # Forward pass - only for MoE models 
-            if not self.is_moe:
-                logger.warning("Non-MoE model detected, skipping trace collection")
-                return []
+            try:
+                # Tokenize batch
+                inputs = self.tokenizer(
+                    batch_texts,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=512,
+                    padding=True
+                ).to(self.device)
                 
-            with torch.no_grad():
-                outputs = self.model(
-                    **inputs,
-                    output_hidden_states=True,
-                    output_router_logits=True
-                )
-                
-            # Extract routing information
-            routing_data = self.extract_expert_routing(outputs, inputs)
-            
-            # Convert to our data format
-            traces = []
-            for route_info in routing_data:
-                # Flatten for sequence processing
-                batch_size, seq_len, hidden_size = route_info['hidden_states'].shape
-                
-                for seq_idx in range(seq_len):
-                    trace = MixtralGatingDataPoint(
-                        layer_id=route_info['layer_id'],
-                        hidden_states=route_info['hidden_states'][:, seq_idx, :],
-                        input_embeddings=outputs.hidden_states[0][:, seq_idx, :] if outputs.hidden_states else None,
-                        target_routing=route_info['target_routing'][:, seq_idx, :],
-                        target_top_k=route_info['top_k_indices'][:, seq_idx, :],
-                        prev_layer_gates=[],
-                        sequence_length=seq_len,
-                        token_ids=inputs['input_ids'][:, seq_idx] if seq_idx < inputs['input_ids'].shape[1] else None,
-                        dataset_name=dataset_name,
-                        sample_id=f"{sample_id}_seq_{seq_idx}"
-                    )
-                    traces.append(trace)
+                # Forward pass - only for MoE models 
+                if not self.is_moe:
+                    logger.warning("Non-MoE model detected, skipping trace collection")
+                    continue
                     
-            return traces
-            
-        except Exception as e:
-            logger.error(f"Error processing text: {e}")
-            return []
+                with torch.no_grad():
+                    outputs = self.model(
+                        **inputs,
+                        output_hidden_states=True,
+                        output_router_logits=True
+                    )
+                    
+                # Extract routing information
+                routing_data = self.extract_expert_routing(outputs, inputs)
+                
+                # Convert to our data format
+                for route_info in routing_data:
+                    # Get batch and sequence dimensions
+                    batch_size_actual, seq_len, hidden_size = route_info['hidden_states'].shape
+                    
+                    # Process each sample in the batch
+                    for batch_idx in range(batch_size_actual):
+                        if batch_idx < len(batch_sample_ids):
+                            dataset_name = batch_dataset_names[batch_idx]
+                            sample_id = batch_sample_ids[batch_idx]
+                            
+                            # Process each sequence position
+                            for seq_idx in range(seq_len):
+                                trace = MixtralGatingDataPoint(
+                                    layer_id=route_info['layer_id'],
+                                    hidden_states=route_info['hidden_states'][batch_idx:batch_idx+1, seq_idx, :],
+                                    input_embeddings=outputs.hidden_states[0][batch_idx:batch_idx+1, seq_idx, :] if outputs.hidden_states else None,
+                                    target_routing=route_info['target_routing'][batch_idx:batch_idx+1, seq_idx, :],
+                                    target_top_k=route_info['top_k_indices'][batch_idx:batch_idx+1, seq_idx, :],
+                                    prev_layer_gates=[],
+                                    sequence_length=seq_len,
+                                    token_ids=inputs['input_ids'][batch_idx, seq_idx] if seq_idx < inputs['input_ids'].shape[1] else None,
+                                    dataset_name=dataset_name,
+                                    sample_id=f"{sample_id}_seq_{seq_idx}"
+                                )
+                                all_traces.append(trace)
+                                
+            except Exception as e:
+                logger.error(f"Error processing batch {i//batch_size}: {e}")
+                continue
+                
+        return all_traces
 
-    def collect_from_datasets(self, num_samples_per_dataset=150):
-        """Collect traces from multiple datasets"""
+    def collect_traces_from_text(self, text: str, dataset_name: str, sample_id: str):
+        """Collect traces from a single text sample (legacy method)"""
+        return self.collect_traces_from_text_batch([text], [dataset_name], [sample_id], batch_size=1)
+
+    def collect_from_datasets(self, target_total_traces=50000, max_traces_per_sample=200):
+        """Collect traces from multiple datasets with balanced sampling"""
         
         # Dataset selection optimized for Mixtral - using working datasets only
         dataset_configs = [
@@ -418,10 +436,15 @@ class MixtralTraceCollector:
             ("yahoo_answers_topics", None, "train")
         ]
         
+        # Calculate target traces per dataset
+        traces_per_dataset = target_total_traces // len(dataset_configs)
+        logger.info(f"Target: {target_total_traces} total traces, ~{traces_per_dataset} per dataset")
+        
         all_traces = []
         
         for dataset_name, config_name, split in dataset_configs:
             logger.info(f"\n📊 Processing {dataset_name} ({config_name or 'default'})...")
+            dataset_traces = []
             
             try:
                 # Load dataset
@@ -430,67 +453,119 @@ class MixtralTraceCollector:
                 else:
                     dataset = datasets.load_dataset(dataset_name, split=split)
                 
-                # Sample data safely
+                # Start with a reasonable number of samples and expand if needed
                 dataset_size = len(dataset)
-                sample_size = min(num_samples_per_dataset, dataset_size)
-                indices = np.random.choice(dataset_size, sample_size, replace=False)
+                initial_samples = min(50, dataset_size)  # Start with fewer samples
+                indices = np.random.choice(dataset_size, initial_samples, replace=False)
                 
                 # Convert indices to regular Python integers
                 indices = [int(idx) for idx in indices]
                 
-                # Process samples
-                for i, idx in enumerate(tqdm(indices, desc=f"Processing {dataset_name}")):
-                    sample = dataset[idx]
+                # Determine optimal batch size based on GPU memory
+                memory_gb = self.gpu_info['memory_total']
+                if memory_gb >= 80:  # A100 80GB
+                    batch_size = 16
+                elif memory_gb >= 40:  # A100 40GB, A6000 
+                    batch_size = 12
+                elif memory_gb >= 24:  # RTX 3090
+                    batch_size = 8
+                else:
+                    batch_size = 4
+                
+                logger.info(f"Using batch size: {batch_size} for {self.gpu_info['name']}")
+                
+                # Collect texts, dataset names, and sample IDs for batch processing
+                batch_texts = []
+                batch_dataset_names = []
+                batch_sample_ids = []
+                
+                # Process samples until we have enough traces from this dataset
+                sample_idx = 0
+                while len(dataset_traces) < traces_per_dataset and sample_idx < len(indices):
+                    # Get batch of samples
+                    current_batch_indices = indices[sample_idx:sample_idx + batch_size]
+                    batch_samples = []
                     
-                    # Extract text based on dataset format
-                    try:
-                        if dataset_name == "wikitext":
-                            text = sample['text']
-                        elif dataset_name == "squad":
-                            text = sample['context']
-                        elif dataset_name == "imdb":
-                            text = sample['text']
-                        elif dataset_name == "yelp_review_full":
-                            text = sample['text']
-                        elif dataset_name == "ag_news":
-                            text = sample['text']
-                        elif dataset_name == "dbpedia_14":
-                            text = sample['content']
-                        elif dataset_name == "amazon_polarity":
-                            text = sample['content']
-                        elif dataset_name == "yahoo_answers_topics":
-                            text = sample['question_content']
-                        else:
-                            # Try common text fields
-                            for field in ['text', 'content', 'article', 'document']:
-                                if field in sample:
-                                    text = sample[field]
-                                    break
+                    for idx in current_batch_indices:
+                        sample = dataset[idx]
+                        
+                        # Extract text based on dataset format
+                        try:
+                            if dataset_name == "wikitext":
+                                text = sample['text']
+                            elif dataset_name == "squad":
+                                text = sample['context']
+                            elif dataset_name == "imdb":
+                                text = sample['text']
+                            elif dataset_name == "yelp_review_full":
+                                text = sample['text']
+                            elif dataset_name == "ag_news":
+                                text = sample['text']
+                            elif dataset_name == "dbpedia_14":
+                                text = sample['content']
+                            elif dataset_name == "amazon_polarity":
+                                text = sample['content']
+                            elif dataset_name == "yahoo_answers_topics":
+                                text = sample['question_content']
                             else:
-                                text = str(sample)
-                    except Exception as e:
-                        logger.warning(f"Error extracting text from {dataset_name}: {e}")
-                        text = None
+                                # Try common text fields
+                                for field in ['text', 'content', 'article', 'document']:
+                                    if field in sample:
+                                        text = sample[field]
+                                        break
+                                else:
+                                    text = str(sample)
+                        except Exception as e:
+                            logger.warning(f"Error extracting text from {dataset_name}: {e}")
+                            text = None
+                        
+                        if text and len(text.strip()) > 50:
+                            batch_samples.append((text, dataset_name, f"{dataset_name}_{sample_idx}"))
                     
-                    if text and len(text.strip()) > 50:
-                        traces = self.collect_traces_from_text(
-                            text, 
-                            dataset_name, 
-                            f"{dataset_name}_{i}"
+                    # Process batch if we have samples
+                    if batch_samples:
+                        texts, names, ids = zip(*batch_samples)
+                        traces = self.collect_traces_from_text_batch(
+                            list(texts), 
+                            list(names), 
+                            list(ids),
+                            len(batch_samples)
                         )
-                        all_traces.extend(traces)
                         
-                        # Debug: print progress
-                        if i % 10 == 0:
-                            logger.info(f"Processed {i+1}/{sample_size} samples from {dataset_name}, collected {len(traces)} traces")
-                    else:
-                        logger.debug(f"Skipping sample {i} from {dataset_name}: text too short or empty")
+                        # Limit traces per sample to avoid over-sampling
+                        limited_traces = traces[:max_traces_per_sample * len(batch_samples)]
+                        dataset_traces.extend(limited_traces)
                         
-                        # Memory management for RTX 3090
-                        if len(all_traces) > 3000:  # Lower threshold for RTX 3090
-                            logger.info(f"Collected {len(all_traces)} traces, cleaning memory...")
-                            torch.cuda.empty_cache()
-                            gc.collect()
+                        logger.info(f"Processed batch of {len(batch_samples)} samples from {dataset_name}, collected {len(limited_traces)} traces (total: {len(dataset_traces)}/{traces_per_dataset})")
+                        
+                        # Memory management
+                        torch.cuda.empty_cache()
+                    
+                    sample_idx += batch_size
+                    
+                    # If we need more samples, expand the sample set
+                    if sample_idx >= len(indices) and len(dataset_traces) < traces_per_dataset:
+                        remaining_needed = traces_per_dataset - len(dataset_traces)
+                        additional_samples = min(50, dataset_size - len(indices))
+                        if additional_samples > 0:
+                            new_indices = np.random.choice(
+                                [i for i in range(dataset_size) if i not in indices], 
+                                additional_samples, 
+                                replace=False
+                            )
+                            indices.extend([int(idx) for idx in new_indices])
+                            logger.info(f"Expanding sample set for {dataset_name}: added {additional_samples} samples")
+                
+                # Add dataset traces to overall collection
+                all_traces.extend(dataset_traces)
+                logger.info(f"✅ {dataset_name}: collected {len(dataset_traces)} traces")
+                        
+                # Memory management - adaptive based on GPU
+                memory_gb = self.gpu_info['memory_total']
+                if len(all_traces) > (8000 if memory_gb >= 80 else 4000):
+                    logger.info(f"Collected {len(all_traces)} traces, cleaning memory...")
+                    torch.cuda.empty_cache()
+                    gc.collect()
                             
             except Exception as e:
                 logger.error(f"Error processing {dataset_name}: {e}")
@@ -551,8 +626,8 @@ def main():
     collector = MixtralTraceCollector()
     collector.load_model()
     
-    # Collect traces
-    traces = collector.collect_from_datasets(num_samples_per_dataset=150)
+    # Collect traces with balanced sampling
+    traces = collector.collect_from_datasets(target_total_traces=50000, max_traces_per_sample=200)
     
     # Save results
     collector.save_traces(traces)

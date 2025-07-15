@@ -57,30 +57,46 @@ Combines multiple prediction strategies:
 
 ## Data Collection
 
-### Trace Collection Process
-1. **Model Loading**: Mixtral 8x7B with 8-bit quantization (RTX 3090 optimized)
-2. **Router Extraction**: Extract `router_logits` from MoE layers
-3. **Top-2 Routing**: Identify activated expert pairs per token
-4. **Sequence Creation**: Build context-target sequences for training
+### Optimized Trace Collection Process
+1. **Model Loading**: Mixtral 8x7B with 4-bit/8-bit quantization (GPU-adaptive)
+2. **Batch Processing**: Process 4-16 samples simultaneously based on GPU memory
+3. **Router Extraction**: Extract `router_logits` from MoE layers with tensor shape handling
+4. **Top-2 Routing**: Identify activated expert pairs per token
+5. **Balanced Sampling**: Collect 50,000 traces total with max 200 traces per sample
+6. **Sequence Creation**: Build context-target sequences for training
 
-### Dataset Coverage
-- **WikiText-2**: General knowledge
-- **CNN/DailyMail**: News articles
-- **XSum**: Summarization tasks
-- **Squad**: Question answering
-- **Multi-News**: Multi-document summarization
-- **IMDB**: Sentiment analysis
-- **Yelp Reviews**: User reviews
-- **Amazon Reviews**: Product reviews
-- **AG News**: News categorization
-- **DBpedia**: Structured knowledge
+### Batch Processing Optimization
+- **A100 80GB**: 16 samples per batch
+- **A100 40GB/A6000 48GB**: 12 samples per batch
+- **RTX 3090 24GB**: 8 samples per batch
+- **Smaller GPUs**: 4 samples per batch
+
+### Dataset Coverage (Balanced Sampling)
+- **WikiText-2**: General knowledge (~6,250 traces)
+- **Squad**: Question answering (~6,250 traces)
+- **IMDB**: Sentiment analysis (~6,250 traces)
+- **Yelp Reviews**: User reviews (~6,250 traces)
+- **AG News**: News categorization (~6,250 traces)
+- **DBpedia**: Structured knowledge (~6,250 traces)
+- **Amazon Reviews**: Product reviews (~6,250 traces)
+- **Yahoo Answers**: Q&A content (~6,250 traces)
 
 ## Training Configuration
 
-### RTX 3090 Optimizations
+### GPU-Adaptive Optimizations
 ```python
-config = {
-    'batch_size': 16,           # Reduced for RTX 3090
+# A100 80GB Configuration
+config_a100_80 = {
+    'batch_size': 16,           # Maximum throughput
+    'max_memory': {'0': '72GB'}, # Leave 8GB buffer
+    'load_in_4bit': True,       # Optimal for A100
+    'gradient_checkpointing': True,
+    'mixed_precision': 'fp16'
+}
+
+# RTX 3090 Configuration
+config_rtx3090 = {
+    'batch_size': 8,            # Memory-constrained
     'max_memory': {'0': '22GB'}, # Leave 2GB buffer
     'load_in_8bit': True,       # Essential for 45B model
     'gradient_checkpointing': True,
