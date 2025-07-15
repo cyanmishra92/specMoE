@@ -98,7 +98,8 @@ class MixtralTraceCollector:
             # Set CUDA device
             device = f"cuda:{selected_gpu.id}"
             torch.cuda.set_device(selected_gpu.id)
-            os.environ['CUDA_VISIBLE_DEVICES'] = str(selected_gpu.id)
+            # Don't set CUDA_VISIBLE_DEVICES as it interferes with device mapping
+            # os.environ['CUDA_VISIBLE_DEVICES'] = str(selected_gpu.id)
             
             gpu_info = {
                 "id": selected_gpu.id,
@@ -123,32 +124,34 @@ class MixtralTraceCollector:
         """Get optimal configuration based on GPU memory"""
         memory_gb = self.gpu_info['memory_total']
         
+        gpu_id = self.gpu_info['id']
+        
         if memory_gb >= 80:  # A100 80GB
             return {
                 "quantization": "4bit",
                 "device_map": "auto",
-                "max_memory": {0: f"{int(memory_gb * 0.9)}GB"},
+                "max_memory": {gpu_id: f"{int(memory_gb * 0.9)}GB"},
                 "cpu_offload": False
             }
         elif memory_gb >= 40:  # A100 40GB, A6000 48GB
             return {
                 "quantization": "4bit",
                 "device_map": "auto", 
-                "max_memory": {0: f"{int(memory_gb * 0.85)}GB", "cpu": "20GB"},
+                "max_memory": {gpu_id: f"{int(memory_gb * 0.85)}GB", "cpu": "20GB"},
                 "cpu_offload": True
             }
         elif memory_gb >= 24:  # RTX 3090, RTX 4090
             return {
                 "quantization": "4bit",
                 "device_map": "sequential",
-                "max_memory": {0: f"{int(memory_gb * 0.8)}GB", "cpu": "40GB"},
+                "max_memory": {gpu_id: f"{int(memory_gb * 0.8)}GB", "cpu": "40GB"},
                 "cpu_offload": True
             }
         else:  # Smaller GPUs
             return {
                 "quantization": "8bit",
                 "device_map": "auto",
-                "max_memory": {0: f"{int(memory_gb * 0.7)}GB", "cpu": "20GB"},
+                "max_memory": {gpu_id: f"{int(memory_gb * 0.7)}GB", "cpu": "20GB"},
                 "cpu_offload": True
             }
         
@@ -174,11 +177,12 @@ class MixtralTraceCollector:
                     **optimal_config
                 },
                 {
-                    "name": "microsoft/switch-base-128",
+                    "name": "google/switch-base-128",
                     "quantization": "8bit",  # Switch works well with 8bit
                     "is_moe": True,
                     "device_map": "auto",
-                    "max_memory": {0: f"{int(self.gpu_info['memory_total'] * 0.9)}GB"}
+                    "max_memory": {self.gpu_info['id']: f"{int(self.gpu_info['memory_total'] * 0.9)}GB"},
+                    "cpu_offload": False
                 }
             ]
             
@@ -522,6 +526,17 @@ class MixtralTraceCollector:
 def main():
     """Main collection function"""
     logger.info("🚀 Starting Mixtral 8x7B MoE Trace Collection")
+    
+    # Check HuggingFace authentication
+    try:
+        from huggingface_hub import HfApi
+        api = HfApi()
+        user_info = api.whoami()
+        logger.info(f"🤗 Authenticated as: {user_info['name']}")
+    except Exception as e:
+        logger.error("❌ HuggingFace authentication failed")
+        logger.error("Please run: huggingface-cli login")
+        return
     
     collector = MixtralTraceCollector()
     collector.load_model()
