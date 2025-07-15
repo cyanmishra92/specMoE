@@ -95,11 +95,17 @@ class MixtralTraceCollector:
                 selected_gpu = sorted_gpus[0]
                 logger.warning(f"No GPU with sufficient memory found, using GPU {selected_gpu.id} with {selected_gpu.memoryFree:.1f}GB free")
             
-            # Set CUDA device
-            device = f"cuda:{selected_gpu.id}"
-            torch.cuda.set_device(selected_gpu.id)
-            # Don't set CUDA_VISIBLE_DEVICES as it interferes with device mapping
-            # os.environ['CUDA_VISIBLE_DEVICES'] = str(selected_gpu.id)
+            # Set CUDA device with error handling
+            try:
+                device = f"cuda:{selected_gpu.id}"
+                torch.cuda.set_device(selected_gpu.id)
+                # Test if the device is actually accessible
+                torch.cuda.get_device_properties(selected_gpu.id)
+            except Exception as device_error:
+                logger.warning(f"Failed to set CUDA device {selected_gpu.id}: {device_error}")
+                # Fall back to default device
+                device = "cuda"
+                selected_gpu.id = 0
             
             gpu_info = {
                 "id": selected_gpu.id,
@@ -118,13 +124,13 @@ class MixtralTraceCollector:
         except Exception as e:
             logger.error(f"Error selecting GPU: {e}")
             logger.warning("Falling back to default CUDA device")
-            return "cuda", {"name": "CUDA", "memory_total": 0, "memory_free": 0}
+            return "cuda", {"id": 0, "name": "CUDA", "memory_total": 80, "memory_free": 80}  # Assume A100 80GB
     
     def _get_optimal_config_for_gpu(self):
         """Get optimal configuration based on GPU memory"""
         memory_gb = self.gpu_info['memory_total']
         
-        gpu_id = self.gpu_info['id']
+        gpu_id = self.gpu_info.get('id', 0)  # Default to 0 if not found
         
         if memory_gb >= 80:  # A100 80GB
             return {
