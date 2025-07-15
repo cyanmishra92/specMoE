@@ -159,19 +159,19 @@ def calculate_accuracies(predictions, targets, confidences=None):
     valid_mask = targets_np != 0
     
     if not valid_mask.any():
-        return {'top_1_accuracy': 0.0, 'top_3_accuracy': 0.0, 'top_5_accuracy': 0.0}
+        return {'top_1_accuracy': 0.0, 'top_3_accuracy': 0.0, 'top_5_accuracy': 0.0, 'top_10_accuracy': 0.0}
     
     valid_predictions = predictions_np[valid_mask]
     valid_targets = targets_np[valid_mask]
     
     # Get top-k predictions
-    top_k_predictions = np.argsort(valid_predictions, axis=1)[:, -5:]  # Top 5
+    top_k_predictions = np.argsort(valid_predictions, axis=1)[:, -10:]  # Top 10
     
     # Calculate accuracies
     total_samples = len(valid_targets)
     top_k_correct = {}
     
-    for k in [1, 3, 5]:
+    for k in [1, 3, 5, 10]:
         correct = 0
         for i, target in enumerate(valid_targets):
             if target in top_k_predictions[i, -k:]:
@@ -179,7 +179,7 @@ def calculate_accuracies(predictions, targets, confidences=None):
         top_k_correct[k] = correct
     
     accuracies = {}
-    for k in [1, 3, 5]:
+    for k in [1, 3, 5, 10]:
         accuracies[f'top_{k}_accuracy'] = top_k_correct[k] / total_samples * 100
     
     if confidences is not None:
@@ -442,7 +442,7 @@ def train_statistics_aware_model():
         logger.info(f"Epoch {epoch}:")
         logger.info(f"  Train Loss: {avg_train_loss:.4f}, Train Acc: {train_acc:.4f}")
         logger.info(f"  Val Loss: {avg_val_loss:.4f}, Val Acc: {val_accuracy:.4f}")
-        logger.info(f"  Top-3 Acc: {val_acc_metrics['top_3_accuracy']:.4f}, Top-5 Acc: {val_acc_metrics['top_5_accuracy']:.4f}")
+        logger.info(f"  Top-3 Acc: {val_acc_metrics['top_3_accuracy']:.4f}, Top-5 Acc: {val_acc_metrics['top_5_accuracy']:.4f}, Top-10 Acc: {val_acc_metrics['top_10_accuracy']:.4f}")
         logger.info(f"  Avg Confidence: {val_acc_metrics['avg_confidence']:.4f}")
         
         # Save best model
