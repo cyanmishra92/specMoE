@@ -297,8 +297,18 @@ class MixtralTraceCollector:
             
             for layer_idx, router_logit in enumerate(router_logits):
                 if layer_idx < len(hidden_states):
-                    # Router logit shape: [batch_size, seq_len, num_experts]
-                    batch_size, seq_len, num_experts = router_logit.shape
+                    # Handle different router logit shapes
+                    if len(router_logit.shape) == 3:
+                        # Expected shape: [batch_size, seq_len, num_experts]
+                        batch_size, seq_len, num_experts = router_logit.shape
+                    elif len(router_logit.shape) == 2:
+                        # Alternative shape: [batch_size, num_experts] - expand to include seq_len
+                        batch_size, num_experts = router_logit.shape
+                        seq_len = hidden_states[layer_idx].shape[1]  # Get seq_len from hidden states
+                        router_logit = router_logit.unsqueeze(1).expand(batch_size, seq_len, num_experts)
+                    else:
+                        logger.warning(f"Unexpected router logit shape: {router_logit.shape}")
+                        continue
                     
                     # Handle different routing strategies
                     if "mixtral" in type(self.model).__name__.lower():
