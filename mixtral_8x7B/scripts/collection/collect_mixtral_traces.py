@@ -375,11 +375,13 @@ class MixtralTraceCollector:
                     continue
                     
                 with torch.no_grad():
+                    logger.info(f"🔥 Running model inference on {len(batch_texts)} samples...")
                     outputs = self.model(
                         **inputs,
                         output_hidden_states=True,
                         output_router_logits=True
                     )
+                    logger.info(f"✅ Model inference completed")
                     
                 # Extract routing information
                 routing_data = self.extract_expert_routing(outputs, inputs)
@@ -525,6 +527,7 @@ class MixtralTraceCollector:
                     # Process batch if we have samples
                     if batch_samples:
                         texts, names, ids = zip(*batch_samples)
+                        logger.info(f"🚀 Starting GPU inference for batch of {len(batch_samples)} samples...")
                         traces = self.collect_traces_from_text_batch(
                             list(texts), 
                             list(names), 
