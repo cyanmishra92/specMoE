@@ -183,8 +183,9 @@ def calculate_accuracies(predictions, targets, confidences=None):
         accuracies[f'top_{k}_accuracy'] = top_k_correct[k] / total_samples * 100
     
     if confidences is not None:
-        valid_confidences = confidences.cpu().numpy()[valid_mask]
-        accuracies['avg_confidence'] = np.mean(valid_confidences)
+        confidences_np = confidences.cpu().numpy()
+        # Confidence is per-sequence, just take the mean directly
+        accuracies['avg_confidence'] = np.mean(confidences_np)
     
     return accuracies
 
@@ -335,8 +336,8 @@ def train_statistics_aware_model():
             
             # Reshape for loss calculation
             batch_size, seq_len, num_experts = expert_logits.shape
-            expert_logits = expert_logits.view(-1, num_experts)
-            target_experts_flat = target_experts.view(-1)
+            expert_logits = expert_logits.reshape(-1, num_experts)
+            target_experts_flat = target_experts.reshape(-1)
             
             # Main prediction loss
             main_loss = main_criterion(expert_logits, target_experts_flat)
@@ -404,8 +405,8 @@ def train_statistics_aware_model():
                 
                 # Reshape for loss calculation
                 batch_size, seq_len, num_experts = expert_logits.shape
-                expert_logits = expert_logits.view(-1, num_experts)
-                target_experts_flat = target_experts.view(-1)
+                expert_logits = expert_logits.reshape(-1, num_experts)
+                target_experts_flat = target_experts.reshape(-1)
                 
                 # Calculate losses
                 main_loss = main_criterion(expert_logits, target_experts_flat)
