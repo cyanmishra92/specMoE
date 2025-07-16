@@ -42,7 +42,7 @@ class QwenMoEGatingDataPoint:
 class QwenMoETraceCollector:
     """Collector for Qwen1.5-MoE-A2.7B traces - Medium size for RTX 3090"""
     
-    def __init__(self):
+    def __init__(self, target_traces: int = 2000):
         self.device, self.gpu_info = self._select_best_gpu()
         self.model = None
         self.tokenizer = None
@@ -50,7 +50,7 @@ class QwenMoETraceCollector:
         self.num_layers = None
         self.traces = []
         self.processed_count = 0
-        self.target_traces = 2000  # MEDIUM: Target ~2000 traces for < 20GB
+        self.target_traces = target_traces  # Configurable target traces
         
     def _select_best_gpu(self):
         """Select the best available GPU"""
@@ -343,15 +343,33 @@ class QwenMoETraceCollector:
     
     def save_traces(self, filepath: str):
         """Save collected traces to file"""
+        logger.info(f"💾 Starting to save {len(self.traces)} traces to {filepath}")
+        logger.info(f"💾 Estimated file size: ~{len(self.traces) * 10 / 1024:.1f} MB")
+        
         with open(filepath, 'wb') as f:
             pickle.dump(self.traces, f)
-        logger.info(f"💾 Saved {len(self.traces)} traces to {filepath}")
+        
+        # Check file size
+        file_size = Path(filepath).stat().st_size / (1024 * 1024)  # MB
+        logger.info(f"💾 Successfully saved {len(self.traces)} traces to {filepath}")
+        logger.info(f"💾 File size: {file_size:.1f} MB")
 
 def main():
     """Main function"""
-    logger.info("🚀 Starting Qwen1.5-MoE-A2.7B Medium Trace Collection...")
+    import argparse
     
-    collector = QwenMoETraceCollector()
+    parser = argparse.ArgumentParser(description='Collect Medium Qwen1.5-MoE-A2.7B Traces')
+    parser.add_argument('--target_traces', type=int, default=2000, 
+                        help='Number of traces to collect (default: 2000)')
+    parser.add_argument('--output_suffix', type=str, default='',
+                        help='Suffix to add to output filename (default: none)')
+    
+    args = parser.parse_args()
+    
+    logger.info(f"🚀 Starting Qwen1.5-MoE-A2.7B Medium Trace Collection...")
+    logger.info(f"Target traces: {args.target_traces}")
+    
+    collector = QwenMoETraceCollector(target_traces=args.target_traces)
     
     # Collect traces
     traces = collector.collect_traces()
@@ -360,7 +378,12 @@ def main():
     output_dir = Path("routing_data")
     output_dir.mkdir(exist_ok=True)
     
-    output_file = output_dir / "qwen15_moe_a27b_traces_medium.pkl"
+    # Create output filename with optional suffix
+    if args.output_suffix:
+        output_file = output_dir / f"qwen15_moe_a27b_traces_medium_{args.output_suffix}.pkl"
+    else:
+        output_file = output_dir / "qwen15_moe_a27b_traces_medium.pkl"
+    
     collector.save_traces(output_file)
     
     logger.info(f"✅ Medium trace collection complete! {len(traces)} traces saved to {output_file}")
