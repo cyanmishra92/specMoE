@@ -47,7 +47,7 @@ class QwenMoETraceCollector:
         self.device, self.gpu_info = self._select_best_gpu()
         self.model = None
         self.tokenizer = None
-        self.num_experts = 8  # Qwen1.5-MoE uses 8 experts
+        self.num_experts = None  # Will be set from model config
         self.is_moe = False
         
         logger.info(f"🚀 Qwen1.5-MoE-A2.7B Trace Collector")
@@ -151,7 +151,7 @@ class QwenMoETraceCollector:
             optimal_config = self._get_optimal_config_for_gpu()
             logger.info(f"Optimal config for {self.gpu_info['name']}: {optimal_config}")
             
-            # Qwen1.5-MoE model options
+            # Try different Qwen MoE model variants
             model_options = [
                 {
                     "name": "Qwen/Qwen1.5-MoE-A2.7B",
@@ -160,6 +160,11 @@ class QwenMoETraceCollector:
                 },
                 {
                     "name": "Qwen/Qwen1.5-MoE-A2.7B-Chat",
+                    "is_moe": True,
+                    **optimal_config
+                },
+                {
+                    "name": "Qwen/Qwen2-MoE-A2.7B",
                     "is_moe": True,
                     **optimal_config
                 }
@@ -203,11 +208,24 @@ class QwenMoETraceCollector:
                         max_memory=max_memory
                     )
                     
+                    # Get number of experts from model config
+                    if hasattr(self.model.config, 'num_experts'):
+                        self.num_experts = self.model.config.num_experts
+                    elif hasattr(self.model.config, 'num_experts_per_tok'):
+                        # Sometimes stored differently
+                        self.num_experts = getattr(self.model.config, 'num_experts', 8)
+                    else:
+                        self.num_experts = 8  # Default fallback
+                    
+                    # Get routing strategy
+                    self.num_experts_per_tok = getattr(self.model.config, 'num_experts_per_tok', 2)
+                    
                     logger.info(f"✅ {model_name} loaded successfully")
                     logger.info(f"Model config: {self.model.config}")
                     logger.info(f"Number of layers: {self.model.config.num_hidden_layers}")
                     logger.info(f"Is MoE model: {is_moe}")
                     logger.info(f"Number of experts: {self.num_experts}")
+                    logger.info(f"Experts per token: {self.num_experts_per_tok}")
                     
                     self.is_moe = is_moe
                     model_loaded = True
@@ -246,8 +264,8 @@ class QwenMoETraceCollector:
                         logger.warning(f"Unexpected router logit shape: {router_logit.shape}")
                         continue
                     
-                    # Qwen1.5-MoE uses top-2 routing like Mixtral
-                    top_k = 2
+                    # Use dynamic top-k based on model config
+                    top_k = self.num_experts_per_tok if hasattr(self, 'num_experts_per_tok') else 2
                     top_k_logits, top_k_indices = torch.topk(router_logit, k=top_k, dim=-1)
                     
                     # Convert to routing probabilities
@@ -259,7 +277,11 @@ class QwenMoETraceCollector:
                         for s in range(seq_len):
                             for k in range(top_k):
                                 expert_idx = top_k_indices[b, s, k]
-                                target_routing[b, s, expert_idx] = routing_probs[b, s, expert_idx]
+                                # Check bounds to avoid index errors
+                                if expert_idx < self.num_experts:
+                                    target_routing[b, s, expert_idx] = routing_probs[b, s, expert_idx]
+                                else:
+                                    logger.warning(f"Expert index {expert_idx} out of bounds for {self.num_experts} experts")
                     
                     layer_routing = {
                         'layer_id': layer_idx,
@@ -288,12 +310,15 @@ class QwenMoETraceCollector:
             batch_sample_ids = sample_ids[i:i + batch_size]
             
             try:
+                # Adjust max_length based on number of experts
+                max_length = 256 if self.num_experts >= 60 else 512
+                
                 # Tokenize batch - shorter sequences for faster processing
                 inputs = self.tokenizer(
                     batch_texts,
                     return_tensors="pt",
                     truncation=True,
-                    max_length=512,
+                    max_length=max_length,
                     padding=True
                 ).to(self.device)
                 
@@ -375,14 +400,22 @@ class QwenMoETraceCollector:
                 else:
                     dataset = datasets.load_dataset(dataset_name, split=split)
                 
-                # Determine optimal batch size based on GPU memory
+                # Determine optimal batch size based on GPU memory and model size
                 memory_gb = self.gpu_info['memory_total']
-                if memory_gb >= 40:  # A6000 48GB
-                    batch_size = 24
-                elif memory_gb >= 24:  # RTX 3090
-                    batch_size = 16
-                else:
-                    batch_size = 8
+                if self.num_experts >= 60:  # Large MoE models
+                    if memory_gb >= 40:  # A6000 48GB
+                        batch_size = 8
+                    elif memory_gb >= 24:  # RTX 3090
+                        batch_size = 4
+                    else:
+                        batch_size = 2
+                else:  # Standard 8-expert models
+                    if memory_gb >= 40:  # A6000 48GB
+                        batch_size = 24
+                    elif memory_gb >= 24:  # RTX 3090
+                        batch_size = 16
+                    else:
+                        batch_size = 8
                 
                 logger.info(f"Using batch size: {batch_size} for {self.gpu_info['name']}")
                 
@@ -434,12 +467,29 @@ class QwenMoETraceCollector:
                         texts, names, ids = zip(*batch_samples)
                         logger.info(f"🚀 Starting GPU inference for batch of {len(batch_samples)} samples...")
                         start_batch_time = time.time()
-                        traces = self.collect_traces_from_text_batch(
-                            list(texts), 
-                            list(names), 
-                            list(ids),
-                            len(batch_samples)
-                        )
+                        
+                        # Retry with smaller batch size if memory error
+                        current_batch_size = len(batch_samples)
+                        traces = []
+                        
+                        while current_batch_size > 0 and not traces:
+                            try:
+                                traces = self.collect_traces_from_text_batch(
+                                    list(texts[:current_batch_size]), 
+                                    list(names[:current_batch_size]), 
+                                    list(ids[:current_batch_size]),
+                                    current_batch_size
+                                )
+                                break
+                            except RuntimeError as e:
+                                if "out of memory" in str(e):
+                                    current_batch_size = max(1, current_batch_size // 2)
+                                    logger.warning(f"OOM error, reducing batch size to {current_batch_size}")
+                                    torch.cuda.empty_cache()
+                                    continue
+                                else:
+                                    raise e
+                        
                         batch_time = time.time() - start_batch_time
                         
                         # Limit traces per sample
@@ -506,7 +556,7 @@ class QwenMoETraceCollector:
             'num_traces': len(traces),
             'collection_time': time.time(),
             'num_experts': self.num_experts,
-            'routing_type': 'top-2',
+            'routing_type': f'top-{getattr(self, "num_experts_per_tok", 2)}',
             'total_parameters': '14.3B',
             'active_parameters': '2.7B',
             'file_size_mb': file_size_mb,

@@ -55,6 +55,10 @@ class QwenMoETraceCollector:
     def _select_best_gpu(self):
         """Select the best available GPU"""
         try:
+            # Initialize CUDA if available
+            if not torch.cuda.is_available():
+                return "cpu", {"name": "CPU", "memory": 0}
+                
             gpus = GPUtil.getGPUs()
             if not gpus:
                 return "cpu", {"name": "CPU", "memory": 0}
@@ -69,8 +73,23 @@ class QwenMoETraceCollector:
             }
             
             device = f"cuda:{best_gpu.id}"
-            logger.info(f"Selected GPU: {best_gpu.name} with {best_gpu.memoryFree}MB free memory")
-            return device, gpu_info
+            
+            # Test device accessibility
+            try:
+                torch.cuda.set_device(device)
+                torch.cuda.empty_cache()
+                logger.info(f"Selected GPU: {best_gpu.name} with {best_gpu.memoryFree}MB free memory")
+                return device, gpu_info
+            except Exception as device_error:
+                logger.warning(f"Device {device} not accessible: {device_error}")
+                # Fallback to default CUDA device
+                if torch.cuda.is_available():
+                    device = "cuda:0"
+                    gpu_info = {"id": 0, "name": "CUDA Device 0", "memory": 0, "memory_free": 0}
+                    logger.info(f"Falling back to {device}")
+                    return device, gpu_info
+                else:
+                    return "cpu", {"name": "CPU", "memory": 0}
             
         except Exception as e:
             logger.warning(f"GPU selection failed: {e}, using CPU")
