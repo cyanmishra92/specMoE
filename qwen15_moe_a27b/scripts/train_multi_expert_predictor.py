@@ -200,6 +200,93 @@ def train_epoch(
         'confidence_loss': total_confidence_loss / num_batches
     }
 
+def train_epoch_sharded(
+    model: MultiExpertPredictor,
+    sharded_loader,
+    optimizer: optim.Optimizer,
+    criterion: MultiExpertLoss,
+    device: torch.device,
+    epoch: int
+) -> Dict[str, float]:
+    """Train for one epoch using sharded data"""
+    model.train()
+    total_loss = 0.0
+    total_expert_loss = 0.0
+    total_ranking_loss = 0.0
+    total_confidence_loss = 0.0
+    num_batches = 0
+    
+    # Estimate total batches for progress bar
+    estimated_batches = sharded_loader.get_num_batches()
+    progress_bar = tqdm(total=estimated_batches, desc=f'Epoch {epoch} (Sharded)')
+    
+    for batch_traces in sharded_loader.iterate_batches():
+        # Convert traces to dataset format
+        dataset = QwenMoEDataset(
+            traces=batch_traces,
+            prediction_window=3,  # Fixed for now
+            num_experts=60
+        )
+        
+        if len(dataset) == 0:
+            continue
+        
+        # Create batch
+        batch_data = []
+        for i in range(len(dataset)):
+            batch_data.append(dataset[i])
+        
+        if not batch_data:
+            continue
+        
+        # Collate batch
+        batch = collate_fn(batch_data)
+        
+        # Move to device
+        input_states = batch['input_states'].to(device)
+        input_layer_ids = batch['input_layer_ids'].to(device)
+        target_experts = batch['target_experts'].to(device)
+        
+        # Forward pass
+        predictions = model(input_states, input_layer_ids)
+        
+        # Compute loss
+        loss_dict = criterion(predictions, target_experts)
+        
+        # Backward pass
+        optimizer.zero_grad()
+        loss_dict['total_loss'].backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        optimizer.step()
+        
+        # Update metrics
+        total_loss += loss_dict['total_loss'].item()
+        total_expert_loss += loss_dict['expert_loss'].item()
+        total_ranking_loss += loss_dict['ranking_loss'].item()
+        total_confidence_loss += loss_dict['confidence_loss'].item()
+        num_batches += 1
+        
+        # Update progress bar
+        progress_bar.set_postfix({
+            'loss': f"{loss_dict['total_loss'].item():.4f}",
+            'expert': f"{loss_dict['expert_loss'].item():.4f}",
+            'ranking': f"{loss_dict['ranking_loss'].item():.4f}"
+        })
+        progress_bar.update(1)
+        
+        # Clear cache periodically
+        if num_batches % 10 == 0:
+            torch.cuda.empty_cache()
+    
+    progress_bar.close()
+    
+    return {
+        'total_loss': total_loss / num_batches if num_batches > 0 else 0.0,
+        'expert_loss': total_expert_loss / num_batches if num_batches > 0 else 0.0,
+        'ranking_loss': total_ranking_loss / num_batches if num_batches > 0 else 0.0,
+        'confidence_loss': total_confidence_loss / num_batches if num_batches > 0 else 0.0
+    }
+
 def evaluate_model(
     model: MultiExpertPredictor,
     dataloader: DataLoader,
@@ -257,6 +344,8 @@ def main():
     parser = argparse.ArgumentParser(description='Train Multi-Expert Predictor')
     parser.add_argument('--trace_file', type=str, default='routing_data/qwen15_moe_a27b_traces_small.pkl',
                         help='Path to trace file')
+    parser.add_argument('--shard_dir', type=str, default='',
+                        help='Path to sharded data directory (alternative to trace_file)')
     parser.add_argument('--batch_size', type=int, default=8, help='Batch size')
     parser.add_argument('--epochs', type=int, default=50, help='Number of epochs')
     parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
@@ -279,41 +368,80 @@ def main():
     
     logger.info(f"Using device: {device}")
     
-    # Load traces
-    logger.info(f"Loading traces from {args.trace_file}")
-    with open(args.trace_file, 'rb') as f:
-        traces = pickle.load(f)
-    
-    logger.info(f"Loaded {len(traces)} traces")
-    
-    # Create dataset
-    dataset = QwenMoEDataset(
-        traces=traces,
-        prediction_window=args.prediction_window,
-        num_experts=args.num_experts
-    )
-    
-    # Split into train/val
-    train_size = int(0.8 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
-    
-    # Create dataloaders
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        collate_fn=collate_fn,
-        num_workers=2
-    )
-    
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        collate_fn=collate_fn,
-        num_workers=2
-    )
+    # Load traces or use sharded data
+    if args.shard_dir:
+        logger.info(f"Using sharded data from {args.shard_dir}")
+        
+        # Add utils to path
+        import sys
+        sys.path.append('../utils')
+        from data_sharding import ShardedDataLoader
+        
+        # Create sharded data loader
+        sharded_loader = ShardedDataLoader(
+            args.shard_dir,
+            batch_size=args.batch_size,
+            shuffle=True
+        )
+        
+        # Get a sample to determine dataset structure
+        sample_traces = sharded_loader.get_sample_batch(100)
+        
+        # Create a small dataset for validation
+        val_dataset = QwenMoEDataset(
+            traces=sample_traces[:20],  # Use small sample for validation
+            prediction_window=args.prediction_window,
+            num_experts=args.num_experts
+        )
+        
+        val_loader = DataLoader(
+            val_dataset,
+            batch_size=args.batch_size,
+            shuffle=False,
+            collate_fn=collate_fn,
+            num_workers=2
+        )
+        
+        train_loader = None  # Will use sharded loader directly
+        
+    else:
+        # Load traces from single file
+        logger.info(f"Loading traces from {args.trace_file}")
+        with open(args.trace_file, 'rb') as f:
+            traces = pickle.load(f)
+        
+        logger.info(f"Loaded {len(traces)} traces")
+        
+        # Create dataset
+        dataset = QwenMoEDataset(
+            traces=traces,
+            prediction_window=args.prediction_window,
+            num_experts=args.num_experts
+        )
+        
+        # Split into train/val
+        train_size = int(0.8 * len(dataset))
+        val_size = len(dataset) - train_size
+        train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+        
+        # Create dataloaders
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=args.batch_size,
+            shuffle=True,
+            collate_fn=collate_fn,
+            num_workers=2
+        )
+        
+        val_loader = DataLoader(
+            val_dataset,
+            batch_size=args.batch_size,
+            shuffle=False,
+            collate_fn=collate_fn,
+            num_workers=2
+        )
+        
+        sharded_loader = None
     
     # Create model
     model = MultiExpertPredictor(
@@ -341,7 +469,10 @@ def main():
     
     for epoch in range(args.epochs):
         # Train
-        train_metrics = train_epoch(model, train_loader, optimizer, criterion, device, epoch)
+        if sharded_loader:
+            train_metrics = train_epoch_sharded(model, sharded_loader, optimizer, criterion, device, epoch)
+        else:
+            train_metrics = train_epoch(model, train_loader, optimizer, criterion, device, epoch)
         
         # Validate
         val_metrics = evaluate_model(model, val_loader, criterion, device)

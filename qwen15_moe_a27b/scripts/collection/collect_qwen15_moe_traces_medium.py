@@ -363,6 +363,10 @@ def main():
                         help='Number of traces to collect (default: 2000)')
     parser.add_argument('--output_suffix', type=str, default='',
                         help='Suffix to add to output filename (default: none)')
+    parser.add_argument('--shard_data', action='store_true',
+                        help='Automatically shard data for memory-efficient training')
+    parser.add_argument('--shard_size_mb', type=int, default=500,
+                        help='Target shard size in MB (default: 500)')
     
     args = parser.parse_args()
     
@@ -385,6 +389,25 @@ def main():
         output_file = output_dir / "qwen15_moe_a27b_traces_medium.pkl"
     
     collector.save_traces(output_file)
+    
+    # Optionally shard the data
+    if args.shard_data:
+        logger.info("📁 Sharding data for memory-efficient training...")
+        
+        # Import sharding utilities
+        import sys
+        sys.path.append('../utils')
+        from data_sharding import shard_trace_file
+        
+        # Create shard directory
+        shard_dir = output_file.parent / (output_file.stem + "_shards")
+        shard_files = shard_trace_file(str(output_file), str(shard_dir), args.shard_size_mb)
+        
+        logger.info(f"📁 Created {len(shard_files)} shards in {shard_dir}")
+        logger.info(f"📁 Each shard ~{args.shard_size_mb}MB, suitable for RTX 3090 training")
+        
+        # Optionally remove original file to save space
+        # output_file.unlink()  # Uncomment if you want to remove the original
     
     logger.info(f"✅ Medium trace collection complete! {len(traces)} traces saved to {output_file}")
 

@@ -1,15 +1,15 @@
 # Qwen1.5-MoE-A2.7B Expert Speculation Training
 
-Complete implementation of expert speculation training for Qwen1.5-MoE-A2.7B model.
+Complete implementation of multi-expert prediction training for Qwen1.5-MoE-A2.7B model with **RTX 3090 memory optimization**.
 
 ## Model Overview
 
 **Qwen1.5-MoE-A2.7B** is a highly efficient small MoE model:
-- **14.3B total parameters** (8 experts × ~1.8B each)
-- **2.7B active parameters** per token (top-2 routing)
-- **8 experts per MoE layer**
-- **Top-2 routing** (same as Mixtral but much smaller)
-- **RTX 3090/A6000 optimized** - fits easily on 24GB VRAM
+- **14.3B total parameters** (60 routing + 4 shared experts)
+- **2.7B active parameters** per token (top-4 routing)
+- **60 routing experts + 4 shared experts** per MoE layer
+- **Top-4 routing** (4 out of 60 experts selected per token)
+- **RTX 3090/A6000 optimized** with data sharding
 
 ## Key Advantages over Mixtral
 
@@ -19,29 +19,38 @@ Complete implementation of expert speculation training for Qwen1.5-MoE-A2.7B mod
 - **Same top-2 routing strategy** for comparable speculation training
 - **Better GPU utilization** on RTX 3090/A6000
 
-## Hardware Requirements
+## 🚀 RTX 3090 Memory Optimization
 
-- **RTX 3090 (24GB)**: Perfect fit, no CPU offload needed
-- **A6000 (48GB)**: Excellent performance, can run larger batches
-- **RTX 4090 (24GB)**: Optimal performance
-- **Minimum**: 16GB VRAM with 8-bit quantization
+**NEW**: Data sharding for memory-efficient training on RTX 3090 (24GB)!
 
-## Quick Start
+### Hardware Requirements
+- **RTX 3090 (24GB)**: ✅ Perfect with data sharding
+- **A6000 (48GB)**: ✅ Excellent performance, larger batches
+- **RTX 4090 (24GB)**: ✅ Optimal performance
+- **Minimum**: 16GB VRAM with 4-bit quantization + sharding
 
-1. **Collect Traces**:
+### Memory-Efficient Workflow
+
+1. **Collect & Shard Traces**:
    ```bash
-   cd qwen15_moe_a27b
-   python scripts/collection/collect_qwen15_moe_traces.py
+   # Automatic sharding for RTX 3090
+   python scripts/collection/collect_qwen15_moe_traces_medium.py \
+     --target_traces 5000 \
+     --shard_data \
+     --shard_size_mb 400
    ```
 
-2. **Train Speculation Model**:
+2. **Train with Sharded Data**:
    ```bash
-   python scripts/training/train_qwen15_moe_speculation.py
+   python scripts/train_multi_expert_predictor.py \
+     --shard_dir routing_data/qwen15_moe_a27b_traces_medium_shards \
+     --batch_size 4 \
+     --epochs 50
    ```
 
-3. **Analyze Results**:
+3. **Run RTX 3090 Example**:
    ```bash
-   python scripts/analysis/visualize_qwen15_moe_routing.py
+   python scripts/examples/rtx3090_training_example.py
    ```
 
 ## Performance Expectations
@@ -62,32 +71,35 @@ Complete implementation of expert speculation training for Qwen1.5-MoE-A2.7B mod
 ```
 Qwen1.5-MoE-A2.7B Architecture:
 ├── 24 Transformer layers
-├── 8 MoE layers (every 3rd layer)
-├── 8 experts per MoE layer
-├── Top-2 expert selection
+├── 60 routing experts per MoE layer
+├── 4 shared experts (always active)
+├── Top-4 expert selection from routing experts
 ├── 2048 hidden dimensions
+├── 1408 intermediate size per routing expert
 └── 32,000 vocabulary size
 ```
 
 ## Training Configuration
 
 ```python
-# RTX 3090 Optimized
+# RTX 3090 Optimized (with sharding)
 config = {
-    'batch_size': 16,
-    'max_length': 512,
-    'quantization': '8bit',
+    'batch_size': 4,
+    'max_length': 256,
+    'quantization': '4bit',
     'device_map': 'auto',
-    'cpu_offload': False
+    'cpu_offload': True,
+    'shard_size_mb': 400
 }
 
 # A6000 Optimized  
 config = {
-    'batch_size': 24,
-    'max_length': 512,
+    'batch_size': 8,
+    'max_length': 256,
     'quantization': '8bit',
     'device_map': 'auto',
-    'cpu_offload': False
+    'cpu_offload': False,
+    'shard_size_mb': 500
 }
 ```
 
@@ -102,27 +114,28 @@ config = {
 
 ## Expected Accuracy
 
-Based on model architecture and similar MoE models:
-- **Random baseline**: ~12.5% (1/8 experts)
-- **Most frequent**: ~25-30%
-- **Pattern-based**: ~45-55% (target)
-- **Statistics-aware**: ~50-60% (target)
+Based on model architecture and top-4 routing:
+- **Random baseline**: ~6.7% (4/60 experts)
+- **Most frequent**: ~15-20%
+- **Multi-expert prediction**: ~35-45% (target)
+- **Pattern-based**: ~40-50% (target)
 
 ## Comparison with Other Models
 
 | Model | Active Params | Total Params | VRAM Needed | RTX 3090 Compatible |
 |-------|---------------|--------------|-------------|-------------------|
-| Qwen1.5-MoE-A2.7B | 2.7B | 14.3B | 8-12GB | ✅ Perfect |
-| DeepSeek-MoE-16B | 2.8B | 16.4B | 16-20GB | ✅ Good |
+| Qwen1.5-MoE-A2.7B | 2.7B | 14.3B | 8-12GB | ✅ Perfect (sharded) |
+| DeepSeek-MoE-16B | 2.8B | 16.4B | 16-20GB | ✅ Good (sharded) |
 | Mixtral-8x7B | 14B | 45B | 24GB+ | ⚠️ Tight fit |
 
-## Features
+## 🆕 New Features
 
-- **Efficient MoE Architecture**: Same top-2 routing as Mixtral
-- **GPU-Adaptive Batch Processing**: Optimized for RTX 3090/A6000
-- **Balanced Dataset Sampling**: 20,000 traces from 6 clean datasets
-- **Fast Inference**: 5x faster than Mixtral on same hardware
+- **Multi-Expert Prediction**: Predicts top-4 experts simultaneously
+- **Data Sharding**: Automatic memory-efficient training
+- **GPU-Adaptive Configuration**: RTX 3090/A6000 optimized
+- **Balanced Dataset Sampling**: Configurable trace counts
 - **Progress Tracking**: Real-time collection rate monitoring
+- **Memory Monitoring**: Automatic GPU cache management
 
 ## Files Structure
 
@@ -130,11 +143,20 @@ Based on model architecture and similar MoE models:
 qwen15_moe_a27b/
 ├── scripts/
 │   ├── collection/          # Trace collection scripts
-│   ├── training/           # Speculation model training
-│   └── analysis/           # Visualization and analysis
-├── models/                 # Trained speculation models
-├── routing_data/          # Collected MoE traces
-└── README.md             # This file
+│   │   ├── collect_qwen15_moe_traces_small.py    # 10 traces (dev)
+│   │   ├── collect_qwen15_moe_traces_medium.py   # Configurable (2000 default)
+│   │   └── collect_qwen15_moe_traces.py          # Full traces
+│   ├── utils/
+│   │   └── data_sharding.py                      # Memory-efficient sharding
+│   ├── examples/
+│   │   └── rtx3090_training_example.py          # RTX 3090 workflow
+│   ├── train_multi_expert_predictor.py          # Multi-expert training
+│   └── analysis/                                 # Visualization and analysis
+├── models/
+│   └── multi_expert_predictor.py               # Multi-expert model
+├── routing_data/                                # Collected MoE traces
+│   └── *_shards/                               # Sharded data directories
+└── README.md                                   # This file
 ```
 
 ## Getting Started
@@ -142,6 +164,7 @@ qwen15_moe_a27b/
 1. **Setup Environment**:
    ```bash
    pip install torch transformers datasets tqdm bitsandbytes accelerate
+   pip install GPUtil seaborn matplotlib numpy scipy
    ```
 
 2. **Login to HuggingFace**:
@@ -149,9 +172,42 @@ qwen15_moe_a27b/
    huggingface-cli login
    ```
 
-3. **Run Collection**:
+3. **Quick Test (RTX 3090)**:
    ```bash
-   python scripts/collection/collect_qwen15_moe_traces.py
+   python scripts/examples/rtx3090_training_example.py
    ```
 
-Perfect for RTX 3090 and A6000 users who want efficient MoE expert speculation training!
+4. **Full Training Pipeline**:
+   ```bash
+   # Collect traces with sharding
+   python scripts/collection/collect_qwen15_moe_traces_medium.py \
+     --target_traces 5000 --shard_data --shard_size_mb 400
+   
+   # Train predictor
+   python scripts/train_multi_expert_predictor.py \
+     --shard_dir routing_data/qwen15_moe_a27b_traces_medium_shards \
+     --batch_size 4 --epochs 50
+   ```
+
+## 🎯 Command Line Options
+
+### Trace Collection
+```bash
+# Configurable trace count
+--target_traces 5000              # Number of traces to collect
+--output_suffix rtx3090           # Custom output filename
+--shard_data                      # Enable automatic sharding
+--shard_size_mb 400              # Shard size in MB
+```
+
+### Training
+```bash
+# Memory-efficient training
+--shard_dir path/to/shards        # Use sharded data
+--batch_size 4                    # Batch size for RTX 3090
+--epochs 50                       # Training epochs
+--lr 1e-4                         # Learning rate
+--device cuda                     # Training device
+```
+
+Perfect for RTX 3090 and A6000 users who want efficient MoE expert speculation training with **memory optimization**!
