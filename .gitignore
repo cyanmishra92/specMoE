@@ -31,6 +31,9 @@ checkpoints/
 routing_data/*.pkl
 routing_data/*.json.gz
 routing_data/*.parquet
+**/routing_data/*.pkl
+**/routing_data/*.json.gz
+**/routing_data/*.parquet
 
 # HuggingFace model cache and downloaded models
 .cache/
