@@ -1,0 +1,35 @@
+{
+  "strategy_name": "D_TopK",
+  "description": "Multi look-ahead with top-k expert loading (k=10 per layer)",
+  "prefetching": {
+    "enabled": true,
+    "lookahead_layers": 3,
+    "accuracy": 0.4755,
+    "confidence_threshold": 0.5,
+    "prefetch_timing": "multi_layer_ahead",
+    "top_k_predictions": 10
+  },
+  "caching": {
+    "enabled": true,
+    "cache_size": 20,
+    "policy": "topk_confidence_lru"
+  },
+  "expert_loading": {
+    "method": "prefetch_topk",
+    "source": "cpu_memory",
+    "transfer_batch_size": 4,
+    "overlap_compute": true,
+    "k_experts_per_layer": 10,
+    "prediction_model": "trained_47_5_accuracy"
+  },
+  "timing_config": {
+    "cpu_to_gpu_ms": 4.35,
+    "cpu_to_gpu_4_ms": 19.14,
+    "cpu_to_gpu_10_ms": 45.0,
+    "gpu_cache_hit_ms": 0.047,
+    "compute_ms": 0.106,
+    "allocation_overhead_ms": 0.008,
+    "prefetch_overlap_factor": 0.7,
+    "prediction_overhead_ms": 0.02
+  }
+}

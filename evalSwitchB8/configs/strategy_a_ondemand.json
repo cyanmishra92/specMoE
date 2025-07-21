@@ -1,0 +1,25 @@
+{
+  "strategy_name": "A_OnDemand",
+  "description": "Baseline: On-demand loading from CPU memory",
+  "prefetching": {
+    "enabled": false,
+    "lookahead_layers": 0,
+    "confidence_threshold": 0.0
+  },
+  "caching": {
+    "enabled": false,
+    "cache_size": 0,
+    "policy": "none"
+  },
+  "expert_loading": {
+    "method": "on_demand",
+    "source": "cpu_memory",
+    "transfer_batch_size": 1
+  },
+  "timing_config": {
+    "cpu_to_gpu_ms": 4.35,
+    "gpu_cache_hit_ms": 0.047,
+    "compute_ms": 0.106,
+    "allocation_overhead_ms": 0.008
+  }
+}

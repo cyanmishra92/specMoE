@@ -1,0 +1,41 @@
+{
+  "strategy_name": "E_Intelligent",
+  "description": "Strategy D + intelligent caching with adaptation",
+  "prefetching": {
+    "enabled": true,
+    "lookahead_layers": 3,
+    "accuracy": 0.4755,
+    "confidence_threshold": 0.5,
+    "prefetch_timing": "multi_layer_ahead",
+    "top_k_predictions": 10,
+    "adaptive_k": true
+  },
+  "caching": {
+    "enabled": true,
+    "cache_size": 32,
+    "policy": "intelligent_adaptive",
+    "adaptation_enabled": true,
+    "memory_pressure_threshold": 0.8
+  },
+  "expert_loading": {
+    "method": "prefetch_intelligent",
+    "source": "cpu_memory",
+    "transfer_batch_size": 4,
+    "overlap_compute": true,
+    "k_experts_per_layer": 10,
+    "prediction_model": "trained_47_5_accuracy",
+    "expert_popularity_tracking": true,
+    "temporal_pattern_detection": true
+  },
+  "timing_config": {
+    "cpu_to_gpu_ms": 4.35,
+    "cpu_to_gpu_4_ms": 19.14,
+    "cpu_to_gpu_10_ms": 45.0,
+    "gpu_cache_hit_ms": 0.047,
+    "compute_ms": 0.106,
+    "allocation_overhead_ms": 0.008,
+    "prefetch_overlap_factor": 0.8,
+    "prediction_overhead_ms": 0.02,
+    "adaptation_overhead_ms": 0.01
+  }
+}

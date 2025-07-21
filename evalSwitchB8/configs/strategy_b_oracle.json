@@ -1,0 +1,29 @@
+{
+  "strategy_name": "B_Oracle",
+  "description": "Oracle one layer ahead prefetching (100% accuracy)",
+  "prefetching": {
+    "enabled": true,
+    "lookahead_layers": 1,
+    "accuracy": 1.0,
+    "confidence_threshold": 1.0,
+    "prefetch_timing": "layer_ahead"
+  },
+  "caching": {
+    "enabled": true,
+    "cache_size": 2,
+    "policy": "oracle_optimal"
+  },
+  "expert_loading": {
+    "method": "prefetch_oracle",
+    "source": "cpu_memory",
+    "transfer_batch_size": 1,
+    "overlap_compute": true
+  },
+  "timing_config": {
+    "cpu_to_gpu_ms": 4.35,
+    "gpu_cache_hit_ms": 0.047,
+    "compute_ms": 0.106,
+    "allocation_overhead_ms": 0.008,
+    "prefetch_overlap_factor": 0.8
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "total_experiments": 25,
+  "successful": 25,
+  "failed": 0,
+  "timeout": 0,
+  "errors": 0,
+  "total_time_hours": 0.0036237898137834335,
+  "average_time_per_experiment": 0.5218257331848144,
+  "results": [
+    {
+      "strategy": "A",
+      "batch_size": 1,
+      "status": "success",
+      "elapsed_time": 0.8534717559814453,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy A, Batch size 1\n   Configuration: Baseline: On-demand loading from CPU memory\n   Runs: 10\n   Run 1/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 2/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 3/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 4/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 5/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 6/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 7/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 8/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 9/10... Latency: 2281.47ms, Hit rate: 0.03%\n   Run 10/10... Latency: 2281.47ms, Hit rate: 0.03%\n\ud83d\udcc1 Results saved to: ../results/strategy_A_batch_1.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 2281.47 \u00b1 0.00 ms\n   Hit Rate: 0.03% \u00b1 0.00%\n   Memory Usage: 28.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "A",
+      "batch_size": 2,
+      "status": "success",
+      "elapsed_time": 0.9178011417388916,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy A, Batch size 2\n   Configuration: Baseline: On-demand loading from CPU memory\n   Runs: 10\n   Run 1/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 2/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 3/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 4/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 5/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 6/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 7/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 8/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 9/10... Latency: 4562.94ms, Hit rate: 0.03%\n   Run 10/10... Latency: 4562.94ms, Hit rate: 0.03%\n\ud83d\udcc1 Results saved to: ../results/strategy_A_batch_2.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 4562.94 \u00b1 0.00 ms\n   Hit Rate: 0.03% \u00b1 0.00%\n   Memory Usage: 28.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "A",
+      "batch_size": 4,
+      "status": "success",
+      "elapsed_time": 0.880460262298584,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy A, Batch size 4\n   Configuration: Baseline: On-demand loading from CPU memory\n   Runs: 10\n   Run 1/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 2/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 3/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 4/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 5/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 6/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 7/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 8/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 9/10... Latency: 9125.89ms, Hit rate: 0.03%\n   Run 10/10... Latency: 9125.89ms, Hit rate: 0.03%\n\ud83d\udcc1 Results saved to: ../results/strategy_A_batch_4.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 9125.89 \u00b1 0.00 ms\n   Hit Rate: 0.03% \u00b1 0.00%\n   Memory Usage: 28.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "A",
+      "batch_size": 8,
+      "status": "success",
+      "elapsed_time": 0.9270551204681396,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy A, Batch size 8\n   Configuration: Baseline: On-demand loading from CPU memory\n   Runs: 10\n   Run 1/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 2/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 3/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 4/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 5/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 6/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 7/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 8/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 9/10... Latency: 18251.78ms, Hit rate: 0.03%\n   Run 10/10... Latency: 18251.78ms, Hit rate: 0.03%\n\ud83d\udcc1 Results saved to: ../results/strategy_A_batch_8.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 18251.78 \u00b1 0.00 ms\n   Hit Rate: 0.03% \u00b1 0.00%\n   Memory Usage: 28.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "A",
+      "batch_size": 16,
+      "status": "success",
+      "elapsed_time": 0.9111018180847168,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy A, Batch size 16\n   Configuration: Baseline: On-demand loading from CPU memory\n   Runs: 10\n   Run 1/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 2/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 3/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 4/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 5/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 6/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 7/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 8/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 9/10... Latency: 36503.55ms, Hit rate: 0.03%\n   Run 10/10... Latency: 36503.55ms, Hit rate: 0.03%\n\ud83d\udcc1 Results saved to: ../results/strategy_A_batch_16.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 36503.55 \u00b1 0.00 ms\n   Hit Rate: 0.03% \u00b1 0.00%\n   Memory Usage: 28.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "B",
+      "batch_size": 1,
+      "status": "success",
+      "elapsed_time": 0.8819382190704346,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy B, Batch size 1\n   Configuration: Oracle one layer ahead prefetching (100% accuracy)\n   Runs: 10\n   Run 1/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 2/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 3/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 4/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 5/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 6/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 7/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 8/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 9/10... Latency: 143.94ms, Hit rate: 99.82%\n   Run 10/10... Latency: 143.94ms, Hit rate: 99.82%\n\ud83d\udcc1 Results saved to: ../results/strategy_B_batch_1.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 143.94 \u00b1 0.00 ms\n   Hit Rate: 99.82% \u00b1 0.00%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "B",
+      "batch_size": 2,
+      "status": "success",
+      "elapsed_time": 0.9041898250579834,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy B, Batch size 2\n   Configuration: Oracle one layer ahead prefetching (100% accuracy)\n   Runs: 10\n   Run 1/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 2/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 3/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 4/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 5/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 6/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 7/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 8/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 9/10... Latency: 287.88ms, Hit rate: 99.82%\n   Run 10/10... Latency: 287.88ms, Hit rate: 99.82%\n\ud83d\udcc1 Results saved to: ../results/strategy_B_batch_2.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 287.88 \u00b1 0.00 ms\n   Hit Rate: 99.82% \u00b1 0.00%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "B",
+      "batch_size": 4,
+      "status": "success",
+      "elapsed_time": 0.8895180225372314,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy B, Batch size 4\n   Configuration: Oracle one layer ahead prefetching (100% accuracy)\n   Runs: 10\n   Run 1/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 2/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 3/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 4/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 5/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 6/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 7/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 8/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 9/10... Latency: 575.76ms, Hit rate: 99.82%\n   Run 10/10... Latency: 575.76ms, Hit rate: 99.82%\n\ud83d\udcc1 Results saved to: ../results/strategy_B_batch_4.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 575.76 \u00b1 0.00 ms\n   Hit Rate: 99.82% \u00b1 0.00%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "B",
+      "batch_size": 8,
+      "status": "success",
+      "elapsed_time": 0.8787462711334229,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy B, Batch size 8\n   Configuration: Oracle one layer ahead prefetching (100% accuracy)\n   Runs: 10\n   Run 1/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 2/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 3/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 4/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 5/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 6/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 7/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 8/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 9/10... Latency: 1151.51ms, Hit rate: 99.82%\n   Run 10/10... Latency: 1151.51ms, Hit rate: 99.82%\n\ud83d\udcc1 Results saved to: ../results/strategy_B_batch_8.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 1151.51 \u00b1 0.00 ms\n   Hit Rate: 99.82% \u00b1 0.00%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "B",
+      "batch_size": 16,
+      "status": "success",
+      "elapsed_time": 0.907097339630127,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy B, Batch size 16\n   Configuration: Oracle one layer ahead prefetching (100% accuracy)\n   Runs: 10\n   Run 1/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 2/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 3/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 4/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 5/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 6/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 7/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 8/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 9/10... Latency: 2303.02ms, Hit rate: 99.82%\n   Run 10/10... Latency: 2303.02ms, Hit rate: 99.82%\n\ud83d\udcc1 Results saved to: ../results/strategy_B_batch_16.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 2303.02 \u00b1 0.00 ms\n   Hit Rate: 99.82% \u00b1 0.00%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "C",
+      "batch_size": 1,
+      "status": "success",
+      "elapsed_time": 1.0277178287506104,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy C, Batch size 1\n   Configuration: Our prefetching method with multi look-ahead\n   Runs: 10\n   Run 1/10... Latency: 192.41ms, Hit rate: 99.09%\n   Run 2/10... Latency: 217.68ms, Hit rate: 98.99%\n   Run 3/10... Latency: 215.98ms, Hit rate: 98.91%\n   Run 4/10... Latency: 219.02ms, Hit rate: 98.91%\n   Run 5/10... Latency: 223.46ms, Hit rate: 98.80%\n   Run 6/10... Latency: 211.77ms, Hit rate: 98.93%\n   Run 7/10... Latency: 208.41ms, Hit rate: 99.02%\n   Run 8/10... Latency: 210.89ms, Hit rate: 99.06%\n   Run 9/10... Latency: 236.41ms, Hit rate: 98.76%\n   Run 10/10... Latency: 215.03ms, Hit rate: 99.19%\n\ud83d\udcc1 Results saved to: ../results/strategy_C_batch_1.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 215.10 \u00b1 10.65 ms\n   Hit Rate: 98.96% \u00b1 0.12%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "C",
+      "batch_size": 2,
+      "status": "success",
+      "elapsed_time": 1.0444626808166504,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy C, Batch size 2\n   Configuration: Our prefetching method with multi look-ahead\n   Runs: 10\n   Run 1/10... Latency: 391.09ms, Hit rate: 99.10%\n   Run 2/10... Latency: 451.52ms, Hit rate: 98.94%\n   Run 3/10... Latency: 405.61ms, Hit rate: 98.97%\n   Run 4/10... Latency: 426.81ms, Hit rate: 99.06%\n   Run 5/10... Latency: 426.38ms, Hit rate: 98.89%\n   Run 6/10... Latency: 407.97ms, Hit rate: 99.15%\n   Run 7/10... Latency: 400.14ms, Hit rate: 99.15%\n   Run 8/10... Latency: 406.92ms, Hit rate: 98.99%\n   Run 9/10... Latency: 419.78ms, Hit rate: 99.04%\n   Run 10/10... Latency: 418.74ms, Hit rate: 99.20%\n\ud83d\udcc1 Results saved to: ../results/strategy_C_batch_2.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 415.50 \u00b1 16.23 ms\n   Hit Rate: 99.05% \u00b1 0.10%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "C",
+      "batch_size": 4,
+      "status": "success",
+      "elapsed_time": 1.0610418319702148,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy C, Batch size 4\n   Configuration: Our prefetching method with multi look-ahead\n   Runs: 10\n   Run 1/10... Latency: 896.10ms, Hit rate: 99.01%\n   Run 2/10... Latency: 868.61ms, Hit rate: 99.10%\n   Run 3/10... Latency: 956.22ms, Hit rate: 98.89%\n   Run 4/10... Latency: 790.53ms, Hit rate: 99.07%\n   Run 5/10... Latency: 778.86ms, Hit rate: 99.22%\n   Run 6/10... Latency: 851.40ms, Hit rate: 98.93%\n   Run 7/10... Latency: 859.56ms, Hit rate: 99.09%\n   Run 8/10... Latency: 951.92ms, Hit rate: 98.76%\n   Run 9/10... Latency: 842.86ms, Hit rate: 99.10%\n   Run 10/10... Latency: 934.17ms, Hit rate: 98.75%\n\ud83d\udcc1 Results saved to: ../results/strategy_C_batch_4.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 873.02 \u00b1 58.88 ms\n   Hit Rate: 98.99% \u00b1 0.15%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "C",
+      "batch_size": 8,
+      "status": "success",
+      "elapsed_time": 1.0329172611236572,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy C, Batch size 8\n   Configuration: Our prefetching method with multi look-ahead\n   Runs: 10\n   Run 1/10... Latency: 1539.30ms, Hit rate: 99.14%\n   Run 2/10... Latency: 1654.46ms, Hit rate: 99.04%\n   Run 3/10... Latency: 1534.42ms, Hit rate: 99.20%\n   Run 4/10... Latency: 1696.48ms, Hit rate: 99.09%\n   Run 5/10... Latency: 1630.79ms, Hit rate: 99.10%\n   Run 6/10... Latency: 1693.06ms, Hit rate: 99.07%\n   Run 7/10... Latency: 1710.46ms, Hit rate: 99.15%\n   Run 8/10... Latency: 1777.97ms, Hit rate: 98.96%\n   Run 9/10... Latency: 1742.47ms, Hit rate: 98.81%\n   Run 10/10... Latency: 1699.64ms, Hit rate: 98.96%\n\ud83d\udcc1 Results saved to: ../results/strategy_C_batch_8.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 1667.90 \u00b1 76.06 ms\n   Hit Rate: 99.05% \u00b1 0.11%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "C",
+      "batch_size": 16,
+      "status": "success",
+      "elapsed_time": 1.0366897583007812,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy C, Batch size 16\n   Configuration: Our prefetching method with multi look-ahead\n   Runs: 10\n   Run 1/10... Latency: 3278.29ms, Hit rate: 98.89%\n   Run 2/10... Latency: 3532.16ms, Hit rate: 98.88%\n   Run 3/10... Latency: 3590.62ms, Hit rate: 98.97%\n   Run 4/10... Latency: 3754.13ms, Hit rate: 98.65%\n   Run 5/10... Latency: 3591.26ms, Hit rate: 98.97%\n   Run 6/10... Latency: 3679.60ms, Hit rate: 98.88%\n   Run 7/10... Latency: 3070.99ms, Hit rate: 99.15%\n   Run 8/10... Latency: 3713.65ms, Hit rate: 98.84%\n   Run 9/10... Latency: 3269.82ms, Hit rate: 99.27%\n   Run 10/10... Latency: 3480.66ms, Hit rate: 98.84%\n\ud83d\udcc1 Results saved to: ../results/strategy_C_batch_16.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 3496.12 \u00b1 211.30 ms\n   Hit Rate: 98.94% \u00b1 0.16%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "D",
+      "batch_size": 1,
+      "status": "success",
+      "elapsed_time": 1.0852689743041992,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy D, Batch size 1\n   Configuration: Multi look-ahead with top-k expert loading (k=10 per layer)\n   Runs: 10\n   Run 1/10... Latency: 225.75ms, Hit rate: 99.19%\n   Run 2/10... Latency: 215.83ms, Hit rate: 99.45%\n   Run 3/10... Latency: 190.07ms, Hit rate: 99.43%\n   Run 4/10... Latency: 209.05ms, Hit rate: 99.51%\n   Run 5/10... Latency: 203.77ms, Hit rate: 99.48%\n   Run 6/10... Latency: 195.29ms, Hit rate: 99.41%\n   Run 7/10... Latency: 198.02ms, Hit rate: 99.41%\n   Run 8/10... Latency: 201.75ms, Hit rate: 99.33%\n   Run 9/10... Latency: 199.46ms, Hit rate: 99.51%\n   Run 10/10... Latency: 217.86ms, Hit rate: 99.32%\n\ud83d\udcc1 Results saved to: ../results/strategy_D_batch_1.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 205.69 \u00b1 10.65 ms\n   Hit Rate: 99.40% \u00b1 0.10%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "D",
+      "batch_size": 2,
+      "status": "success",
+      "elapsed_time": 1.1056814193725586,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy D, Batch size 2\n   Configuration: Multi look-ahead with top-k expert loading (k=10 per layer)\n   Runs: 10\n   Run 1/10... Latency: 394.62ms, Hit rate: 99.46%\n   Run 2/10... Latency: 491.15ms, Hit rate: 99.15%\n   Run 3/10... Latency: 379.10ms, Hit rate: 99.64%\n   Run 4/10... Latency: 378.19ms, Hit rate: 99.56%\n   Run 5/10... Latency: 405.19ms, Hit rate: 99.37%\n   Run 6/10... Latency: 425.93ms, Hit rate: 99.48%\n   Run 7/10... Latency: 410.14ms, Hit rate: 99.41%\n   Run 8/10... Latency: 406.76ms, Hit rate: 99.38%\n   Run 9/10... Latency: 390.59ms, Hit rate: 99.30%\n   Run 10/10... Latency: 402.42ms, Hit rate: 99.38%\n\ud83d\udcc1 Results saved to: ../results/strategy_D_batch_2.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 408.41 \u00b1 30.80 ms\n   Hit Rate: 99.41% \u00b1 0.13%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "D",
+      "batch_size": 4,
+      "status": "success",
+      "elapsed_time": 1.1032829284667969,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy D, Batch size 4\n   Configuration: Multi look-ahead with top-k expert loading (k=10 per layer)\n   Runs: 10\n   Run 1/10... Latency: 727.93ms, Hit rate: 99.51%\n   Run 2/10... Latency: 805.16ms, Hit rate: 99.46%\n   Run 3/10... Latency: 865.68ms, Hit rate: 99.25%\n   Run 4/10... Latency: 833.88ms, Hit rate: 99.25%\n   Run 5/10... Latency: 782.19ms, Hit rate: 99.64%\n   Run 6/10... Latency: 793.17ms, Hit rate: 99.41%\n   Run 7/10... Latency: 841.41ms, Hit rate: 99.40%\n   Run 8/10... Latency: 860.46ms, Hit rate: 99.35%\n   Run 9/10... Latency: 863.31ms, Hit rate: 99.30%\n   Run 10/10... Latency: 899.08ms, Hit rate: 99.37%\n\ud83d\udcc1 Results saved to: ../results/strategy_D_batch_4.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 827.23 \u00b1 47.78 ms\n   Hit Rate: 99.39% \u00b1 0.12%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "D",
+      "batch_size": 8,
+      "status": "success",
+      "elapsed_time": 1.1241025924682617,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy D, Batch size 8\n   Configuration: Multi look-ahead with top-k expert loading (k=10 per layer)\n   Runs: 10\n   Run 1/10... Latency: 1711.56ms, Hit rate: 99.50%\n   Run 2/10... Latency: 1594.63ms, Hit rate: 99.25%\n   Run 3/10... Latency: 1576.97ms, Hit rate: 99.46%\n   Run 4/10... Latency: 1386.46ms, Hit rate: 99.48%\n   Run 5/10... Latency: 1744.91ms, Hit rate: 99.41%\n   Run 6/10... Latency: 1593.67ms, Hit rate: 99.35%\n   Run 7/10... Latency: 1730.30ms, Hit rate: 99.27%\n   Run 8/10... Latency: 1525.78ms, Hit rate: 99.54%\n   Run 9/10... Latency: 1732.44ms, Hit rate: 99.30%\n   Run 10/10... Latency: 1571.72ms, Hit rate: 99.45%\n\ud83d\udcc1 Results saved to: ../results/strategy_D_batch_8.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 1616.84 \u00b1 108.46 ms\n   Hit Rate: 99.40% \u00b1 0.10%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "D",
+      "batch_size": 16,
+      "status": "success",
+      "elapsed_time": 1.1038963794708252,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy D, Batch size 16\n   Configuration: Multi look-ahead with top-k expert loading (k=10 per layer)\n   Runs: 10\n   Run 1/10... Latency: 3124.70ms, Hit rate: 99.45%\n   Run 2/10... Latency: 3319.60ms, Hit rate: 99.45%\n   Run 3/10... Latency: 3652.69ms, Hit rate: 99.45%\n   Run 4/10... Latency: 3057.78ms, Hit rate: 99.53%\n   Run 5/10... Latency: 3329.10ms, Hit rate: 99.32%\n   Run 6/10... Latency: 2782.38ms, Hit rate: 99.69%\n   Run 7/10... Latency: 3481.42ms, Hit rate: 99.38%\n   Run 8/10... Latency: 3331.25ms, Hit rate: 99.45%\n   Run 9/10... Latency: 3673.79ms, Hit rate: 99.45%\n   Run 10/10... Latency: 3302.02ms, Hit rate: 99.43%\n\ud83d\udcc1 Results saved to: ../results/strategy_D_batch_16.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 3305.47 \u00b1 256.18 ms\n   Hit Rate: 99.46% \u00b1 0.09%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "E",
+      "batch_size": 1,
+      "status": "success",
+      "elapsed_time": 1.1136043071746826,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy E, Batch size 1\n   Configuration: Strategy D + intelligent caching with adaptation\n   Runs: 10\n   Run 1/10... Latency: 177.71ms, Hit rate: 99.33%\n   Run 2/10... Latency: 178.93ms, Hit rate: 99.45%\n   Run 3/10... Latency: 169.19ms, Hit rate: 99.50%\n   Run 4/10... Latency: 185.85ms, Hit rate: 99.43%\n   Run 5/10... Latency: 161.06ms, Hit rate: 99.51%\n   Run 6/10... Latency: 162.40ms, Hit rate: 99.43%\n   Run 7/10... Latency: 185.45ms, Hit rate: 99.38%\n   Run 8/10... Latency: 173.49ms, Hit rate: 99.41%\n   Run 9/10... Latency: 181.62ms, Hit rate: 99.40%\n   Run 10/10... Latency: 170.45ms, Hit rate: 99.51%\n\ud83d\udcc1 Results saved to: ../results/strategy_E_batch_1.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 174.62 \u00b1 8.38 ms\n   Hit Rate: 99.44% \u00b1 0.06%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "E",
+      "batch_size": 2,
+      "status": "success",
+      "elapsed_time": 1.0992095470428467,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy E, Batch size 2\n   Configuration: Strategy D + intelligent caching with adaptation\n   Runs: 10\n   Run 1/10... Latency: 339.32ms, Hit rate: 99.45%\n   Run 2/10... Latency: 341.60ms, Hit rate: 99.35%\n   Run 3/10... Latency: 316.90ms, Hit rate: 99.53%\n   Run 4/10... Latency: 311.77ms, Hit rate: 99.64%\n   Run 5/10... Latency: 332.46ms, Hit rate: 99.54%\n   Run 6/10... Latency: 360.81ms, Hit rate: 99.46%\n   Run 7/10... Latency: 387.16ms, Hit rate: 99.19%\n   Run 8/10... Latency: 393.33ms, Hit rate: 99.32%\n   Run 9/10... Latency: 350.21ms, Hit rate: 99.37%\n   Run 10/10... Latency: 375.08ms, Hit rate: 99.41%\n\ud83d\udcc1 Results saved to: ../results/strategy_E_batch_2.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 350.86 \u00b1 26.55 ms\n   Hit Rate: 99.43% \u00b1 0.12%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "E",
+      "batch_size": 4,
+      "status": "success",
+      "elapsed_time": 1.1139862537384033,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy E, Batch size 4\n   Configuration: Strategy D + intelligent caching with adaptation\n   Runs: 10\n   Run 1/10... Latency: 716.24ms, Hit rate: 99.41%\n   Run 2/10... Latency: 779.70ms, Hit rate: 99.30%\n   Run 3/10... Latency: 765.97ms, Hit rate: 99.27%\n   Run 4/10... Latency: 757.62ms, Hit rate: 99.35%\n   Run 5/10... Latency: 724.59ms, Hit rate: 99.41%\n   Run 6/10... Latency: 695.54ms, Hit rate: 99.30%\n   Run 7/10... Latency: 737.24ms, Hit rate: 99.41%\n   Run 8/10... Latency: 706.30ms, Hit rate: 99.40%\n   Run 9/10... Latency: 741.80ms, Hit rate: 99.43%\n   Run 10/10... Latency: 744.20ms, Hit rate: 99.33%\n\ud83d\udcc1 Results saved to: ../results/strategy_E_batch_4.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 736.92 \u00b1 25.32 ms\n   Hit Rate: 99.36% \u00b1 0.06%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "E",
+      "batch_size": 8,
+      "status": "success",
+      "elapsed_time": 1.1224186420440674,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy E, Batch size 8\n   Configuration: Strategy D + intelligent caching with adaptation\n   Runs: 10\n   Run 1/10... Latency: 1411.58ms, Hit rate: 99.46%\n   Run 2/10... Latency: 1497.50ms, Hit rate: 99.25%\n   Run 3/10... Latency: 1442.22ms, Hit rate: 99.37%\n   Run 4/10... Latency: 1457.78ms, Hit rate: 99.48%\n   Run 5/10... Latency: 1312.12ms, Hit rate: 99.56%\n   Run 6/10... Latency: 1404.63ms, Hit rate: 99.33%\n   Run 7/10... Latency: 1586.22ms, Hit rate: 99.24%\n   Run 8/10... Latency: 1490.55ms, Hit rate: 99.30%\n   Run 9/10... Latency: 1507.90ms, Hit rate: 99.41%\n   Run 10/10... Latency: 1398.05ms, Hit rate: 99.50%\n\ud83d\udcc1 Results saved to: ../results/strategy_E_batch_8.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 1450.86 \u00b1 71.53 ms\n   Hit Rate: 99.39% \u00b1 0.10%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    },
+    {
+      "strategy": "E",
+      "batch_size": 16,
+      "status": "success",
+      "elapsed_time": 1.0317180156707764,
+      "stdout": "\ud83d\ude80 Running experiment: Strategy E, Batch size 16\n   Configuration: Strategy D + intelligent caching with adaptation\n   Runs: 10\n   Run 1/10... Latency: 2825.22ms, Hit rate: 99.45%\n   Run 2/10... Latency: 2801.66ms, Hit rate: 99.41%\n   Run 3/10... Latency: 2940.11ms, Hit rate: 99.25%\n   Run 4/10... Latency: 2795.34ms, Hit rate: 99.43%\n   Run 5/10... Latency: 2905.95ms, Hit rate: 99.35%\n   Run 6/10... Latency: 2671.57ms, Hit rate: 99.51%\n   Run 7/10... Latency: 3343.55ms, Hit rate: 99.22%\n   Run 8/10... Latency: 2679.92ms, Hit rate: 99.54%\n   Run 9/10... Latency: 2843.41ms, Hit rate: 99.45%\n   Run 10/10... Latency: 2643.73ms, Hit rate: 99.54%\n\ud83d\udcc1 Results saved to: ../results/strategy_E_batch_16.pkl\n\n\ud83d\udcca Summary Statistics:\n   Latency: 2845.05 \u00b1 190.76 ms\n   Hit Rate: 99.42% \u00b1 0.11%\n   Memory Usage: 3584.0 MB\n",
+      "stderr": ""
+    }
+  ]
+}
