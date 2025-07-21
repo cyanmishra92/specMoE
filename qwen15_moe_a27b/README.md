@@ -1,213 +1,266 @@
-# Qwen1.5-MoE-A2.7B Expert Speculation Training
+# Qwen1.5-MoE-A2.7B Expert Prediction Training
 
-Complete implementation of multi-expert prediction training for Qwen1.5-MoE-A2.7B model with **RTX 3090 memory optimization**.
+Complete implementation of multi-expert prediction training for Qwen1.5-MoE-A2.7B model with **RTX 3090 memory optimization**, **advanced architectures**, and **configurable data collection**.
+
+## 🚀 Multiple Training Approaches Available
+
+We provide **three different architectures** for expert prediction, from simple to state-of-the-art:
+
+1. **Simple Predictor**: Stable baseline with basic MLP architecture
+2. **Hybrid Predictor**: **ExpertFlow-inspired** classification + temporal speculation (RECOMMENDED)
+3. **Complex Predictor**: Full transformer-based with multi-loss training
 
 ## Model Overview
 
-**Qwen1.5-MoE-A2.7B** is a highly efficient small MoE model:
-- **14.3B total parameters** (60 routing + 4 shared experts)
+**Qwen1.5-MoE-A2.7B** (actually Qwen2-MoE detected automatically):
+- **14.3B total parameters** (60 routing + 4 shared experts)  
 - **2.7B active parameters** per token (top-4 routing)
 - **60 routing experts + 4 shared experts** per MoE layer
 - **Top-4 routing** (4 out of 60 experts selected per token)
-- **RTX 3090/A6000 optimized** with data sharding
+- **RTX 3090/A6000 optimized** with configurable shard loading
 
-## Key Advantages over Mixtral
+## 🏗️ Architecture Comparison
 
-- **5x smaller active parameters** (2.7B vs 14B)
-- **3x smaller total parameters** (14.3B vs 45B)
-- **Much faster inference** on consumer GPUs
-- **Same top-2 routing strategy** for comparable speculation training
-- **Better GPU utilization** on RTX 3090/A6000
+| Architecture | Approach | Parameters | Memory | Speed | Accuracy Target |
+|-------------|----------|------------|--------|-------|-----------------|
+| **Simple** | Basic MLP | ~0.5M | Low | Fast | 5-10% |
+| **Hybrid** ⭐ | Classification + Temporal | ~1.5M | Medium | Medium | 15-25% |
+| **Complex** | Multi-Transformer | ~21M | High | Slow | 20-30% |
 
-## 🚀 RTX 3090 Memory Optimization
+## 🎯 Recommended Approach: Hybrid Predictor
 
-**NEW**: Data sharding for memory-efficient training on RTX 3090 (24GB)!
+Our **Hybrid Predictor** combines:
+- **Immediate Classification** (ExpertFlow-inspired): Binary prediction of current expert activation
+- **Temporal Speculation**: Transformer-based prediction of future expert sequences
+- **Joint Training**: Combined loss for both immediate and temporal prediction
 
-### Hardware Requirements
-- **RTX 3090 (24GB)**: ✅ Perfect with data sharding
-- **A6000 (48GB)**: ✅ Excellent performance, larger batches
+### Key Advantages:
+✅ **Stable Training**: Binary classification is more stable than regression  
+✅ **Temporal Awareness**: Predicts 1-4 tokens ahead for true speculation  
+✅ **Proven Approach**: Based on successful ExpertFlow methodology  
+✅ **Balanced Performance**: Good accuracy without excessive complexity  
+
+## Hardware Requirements
+- **RTX 3090 (24GB)**: ✅ Perfect with configurable shard loading
+- **A6000 (48GB)**: ✅ Excellent performance, larger shard groups
 - **RTX 4090 (24GB)**: ✅ Optimal performance
-- **Minimum**: 16GB VRAM with 4-bit quantization + sharding
+- **Minimum**: 16GB VRAM with conservative settings
 
-### Memory-Efficient Workflow
+## 🚀 Quick Start Guide
 
-1. **Collect & Shard Traces**:
-   ```bash
-   # Automatic sharding for RTX 3090
-   python scripts/collection/collect_qwen15_moe_traces_medium.py \
-     --target_traces 5000 \
-     --shard_data \
-     --shard_size_mb 400
-   ```
-
-2. **Train with Sharded Data**:
-   ```bash
-   python scripts/train_multi_expert_predictor.py \
-     --shard_dir routing_data/qwen15_moe_a27b_traces_medium_shards \
-     --batch_size 4 \
-     --epochs 50
-   ```
-
-3. **Run RTX 3090 Example**:
-   ```bash
-   python scripts/examples/rtx3090_training_example.py
-   ```
-
-## Performance Expectations
-
-### Trace Collection
-- **RTX 3090**: ~2000-3000 traces/minute
-- **A6000**: ~3000-4000 traces/minute
-- **Target**: 20,000 traces (~3,333 per dataset)
-- **Collection time**: 10-20 minutes
-
-### Memory Usage
-- **Model loading**: ~8-12GB VRAM
-- **Inference**: ~12-16GB VRAM peak
-- **Batch processing**: Up to 24 samples (A6000), 16 samples (RTX 3090)
-
-## Model Architecture
-
-```
-Qwen1.5-MoE-A2.7B Architecture:
-├── 24 Transformer layers
-├── 60 routing experts per MoE layer
-├── 4 shared experts (always active)
-├── Top-4 expert selection from routing experts
-├── 2048 hidden dimensions
-├── 1408 intermediate size per routing expert
-└── 32,000 vocabulary size
+### Step 1: Collect Training Data
+```bash
+# Collect traces with streaming to avoid memory issues
+python scripts/collection/collect_qwen15_moe_traces_streaming.py \
+  --target_traces 5000 \
+  --shard_size 500
 ```
 
-## Training Configuration
+### Step 2: Choose Your Training Approach
 
-```python
-# RTX 3090 Optimized (with sharding)
-config = {
-    'batch_size': 4,
-    'max_length': 256,
-    'quantization': '4bit',
-    'device_map': 'auto',
-    'cpu_offload': True,
-    'shard_size_mb': 400
-}
-
-# A6000 Optimized  
-config = {
-    'batch_size': 8,
-    'max_length': 256,
-    'quantization': '8bit',
-    'device_map': 'auto',
-    'cpu_offload': False,
-    'shard_size_mb': 500
-}
+#### **Option A: Hybrid Predictor (RECOMMENDED)**
+```bash
+python scripts/train_hybrid_predictor.py \
+  --shards-per-group 2 \
+  --batch-size 12 \
+  --lr 3e-5 \
+  --epochs 30
 ```
 
-## Dataset Coverage
+#### **Option B: Simple Predictor (Stable Baseline)**
+```bash
+python scripts/train_simple_predictor.py \
+  --shards-per-group 4 \
+  --batch-size 8 \
+  --lr 5e-5 \
+  --epochs 20
+```
 
-- **IMDB**: Movie reviews (~3,333 traces)
-- **Yelp**: User reviews (~3,333 traces)
-- **AG News**: News articles (~3,333 traces)
-- **Squad**: Q&A contexts (~3,333 traces)
-- **Amazon**: Product reviews (~3,333 traces)
-- **DBpedia**: Structured knowledge (~3,333 traces)
+#### **Option C: Complex Predictor (Advanced)**
+```bash
+python scripts/train_qwen_multi_expert_predictor.py \
+  --shards-per-group 4 \
+  --batch-size 16 \
+  --lr 1e-4 \
+  --epochs 50
+```
 
-## Expected Accuracy
+## 🔧 Configurable Shard Loading
 
-Based on model architecture and top-4 routing:
-- **Random baseline**: ~6.7% (4/60 experts)
-- **Most frequent**: ~15-20%
-- **Multi-expert prediction**: ~35-45% (target)
-- **Pattern-based**: ~40-50% (target)
+All training scripts support configurable shard loading for optimal GPU utilization:
 
-## Comparison with Other Models
+```bash
+# Conservative (safe for any GPU)
+--shards-per-group 1    # ~4GB memory usage
 
-| Model | Active Params | Total Params | VRAM Needed | RTX 3090 Compatible |
-|-------|---------------|--------------|-------------|-------------------|
-| Qwen1.5-MoE-A2.7B | 2.7B | 14.3B | 8-12GB | ✅ Perfect (sharded) |
-| DeepSeek-MoE-16B | 2.8B | 16.4B | 16-20GB | ✅ Good (sharded) |
-| Mixtral-8x7B | 14B | 45B | 24GB+ | ⚠️ Tight fit |
+# Balanced (RTX 3090 recommended)
+--shards-per-group 2    # ~8GB memory usage
 
-## 🆕 New Features
+# Aggressive (RTX 3090 optimized)
+--shards-per-group 4    # ~16GB memory usage
 
-- **Multi-Expert Prediction**: Predicts top-4 experts simultaneously
-- **Data Sharding**: Automatic memory-efficient training
-- **GPU-Adaptive Configuration**: RTX 3090/A6000 optimized
-- **Balanced Dataset Sampling**: Configurable trace counts
-- **Progress Tracking**: Real-time collection rate monitoring
-- **Memory Monitoring**: Automatic GPU cache management
+# Maximum (A6000/A100)
+--shards-per-group 6    # ~24GB memory usage
+```
 
-## Files Structure
+## 📊 Expected Performance
+
+### Hybrid Predictor (Recommended)
+- **Current Expert Prediction**: 
+  - Top-1: 15-25%
+  - Top-5: 40-60%
+  - Top-10: 65-80%
+- **Temporal Prediction**: 
+  - 1-step ahead: 10-20%
+  - 2-step ahead: 8-15%
+  - 4-step ahead: 5-12%
+
+### Memory Usage by Architecture
+| Architecture | Model Size | Optimal Shards | Memory Usage | RTX 3090 |
+|-------------|------------|----------------|--------------|----------|
+| Simple | ~0.5GB | 4 shards | ~17GB | ✅ Excellent |
+| Hybrid | ~1.5GB | 2 shards | ~11GB | ✅ Perfect |
+| Complex | ~2GB | 4 shards | ~18GB | ✅ Good |
+
+## 🎯 Training Pipeline
+
+### Complete Workflow
+```bash
+# 1. Clone and setup
+cd qwen15_moe_a27b/
+
+# 2. Collect data (creates shards automatically)
+python scripts/collection/collect_qwen15_moe_traces_streaming.py \
+  --target_traces 5000
+
+# 3. Train hybrid model (recommended)
+python scripts/train_hybrid_predictor.py \
+  --shards-per-group 2 \
+  --batch-size 12 \
+  --epochs 30
+
+# 4. Evaluate model
+python scripts/evaluate_multi_expert_predictor.py \
+  --checkpoint ../models/hybrid_checkpoints/best_checkpoint.pth
+```
+
+## 📁 Project Structure
 
 ```
 qwen15_moe_a27b/
 ├── scripts/
-│   ├── collection/          # Trace collection scripts
-│   │   ├── collect_qwen15_moe_traces_small.py    # 10 traces (dev)
-│   │   ├── collect_qwen15_moe_traces_medium.py   # Configurable (2000 default)
-│   │   └── collect_qwen15_moe_traces.py          # Full traces
-│   ├── utils/
-│   │   └── data_sharding.py                      # Memory-efficient sharding
-│   ├── examples/
-│   │   └── rtx3090_training_example.py          # RTX 3090 workflow
-│   ├── train_multi_expert_predictor.py          # Multi-expert training
-│   └── analysis/                                 # Visualization and analysis
+│   ├── collection/
+│   │   ├── collect_qwen15_moe_traces_streaming.py    # Memory-optimized collection
+│   │   ├── collect_qwen15_moe_traces_small.py        # Quick test (500 traces)
+│   │   └── collect_qwen15_moe_traces_medium.py       # Configurable collection
+│   ├── train_simple_predictor.py                     # Simple MLP baseline
+│   ├── train_hybrid_predictor.py                     # Hybrid classification + temporal ⭐
+│   ├── train_qwen_multi_expert_predictor.py          # Complex multi-transformer
+│   └── evaluate_multi_expert_predictor.py            # Comprehensive evaluation
 ├── models/
-│   └── multi_expert_predictor.py               # Multi-expert model
-├── routing_data/                                # Collected MoE traces
-│   └── *_shards/                               # Sharded data directories
-└── README.md                                   # This file
+│   ├── simple_qwen_predictor.py                      # Simple MLP model
+│   ├── hybrid_expert_predictor.py                    # Hybrid model ⭐
+│   └── qwen_multi_expert_predictor.py                # Complex transformer model
+├── routing_data/
+│   └── shards/                                       # Collected trace shards
+└── results/                                          # Training results and plots
 ```
 
-## Getting Started
+## 🧠 Model Architectures
 
-1. **Setup Environment**:
-   ```bash
-   pip install torch transformers datasets tqdm bitsandbytes accelerate
-   pip install GPUtil seaborn matplotlib numpy scipy
-   ```
+### Hybrid Predictor (Recommended)
+```
+Input [batch, seq, 2048]
+    ↓
+Shared Feature Extractor (512-dim)
+    ↓                    ↓
+Classification Head    Temporal Transformer
+(Sigmoid Binary)       (2 layers + pos encoding)  
+    ↓                    ↓
+Current Experts        Future Experts
+[B,S,60] probs        [B,S,4,60] probs
+```
 
-2. **Login to HuggingFace**:
-   ```bash
-   huggingface-cli login
-   ```
+### Simple Predictor (Baseline)
+```
+Input [batch, seq, 2048] → MLP layers → Expert logits [batch, seq, 60]
+```
 
-3. **Quick Test (RTX 3090)**:
-   ```bash
-   python scripts/examples/rtx3090_training_example.py
-   ```
+### Complex Predictor (Advanced)
+```
+Input → Transformer(6 layers) → Multi-head prediction → Expert routing
+```
 
-4. **Full Training Pipeline**:
-   ```bash
-   # Collect traces with sharding
-   python scripts/collection/collect_qwen15_moe_traces_medium.py \
-     --target_traces 5000 --shard_data --shard_size_mb 400
-   
-   # Train predictor
-   python scripts/train_multi_expert_predictor.py \
-     --shard_dir routing_data/qwen15_moe_a27b_traces_medium_shards \
-     --batch_size 4 --epochs 50
-   ```
+## 🔬 Advanced Features
 
-## 🎯 Command Line Options
+### Hybrid Model Capabilities
+- **Binary Expert Classification**: Each expert gets probability [0,1] for activation
+- **Temporal Lookahead**: Predicts expert usage 1-4 tokens in advance
+- **Joint Training**: Combined loss for immediate + temporal prediction
+- **Attention-Based**: Uses transformer layers for temporal dependencies
 
-### Trace Collection
+### Training Optimizations
+- **Mixed Precision**: FP16 training for speed and memory efficiency
+- **Gradient Clipping**: Stable training with clip_grad_norm
+- **Shard-Based Loading**: Process multiple shards together for efficiency
+- **Dynamic Memory Management**: Automatic cleanup between shard groups
+
+## 📈 Evaluation Metrics
+
+All models provide comprehensive evaluation:
+- **Top-k Accuracy**: k ∈ {1, 3, 5, 10, 20}
+- **Exact Match**: All 4 experts predicted correctly
+- **Partial Match**: ≥1 expert predicted correctly
+- **Position-wise Analysis**: Per-token accuracy breakdown
+- **Temporal Accuracy**: Future prediction performance (hybrid only)
+
+## 🎛️ Configuration Options
+
+### Collection Settings
 ```bash
-# Configurable trace count
---target_traces 5000              # Number of traces to collect
---output_suffix rtx3090           # Custom output filename
---shard_data                      # Enable automatic sharding
---shard_size_mb 400              # Shard size in MB
+--target_traces 5000        # Number of traces to collect
+--shard_size 500            # Traces per shard file
+--batch_size 8              # Processing batch size
+--max_length 256            # Sequence length
 ```
 
-### Training
+### Training Settings
 ```bash
-# Memory-efficient training
---shard_dir path/to/shards        # Use sharded data
---batch_size 4                    # Batch size for RTX 3090
---epochs 50                       # Training epochs
---lr 1e-4                         # Learning rate
---device cuda                     # Training device
+--shards-per-group 2        # Shards to load simultaneously
+--batch-size 12             # Training batch size  
+--lr 3e-5                   # Learning rate
+--epochs 30                 # Training epochs
+--lookahead-steps 4         # Future prediction steps (hybrid only)
 ```
 
-Perfect for RTX 3090 and A6000 users who want efficient MoE expert speculation training with **memory optimization**!
+## 🚀 Getting Started (Recommended Path)
+
+1. **Quick Test**:
+   ```bash
+   python scripts/collection/collect_qwen15_moe_traces_small.py
+   ```
+
+2. **Full Data Collection**:
+   ```bash
+   python scripts/collection/collect_qwen15_moe_traces_streaming.py --target_traces 5000
+   ```
+
+3. **Train Hybrid Model**:
+   ```bash
+   python scripts/train_hybrid_predictor.py --shards-per-group 2 --epochs 30
+   ```
+
+4. **Evaluate Results**:
+   ```bash
+   python scripts/evaluate_multi_expert_predictor.py
+   ```
+
+## 🎯 Why Hybrid Approach?
+
+✅ **Inspired by ExpertFlow**: Uses proven binary classification approach  
+✅ **Temporal Awareness**: Adds speculation capability for prefetching  
+✅ **Stable Training**: Binary losses more stable than multi-class regression  
+✅ **Practical**: Balances accuracy and computational efficiency  
+✅ **Extensible**: Easy to add confidence prediction and dynamic routing  
+
+Perfect for researchers working on MoE optimization, expert speculation, and efficient inference systems!

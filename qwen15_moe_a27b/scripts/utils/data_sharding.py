@@ -34,10 +34,10 @@ class TraceDataSharder:
     Shard large trace files into smaller chunks for memory-efficient training
     """
     
-    def __init__(self, shard_size_mb: int = 500):
+    def __init__(self, shard_size_mb: int = 200):
         """
         Args:
-            shard_size_mb: Target size for each shard in MB
+            shard_size_mb: Target size for each shard in MB (reduced for RTX 3090)
         """
         self.shard_size_mb = shard_size_mb
         self.shard_size_bytes = shard_size_mb * 1024 * 1024
@@ -237,14 +237,14 @@ class MemoryEfficientTrainer:
     Memory-efficient trainer for RTX 3090 (24GB)
     """
     
-    def __init__(self, model, optimizer, criterion, device, gradient_accumulation_steps: int = 4):
+    def __init__(self, model, optimizer, criterion, device, gradient_accumulation_steps: int = 8):
         """
         Args:
             model: Model to train
             optimizer: Optimizer
             criterion: Loss criterion
             device: Training device
-            gradient_accumulation_steps: Steps to accumulate gradients (for effective larger batch size)
+            gradient_accumulation_steps: Steps to accumulate gradients (increased for RTX 3090)
         """
         self.model = model
         self.optimizer = optimizer
@@ -283,9 +283,16 @@ class MemoryEfficientTrainer:
             total_loss += batch_loss.item()
             num_batches += 1
             
-            # Clear GPU cache periodically
-            if num_batches % 10 == 0:
+            # Clear cache more frequently for RTX 3090
+            if num_batches % 5 == 0:
                 torch.cuda.empty_cache()
+                
+            # Additional memory check
+            if torch.cuda.is_available():
+                memory_used_mb = torch.cuda.memory_allocated() / (1024 * 1024)
+                if memory_used_mb > 20000:  # 20GB threshold
+                    logger.warning(f"High GPU memory usage: {memory_used_mb:.1f}MB")
+                    torch.cuda.empty_cache()
         
         # Final gradient update if needed
         if accumulation_step % self.gradient_accumulation_steps != 0:
@@ -301,7 +308,7 @@ class MemoryEfficientTrainer:
         # For now, return a dummy loss
         return torch.tensor(0.0, device=self.device, requires_grad=True)
 
-def shard_trace_file(input_file: str, output_dir: str, shard_size_mb: int = 500) -> List[str]:
+def shard_trace_file(input_file: str, output_dir: str, shard_size_mb: int = 200) -> List[str]:
     """
     Convenience function to shard a trace file
     
@@ -323,7 +330,7 @@ def main():
     parser = argparse.ArgumentParser(description='Shard trace data for memory-efficient training')
     parser.add_argument('input_file', type=str, help='Input pickle file')
     parser.add_argument('output_dir', type=str, help='Output directory for shards')
-    parser.add_argument('--shard_size_mb', type=int, default=500, help='Target shard size in MB')
+    parser.add_argument('--shard_size_mb', type=int, default=200, help='Target shard size in MB (RTX 3090 optimized)')
     
     args = parser.parse_args()
     

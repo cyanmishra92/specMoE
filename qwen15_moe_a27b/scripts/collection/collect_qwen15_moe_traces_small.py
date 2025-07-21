@@ -46,8 +46,9 @@ class QwenMoETraceCollector:
         self.device, self.gpu_info = self._select_best_gpu()
         self.model = None
         self.tokenizer = None
-        self.num_experts = None
+        self.num_experts = None  # Will be set from model config
         self.num_layers = None
+        self.num_experts_per_tok = None  # Will be set from model config
         self.traces = []
         self.processed_count = 0
         self.target_traces = 10  # SMALL: Only 10 traces for development
@@ -175,11 +176,20 @@ class QwenMoETraceCollector:
             trust_remote_code=True
         )
         
-        # Get model info
-        self.num_experts = 8  # Qwen1.5-MoE-A2.7B has 8 experts
+        # Get model info from config
+        if hasattr(self.model.config, 'num_experts'):
+            self.num_experts = self.model.config.num_experts
+        elif hasattr(self.model.config, 'num_experts_per_tok'):
+            self.num_experts = getattr(self.model.config, 'num_experts', 8)
+        else:
+            self.num_experts = 8  # Default fallback
+        
+        # Get routing strategy
+        self.num_experts_per_tok = getattr(self.model.config, 'num_experts_per_tok', 2)
         self.num_layers = len(self.model.model.layers)
         
         logger.info(f"Model loaded: {self.num_layers} layers, {self.num_experts} experts per layer")
+        logger.info(f"Experts per token: {self.num_experts_per_tok}")
         
         # Add hooks for trace collection
         self._add_hooks()
@@ -214,7 +224,9 @@ class QwenMoETraceCollector:
                         router_logits = router_logits.unsqueeze(1)
                     
                     # Get top-k routing
-                    top_k_logits, top_k_indices = torch.topk(router_logits, k=2, dim=-1)
+                    top_k_logits, top_k_indices = torch.topk(router_logits, k=self.num_experts_per_tok, dim=-1)
+                    # Clamp indices to valid range to prevent routing errors
+                    top_k_indices = torch.clamp(top_k_indices, 0, self.num_experts - 1)
                     
                     # Create trace
                     trace = QwenMoEGatingDataPoint(
@@ -257,7 +269,7 @@ class QwenMoETraceCollector:
             return_tensors="pt",
             padding=True,
             truncation=True,
-            max_length=128  # Shorter for small traces
+            max_length=256 if self.num_experts >= 60 else 512  # Adjust based on model size
         )
         
         # Move to device

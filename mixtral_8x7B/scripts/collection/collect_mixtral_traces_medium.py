@@ -42,7 +42,7 @@ class MixtralGatingDataPoint:
 class MixtralTraceCollector:
     """Collector for Mixtral-8x7B traces - Medium size for training"""
     
-    def __init__(self):
+    def __init__(self, target_traces: int = 1500):
         self.device, self.gpu_info = self._select_best_gpu()
         self.model = None
         self.tokenizer = None
@@ -50,7 +50,7 @@ class MixtralTraceCollector:
         self.num_layers = None
         self.traces = []
         self.processed_count = 0
-        self.target_traces = 1500  # MEDIUM: Target ~1500 traces for < 20GB
+        self.target_traces = target_traces  # Configurable target traces
         
     def _select_best_gpu(self):
         """Select the best available GPU"""
@@ -349,9 +349,24 @@ class MixtralTraceCollector:
 
 def main():
     """Main function"""
-    logger.info("🚀 Starting Mixtral-8x7B Medium Trace Collection...")
+    import argparse
     
-    collector = MixtralTraceCollector()
+    parser = argparse.ArgumentParser(description='Collect Medium Mixtral-8x7B Traces')
+    parser.add_argument('--target_traces', type=int, default=1500, 
+                        help='Number of traces to collect (default: 1500)')
+    parser.add_argument('--output_suffix', type=str, default='',
+                        help='Suffix to add to output filename (default: none)')
+    parser.add_argument('--shard_data', action='store_true',
+                        help='Automatically shard data for memory-efficient training')
+    parser.add_argument('--shard_size_mb', type=int, default=500,
+                        help='Target shard size in MB (default: 500)')
+    
+    args = parser.parse_args()
+    
+    logger.info(f"🚀 Starting Mixtral-8x7B Medium Trace Collection...")
+    logger.info(f"Target traces: {args.target_traces}")
+    
+    collector = MixtralTraceCollector(target_traces=args.target_traces)
     
     # Collect traces
     traces = collector.collect_traces()
@@ -360,8 +375,32 @@ def main():
     output_dir = Path("routing_data")
     output_dir.mkdir(exist_ok=True)
     
-    output_file = output_dir / "mixtral_8x7b_traces_medium.pkl"
+    # Create output filename with optional suffix
+    if args.output_suffix:
+        output_file = output_dir / f"mixtral_8x7b_traces_medium_{args.output_suffix}.pkl"
+    else:
+        output_file = output_dir / "mixtral_8x7b_traces_medium.pkl"
+    
     collector.save_traces(output_file)
+    
+    # Optionally shard the data
+    if args.shard_data:
+        logger.info("📁 Sharding data for memory-efficient training...")
+        
+        # Import sharding utilities
+        import sys
+        sys.path.append('../../qwen15_moe_a27b/scripts/utils')
+        from data_sharding import shard_trace_file
+        
+        # Create shard directory
+        shard_dir = output_file.parent / (output_file.stem + "_shards")
+        shard_files = shard_trace_file(str(output_file), str(shard_dir), args.shard_size_mb)
+        
+        logger.info(f"📁 Created {len(shard_files)} shards in {shard_dir}")
+        logger.info(f"📁 Each shard ~{args.shard_size_mb}MB, suitable for RTX 3090 training")
+        
+        # Optionally remove original file to save space
+        # output_file.unlink()  # Uncomment if you want to remove the original
     
     logger.info(f"✅ Medium trace collection complete! {len(traces)} traces saved to {output_file}")
 

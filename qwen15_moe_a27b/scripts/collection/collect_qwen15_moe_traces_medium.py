@@ -20,6 +20,9 @@ from dataclasses import dataclass
 from typing import List, Optional
 import gc
 import GPUtil
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'utils'))
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +45,7 @@ class QwenMoEGatingDataPoint:
 class QwenMoETraceCollector:
     """Collector for Qwen1.5-MoE-A2.7B traces - Medium size for RTX 3090"""
     
-    def __init__(self, target_traces: int = 2000):
+    def __init__(self, target_traces: int = 2000, checkpoint_interval: int = 500, shard_size: int = 500):
         self.device, self.gpu_info = self._select_best_gpu()
         self.model = None
         self.tokenizer = None
@@ -50,7 +53,12 @@ class QwenMoETraceCollector:
         self.num_layers = None
         self.traces = []
         self.processed_count = 0
+        self.total_collected = 0  # Total traces collected (including streamed)
         self.target_traces = target_traces  # Configurable target traces
+        self.checkpoint_interval = checkpoint_interval  # Store checkpoint interval
+        self.shard_size = shard_size  # For RTX 3090 memory-efficient training
+        self.current_shard = 0
+        self.memory_limit = 2000  # Keep max 2000 traces in memory to prevent OOM
         
     def _select_best_gpu(self):
         """Select the best available GPU"""
@@ -175,11 +183,22 @@ class QwenMoETraceCollector:
             trust_remote_code=True
         )
         
-        # Get model info
-        self.num_experts = 8  # Qwen1.5-MoE-A2.7B has 8 experts
+        # Get model info - dynamically read from config
+        # Get number of experts from model config
+        if hasattr(self.model.config, 'num_experts'):
+            self.num_experts = self.model.config.num_experts
+        elif hasattr(self.model.config, 'num_experts_per_tok'):
+            # Sometimes stored differently
+            self.num_experts = getattr(self.model.config, 'num_experts', 8)
+        else:
+            self.num_experts = 8  # Default fallback
+        
+        # Get routing strategy
+        self.num_experts_per_tok = getattr(self.model.config, 'num_experts_per_tok', 2)
         self.num_layers = len(self.model.model.layers)
         
         logger.info(f"Model loaded: {self.num_layers} layers, {self.num_experts} experts per layer")
+        logger.info(f"Experts per token: {self.num_experts_per_tok}")
         
         # Add hooks for trace collection
         self._add_hooks()
@@ -188,7 +207,7 @@ class QwenMoETraceCollector:
         """Add forward hooks to collect routing information"""
         def hook_fn(module, input, output):
             # Skip if we have enough traces
-            if len(self.traces) >= self.target_traces:
+            if self.total_collected >= self.target_traces:
                 return
                 
             try:
@@ -213,8 +232,12 @@ class QwenMoETraceCollector:
                     if router_logits.dim() == 2:
                         router_logits = router_logits.unsqueeze(1)
                     
-                    # Get top-k routing
-                    top_k_logits, top_k_indices = torch.topk(router_logits, k=2, dim=-1)
+                    # Get top-k routing - use dynamic k from config
+                    k = self.num_experts_per_tok if hasattr(self, 'num_experts_per_tok') else 2
+                    top_k_logits, top_k_indices = torch.topk(router_logits, k=k, dim=-1)
+                    
+                    # Clamp indices to valid range to prevent routing errors
+                    top_k_indices = torch.clamp(top_k_indices, 0, self.num_experts - 1)
                     
                     # Create trace
                     trace = QwenMoEGatingDataPoint(
@@ -231,6 +254,17 @@ class QwenMoETraceCollector:
                     )
                     
                     self.traces.append(trace)
+                    self.total_collected += 1  # Keep accurate count including streamed
+                    
+                    # Memory management - prevent OOM on RTX 3090
+                    if len(self.traces) >= self.memory_limit:
+                        logger.info(f"🧹 Memory limit reached ({len(self.traces)} traces), saving to disk...")
+                        self._emergency_save_and_clear()
+                    
+                    # Aggressive GPU memory cleanup every 100 traces  
+                    if self.total_collected % 100 == 0:
+                        torch.cuda.empty_cache()
+                        gc.collect()
                     
             except Exception as e:
                 logger.warning(f"Hook failed: {e}")
@@ -242,11 +276,11 @@ class QwenMoETraceCollector:
     
     def collect_traces_from_text_batch(self, texts: List[str], dataset_name: str) -> int:
         """Collect traces from a batch of text samples"""
-        if len(self.traces) >= self.target_traces:
+        if self.total_collected >= self.target_traces:
             return 0
             
         self.current_dataset = dataset_name
-        collected_before = len(self.traces)
+        collected_before = self.total_collected
         
         logger.info(f"🚀 Starting GPU inference for batch of {len(texts)} samples...")
         
@@ -257,7 +291,7 @@ class QwenMoETraceCollector:
             return_tensors="pt",
             padding=True,
             truncation=True,
-            max_length=256  # Medium sequence length
+            max_length=256 if self.num_experts >= 60 else 512  # Adjust based on model size
         )
         
         # Move to device
@@ -270,10 +304,18 @@ class QwenMoETraceCollector:
         with torch.no_grad():
             outputs = self.model(**inputs)
         
+        # Immediately clear outputs from GPU memory
+        del outputs
+        torch.cuda.empty_cache()
+        
         inference_time = time.time() - start_time
         logger.info(f"✅ Model inference completed in {inference_time:.2f}s ({inference_time/len(texts):.2f}s per sample)")
         
-        collected_new = len(self.traces) - collected_before
+        # Clear inputs from GPU
+        del inputs
+        torch.cuda.empty_cache()
+        
+        collected_new = self.total_collected - collected_before
         return collected_new
     
     def collect_traces(self):
@@ -293,7 +335,7 @@ class QwenMoETraceCollector:
         traces_per_dataset = self.target_traces // len(datasets_config)
         
         for dataset_name, dataset_id, dataset_config in datasets_config:
-            if len(self.traces) >= self.target_traces:
+            if self.total_collected >= self.target_traces:
                 break
                 
             logger.info(f"📊 Processing {dataset_name} (medium)...")
@@ -307,7 +349,7 @@ class QwenMoETraceCollector:
             
             with tqdm(total=traces_per_dataset, desc=f"Collecting {dataset_name} traces") as pbar:
                 for i, sample in enumerate(dataset):
-                    if len(self.traces) >= self.target_traces or dataset_traces >= traces_per_dataset:
+                    if self.total_collected >= self.target_traces or dataset_traces >= traces_per_dataset:
                         break
                         
                     # Get text
@@ -322,61 +364,180 @@ class QwenMoETraceCollector:
                         pbar.update(collected)
                         batch_texts = []
                         
-                        if len(self.traces) >= self.target_traces or dataset_traces >= traces_per_dataset:
+                        # Save checkpoint based on interval
+                        self.save_checkpoint("routing_data/checkpoints", self.checkpoint_interval)
+                        
+                        if self.total_collected >= self.target_traces or dataset_traces >= traces_per_dataset:
                             break
                 
                 # Process remaining texts
-                if batch_texts and len(self.traces) < self.target_traces and dataset_traces < traces_per_dataset:
+                if batch_texts and self.total_collected < self.target_traces and dataset_traces < traces_per_dataset:
                     collected = self.collect_traces_from_text_batch(batch_texts, dataset_name)
                     dataset_traces += collected
                     pbar.update(collected)
             
             logger.info(f"✅ {dataset_name}: collected {dataset_traces} traces")
             
-            # Clean memory
-            if len(self.traces) > 500:
-                gc.collect()
+            # Clean memory more aggressively
+            gc.collect()
+            if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         
-        logger.info(f"🎉 Collection complete! Total traces: {len(self.traces)}")
+        logger.info(f"🎉 Collection complete! Total traces: {self.total_collected} (in memory: {len(self.traces)})")
         return self.traces
     
-    def save_traces(self, filepath: str):
-        """Save collected traces to file"""
+    def save_traces(self, filepath: str, backup: bool = True):
+        """Save collected traces to file with backup and checkpointing"""
         logger.info(f"💾 Starting to save {len(self.traces)} traces to {filepath}")
         logger.info(f"💾 Estimated file size: ~{len(self.traces) * 10 / 1024:.1f} MB")
         
-        with open(filepath, 'wb') as f:
-            pickle.dump(self.traces, f)
+        # Create backup if file exists
+        filepath_obj = Path(filepath)
+        if backup and filepath_obj.exists():
+            backup_path = filepath_obj.with_suffix(f'.backup_{int(time.time())}.pkl')
+            logger.info(f"💾 Creating backup: {backup_path}")
+            filepath_obj.rename(backup_path)
         
-        # Check file size
-        file_size = Path(filepath).stat().st_size / (1024 * 1024)  # MB
+        # Load all traces from streaming files if they exist
+        logger.info("💾 Collecting all traces (including streaming files)...")
+        all_traces = self._load_all_streaming_traces()
+        
+        # Save with error handling
+        temp_filepath = filepath_obj.with_suffix('.tmp')
+        try:
+            # Save to temporary file first
+            logger.info(f"💾 Writing {len(all_traces)} traces to temporary file: {temp_filepath}")
+            with open(temp_filepath, 'wb') as f:
+                pickle.dump(all_traces, f, protocol=pickle.HIGHEST_PROTOCOL)
+            
+            # Verify the temporary file
+            logger.info(f"💾 Verifying temporary file...")
+            with open(temp_filepath, 'rb') as f:
+                test_traces = pickle.load(f)
+                assert len(test_traces) == len(all_traces), f"Trace count mismatch: {len(test_traces)} vs {len(all_traces)}"
+            
+            # Move temp file to final location
+            temp_filepath.rename(filepath_obj)
+            logger.info(f"💾 Successfully moved temp file to final location")
+            
+        except Exception as e:
+            logger.error(f"💾 Failed to save traces: {e}")
+            if temp_filepath.exists():
+                temp_filepath.unlink()
+            raise
+        
+        # Check final file
+        file_size = filepath_obj.stat().st_size / (1024 * 1024)  # MB
         logger.info(f"💾 Successfully saved {len(self.traces)} traces to {filepath}")
         logger.info(f"💾 File size: {file_size:.1f} MB")
+    
+    def _emergency_save_and_clear(self):
+        """Emergency save current traces to disk and clear from memory (RTX 3090 OOM prevention)"""
+        if not self.traces:
+            return
+            
+        # Create streaming save directory
+        streaming_dir = Path("routing_data/streaming")
+        streaming_dir.mkdir(exist_ok=True)
+        
+        # Save current batch to disk
+        batch_file = streaming_dir / f"batch_{self.processed_count // self.memory_limit:03d}.pkl"
+        with open(batch_file, 'wb') as f:
+            pickle.dump(self.traces, f)
+        
+        file_size_mb = batch_file.stat().st_size / (1024 * 1024)
+        logger.info(f"💾 Saved {len(self.traces)} traces to {batch_file} ({file_size_mb:.1f}MB)")
+        
+        # Clear traces from memory but keep count
+        trace_count = len(self.traces)
+        self.traces.clear()
+        torch.cuda.empty_cache()
+        gc.collect()
+        
+        logger.info(f"🧹 Memory cleared, {trace_count} traces moved to disk")
+    
+    def _load_all_streaming_traces(self):
+        """Load all streaming traces back into memory for final save"""
+        streaming_dir = Path("routing_data/streaming")
+        if not streaming_dir.exists():
+            return self.traces
+            
+        all_traces = list(self.traces)  # Start with current traces
+        
+        # Load all batch files
+        batch_files = sorted(streaming_dir.glob("batch_*.pkl"))
+        for batch_file in batch_files:
+            logger.info(f"Loading {batch_file}...")
+            with open(batch_file, 'rb') as f:
+                batch_traces = pickle.load(f)
+                all_traces.extend(batch_traces)
+        
+        logger.info(f"Loaded {len(all_traces)} total traces from {len(batch_files)} batches")
+        return all_traces
+
+    def save_checkpoint(self, checkpoint_dir: str, checkpoint_interval: int = 500):
+        """Save periodic checkpoints during collection"""
+        if len(self.traces) % checkpoint_interval == 0 and len(self.traces) > 0:
+            checkpoint_path = Path(checkpoint_dir) / f"checkpoint_{len(self.traces)}_traces.pkl"
+            checkpoint_path.parent.mkdir(exist_ok=True, parents=True)
+            
+            logger.info(f"💾 Saving checkpoint: {checkpoint_path}")
+            try:
+                with open(checkpoint_path, 'wb') as f:
+                    pickle.dump(self.traces, f, protocol=pickle.HIGHEST_PROTOCOL)
+                logger.info(f"💾 Checkpoint saved: {len(self.traces)} traces")
+            except Exception as e:
+                logger.warning(f"💾 Checkpoint save failed: {e}")
 
 def main():
     """Main function"""
     import argparse
     
     parser = argparse.ArgumentParser(description='Collect Medium Qwen1.5-MoE-A2.7B Traces')
-    parser.add_argument('--target_traces', type=int, default=2000, 
-                        help='Number of traces to collect (default: 2000)')
+    parser.add_argument('--target_traces', type=int, default=1000, 
+                        help='Number of traces to collect (default: 1000, reduced for stability)')
     parser.add_argument('--output_suffix', type=str, default='',
                         help='Suffix to add to output filename (default: none)')
     parser.add_argument('--shard_data', action='store_true',
                         help='Automatically shard data for memory-efficient training')
-    parser.add_argument('--shard_size_mb', type=int, default=500,
-                        help='Target shard size in MB (default: 500)')
+    parser.add_argument('--shard_size_mb', type=int, default=200,
+                        help='Target shard size in MB (default: 200 for RTX 3090)')
+    parser.add_argument('--checkpoint_interval', type=int, default=250,
+                        help='Save checkpoint every N traces (default: 250)')
+    parser.add_argument('--resume_from_checkpoint', type=str, default='',
+                        help='Resume collection from checkpoint file')
     
     args = parser.parse_args()
     
     logger.info(f"🚀 Starting Qwen1.5-MoE-A2.7B Medium Trace Collection...")
     logger.info(f"Target traces: {args.target_traces}")
     
-    collector = QwenMoETraceCollector(target_traces=args.target_traces)
+    collector = QwenMoETraceCollector(target_traces=args.target_traces, checkpoint_interval=args.checkpoint_interval)
+    
+    # Resume from checkpoint if specified
+    if args.resume_from_checkpoint and Path(args.resume_from_checkpoint).exists():
+        logger.info(f"📥 Resuming from checkpoint: {args.resume_from_checkpoint}")
+        try:
+            with open(args.resume_from_checkpoint, 'rb') as f:
+                collector.traces = pickle.load(f)
+            logger.info(f"📥 Loaded {len(collector.traces)} traces from checkpoint")
+        except Exception as e:
+            logger.error(f"❌ Failed to load checkpoint: {e}")
+            logger.info("🚀 Starting fresh collection...")
     
     # Collect traces
-    traces = collector.collect_traces()
+    try:
+        traces = collector.collect_traces()
+        
+        # Save final checkpoint
+        logger.info("💾 Saving final checkpoint...")
+        collector.save_checkpoint("routing_data/checkpoints", 1)  # Force save final checkpoint
+        
+    except Exception as e:
+        logger.error(f"❌ Collection failed: {e}")
+        logger.info("💾 Saving emergency checkpoint...")
+        collector.save_checkpoint("routing_data/checkpoints", 1)  # Emergency save
+        raise
     
     # Save traces
     output_dir = Path("routing_data")
@@ -410,6 +571,67 @@ def main():
         # output_file.unlink()  # Uncomment if you want to remove the original
     
     logger.info(f"✅ Medium trace collection complete! {len(traces)} traces saved to {output_file}")
+
+def create_training_shards(collector_or_traces, shard_size=500):
+    """Create training shards optimized for RTX 3090"""
+    shard_dir = Path("routing_data/shards")
+    shard_dir.mkdir(exist_ok=True)
+    
+    # Handle both collector object and traces list
+    if hasattr(collector_or_traces, '_load_all_streaming_traces'):
+        logger.info(f"🧩 Loading all traces from collector (including streaming files)...")
+        traces = collector_or_traces._load_all_streaming_traces()
+    else:
+        traces = collector_or_traces
+    
+    logger.info(f"🧩 Creating training shards for RTX 3090 (shard_size={shard_size}, total_traces={len(traces)})")
+    
+    for i in range(0, len(traces), shard_size):
+        shard_traces = traces[i:i+shard_size]
+        shard_id = i // shard_size
+        
+        # Save shard
+        shard_file = shard_dir / f"shard_{shard_id:03d}_{len(shard_traces)}_traces.pkl"
+        with open(shard_file, 'wb') as f:
+            pickle.dump(shard_traces, f)
+        
+        file_size_mb = shard_file.stat().st_size / (1024 * 1024)
+        
+        # Save metadata
+        metadata = {
+            'shard_id': shard_id,
+            'num_traces': len(shard_traces),
+            'file_size_mb': file_size_mb,
+            'rtx3090_optimized': True,
+            'created_from': 'medium_collection'
+        }
+        
+        metadata_file = shard_dir / f"shard_{shard_id:03d}_metadata.json"
+        with open(metadata_file, 'w') as f:
+            json.dump(metadata, f, indent=2)
+        
+        logger.info(f"  Shard {shard_id}: {len(shard_traces)} traces, {file_size_mb:.1f}MB")
+    
+    # Create training config
+    total_shards = (len(traces) + shard_size - 1) // shard_size
+    config = {
+        'total_traces': len(traces),
+        'shard_size': shard_size,
+        'num_shards': total_shards,
+        'rtx3090_settings': {
+            'batch_size': 16,
+            'max_seq_length': 256,
+            'fp16': True,
+            'gradient_accumulation': 4
+        }
+    }
+    
+    config_file = shard_dir / "training_config.json"
+    with open(config_file, 'w') as f:
+        json.dump(config, f, indent=2)
+    
+    logger.info(f"✅ Created {total_shards} shards for RTX 3090 training in {shard_dir}")
+    return total_shards
 
 if __name__ == "__main__":
     main()

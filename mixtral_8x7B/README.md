@@ -1,6 +1,6 @@
 # Mixtral 8x7B Expert Speculation Training
 
-Complete implementation of expert speculation training for Mixtral 8x7B MoE model.
+Complete implementation of expert speculation training for Mixtral 8x7B MoE model with **memory optimization**.
 
 ## Model Overview
 
@@ -10,6 +10,7 @@ Complete implementation of expert speculation training for Mixtral 8x7B MoE mode
 - **8 experts per MoE layer**
 - **Top-2 routing** (vs Switch Transformer's top-1)
 - **Multi-GPU optimized** with automatic GPU selection
+- **Data sharding** for RTX 3090 compatibility
 
 ## Project Structure
 
@@ -25,16 +26,32 @@ mixtral_8x7B/
 └── README.md             # This file
 ```
 
-## Quick Start
+## 🚀 Memory-Efficient Training
 
-1. **Collect Traces**:
+**NEW**: Data sharding for RTX 3090 compatibility!
+
+### Hardware Requirements
+- **RTX 3090 (24GB)**: ✅ Supported with data sharding
+- **A6000 (48GB)**: ✅ Recommended, larger batches
+- **A100 (40/80GB)**: ✅ Optimal performance
+- **RAM**: 32GB+ recommended (64GB+ for A100)
+- **Storage**: 50GB+ for traces and models
+
+### Quick Start
+
+1. **Collect Traces with Sharding**:
    ```bash
-   python scripts/collection/collect_mixtral_traces.py
+   python scripts/collection/collect_mixtral_traces_medium.py \
+     --target_traces 3000 \
+     --shard_data \
+     --shard_size_mb 500
    ```
 
-2. **Train Speculation Model**:
+2. **Train with Sharded Data**:
    ```bash
-   python scripts/training/train_mixtral_speculation.py
+   python scripts/training/train_mixtral_speculation.py \
+     --shard_dir routing_data/mixtral_8x7b_traces_medium_shards \
+     --batch_size 4
    ```
 
 3. **Analyze Results**:
@@ -42,25 +59,40 @@ mixtral_8x7B/
    python scripts/analysis/visualize_mixtral_routing.py
    ```
 
-## Hardware Requirements
-
-- **GPU**: RTX 3090 (24GB VRAM) minimum, A6000 (48GB) recommended, A100 (40GB/80GB) optimal
-- **RAM**: 32GB+ recommended (64GB+ for A100)
-- **Storage**: 50GB+ for traces and models
-- **Multi-GPU**: Automatic selection of best available GPU
-
-## Features
+## 🆕 Features
 
 - **Advanced MoE Architecture**: Top-2 routing vs Switch Transformer's top-1
+- **Data Sharding**: Automatic memory-efficient training for RTX 3090
 - **Multi-GPU Support**: Automatic GPU selection and optimal configuration
 - **Optimized Data Collection**: 
   - Batch processing for 4-16x speedup (GPU-adaptive)
   - Balanced sampling from 8 diverse datasets
-  - 50,000 total traces with max 200 traces per sample
+  - Configurable trace counts (default: 1500 medium traces)
+  - Automatic sharding with customizable shard sizes
 - **Multiple Speculation Models**: InterLayer, Statistics-Aware, and Ensemble
 - **Rich Visualizations**: Token journeys, expert usage, routing patterns
 - **Performance Metrics**: Top-1/3/5/10 accuracy tracking
-- **Hardware Optimization**: RTX 3090, A6000, A100 support
+- **Hardware Optimization**: RTX 3090, A6000, A100 support with memory management
+
+## 🎯 Command Line Options
+
+### Trace Collection
+```bash
+# Configurable trace count and sharding
+--target_traces 3000              # Number of traces to collect
+--output_suffix rtx3090           # Custom output filename
+--shard_data                      # Enable automatic sharding
+--shard_size_mb 500              # Shard size in MB
+```
+
+### Training
+```bash
+# Memory-efficient training options
+--shard_dir path/to/shards        # Use sharded data
+--batch_size 4                    # Batch size for RTX 3090
+--gradient_accumulation_steps 4   # Effective larger batch size
+--device cuda                     # Training device
+```
 
 ## Getting Started
 

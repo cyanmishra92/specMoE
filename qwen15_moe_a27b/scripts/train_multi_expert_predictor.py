@@ -250,8 +250,22 @@ def train_epoch_sharded(
         # Forward pass
         predictions = model(input_states, input_layer_ids)
         
-        # Compute loss
-        loss_dict = criterion(predictions, target_experts)
+        # Compute loss - handle different loss function signatures
+        try:
+            # Try the pair-based loss first
+            target_pair_indices = torch.zeros(target_experts.shape[0], target_experts.shape[1], dtype=torch.long, device=device)
+            for b in range(target_experts.shape[0]):
+                for s in range(target_experts.shape[1]):
+                    expert1, expert2 = target_experts[b, s, 0].item(), target_experts[b, s, 1].item()
+                    if expert1 < 60 and expert2 < 60:  # Valid expert indices
+                        pair_idx = expert_pair_to_index(expert1, expert2, 60)
+                        target_pair_indices[b, s] = pair_idx
+            
+            loss_dict = criterion(predictions, target_pair_indices, target_experts)
+        except Exception as e:
+            # Fallback to expert-only loss
+            logger.warning(f"Using fallback loss computation: {e}")
+            loss_dict = criterion(predictions, target_experts)
         
         # Backward pass
         optimizer.zero_grad()
@@ -374,7 +388,9 @@ def main():
         
         # Add utils to path
         import sys
-        sys.path.append('../utils')
+        utils_path = os.path.join(os.path.dirname(__file__), '..', 'utils')
+        if utils_path not in sys.path:
+            sys.path.append(utils_path)
         from data_sharding import ShardedDataLoader
         
         # Create sharded data loader
