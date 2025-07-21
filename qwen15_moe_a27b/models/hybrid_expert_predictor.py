@@ -28,8 +28,7 @@ class ExpertClassificationHead(nn.Module):
             nn.Linear(hidden_dim, hidden_dim // 2),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(hidden_dim // 2, num_experts),  # Binary classification per expert
-            nn.Sigmoid()  # Output probabilities [0,1] for each expert
+            nn.Linear(hidden_dim // 2, num_experts)  # Logits for binary classification per expert
         )
     
     def forward(self, hidden_states):
@@ -37,9 +36,15 @@ class ExpertClassificationHead(nn.Module):
         Args:
             hidden_states: [batch, seq_len, hidden_dim]
         Returns:
-            expert_probs: [batch, seq_len, num_experts] - probability each expert is active
+            dict with logits and probs
         """
-        return self.expert_classifier(hidden_states)
+        logits = self.expert_classifier(hidden_states)  # [batch, seq_len, num_experts]
+        probs = torch.sigmoid(logits)  # Convert to probabilities
+        
+        return {
+            'logits': logits,
+            'probs': probs
+        }
 
 
 class TemporalPredictionHead(nn.Module):
@@ -167,7 +172,9 @@ class HybridExpertPredictor(nn.Module):
         features = self.feature_extractor(hidden_states)  # [batch, seq_len, hidden_dim]
         
         # Immediate classification (ExpertFlow-style)
-        current_expert_probs = self.classification_head(features)  # [batch, seq_len, num_experts]
+        classification_output = self.classification_head(features)  # Returns dict with logits and probs
+        current_expert_logits = classification_output['logits']
+        current_expert_probs = classification_output['probs']
         
         # Temporal prediction for speculation
         future_expert_probs = self.temporal_head(features)  # [batch, seq_len, lookahead_steps, num_experts]
@@ -189,6 +196,7 @@ class HybridExpertPredictor(nn.Module):
         
         return {
             # Immediate predictions (classification)
+            'current_expert_logits': current_expert_logits,  # For autocast-safe loss
             'current_expert_probs': current_expert_probs,
             'current_topk_logits': current_topk_logits,
             'current_topk_indices': current_topk_indices,
@@ -227,9 +235,11 @@ class HybridExpertPredictor(nn.Module):
                     if expert_idx < self.num_experts:
                         current_binary_targets[b, s, expert_idx] = 1.0
         
-        # Binary classification loss (like ExpertFlow)
-        classification_loss = F.binary_cross_entropy(
-            predictions['current_expert_probs'],
+        # Binary classification loss (like ExpertFlow) - use logits for autocast safety
+        current_logits = predictions['current_expert_logits']
+        
+        classification_loss = F.binary_cross_entropy_with_logits(
+            current_logits,
             current_binary_targets,
             reduction='mean'
         )
@@ -253,9 +263,14 @@ class HybridExpertPredictor(nn.Module):
                                 if expert_idx < self.num_experts:
                                     step_binary_targets[b, s, expert_idx] = 1.0
                 
-                # Loss for this step
-                step_loss = F.binary_cross_entropy(
-                    predictions['future_expert_probs'][:, :, step, :],
+                # Loss for this step - convert probs back to logits for autocast safety
+                future_probs = predictions['future_expert_probs'][:, :, step, :]
+                # Clamp to avoid log(0) or log(1) 
+                future_probs_clamped = torch.clamp(future_probs, 1e-7, 1-1e-7)
+                future_logits = torch.log(future_probs_clamped / (1 - future_probs_clamped))
+                
+                step_loss = F.binary_cross_entropy_with_logits(
+                    future_logits,
                     step_binary_targets,
                     reduction='mean'
                 )

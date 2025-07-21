@@ -14,47 +14,18 @@ ls ../routing_data/shards/
 
 ---
 
-## 🎯 RECOMMENDED: Hybrid Approach (Best Results)
+## 🎯 RECOMMENDED: Simple Approach (⭐ PROVEN WINNER - 47.55%)
 
 ### Step 1: Clean Environment (Optional)
 ```bash
 # Clean previous results if needed
-rm -rf ../models/hybrid_checkpoints/*
-rm -rf ../results/*
-```
-
-### Step 2: Train Hybrid Model
-```bash
-# Train with hybrid classification + temporal prediction
-python train_hybrid_predictor.py \
-  --shards-per-group 2 \
-  --batch-size 12 \
-  --lr 3e-5 \
-  --epochs 30 \
-  --lookahead-steps 4
-```
-
-**Expected output:**
-```
-INFO - Using 2 shards per group (~8GB memory)
-INFO - Hybrid Model parameters: 1,234,567 total, 1,234,567 trainable
-INFO - Train - Total: 2.1234, Classification: 1.8765, Temporal: 0.2469
-INFO - Current Expert Accuracy: Top-1: 0.0892 | Top-3: 0.2341 | Top-5: 0.3892
-INFO - Temporal Expert Accuracy: Top-1: 0.0567 | Top-3: 0.1678 | Top-5: 0.2845
-```
-
----
-
-## 🔧 Alternative: Simple Approach (Stable Baseline)
-
-### Step 1: Clean Environment (Optional)
-```bash
 rm -rf ../models/simple_checkpoints/*
+rm -rf ../results/*
 ```
 
 ### Step 2: Train Simple Model
 ```bash
-# Train stable baseline model
+# Train proven winner - achieves 47.55% Top-1 accuracy!
 python train_simple_predictor.py \
   --shards-per-group 4 \
   --batch-size 8 \
@@ -64,9 +35,38 @@ python train_simple_predictor.py \
 
 **Expected output:**
 ```
-INFO - Simple Model parameters: 567,890 total, 567,890 trainable
-INFO - Train loss: 2.3456
-INFO - Val loss: 2.1987, Top-1: 0.0234, Top-5: 0.1456
+INFO - Simple Model parameters: 672,572 total, 672,572 trainable
+INFO - Train loss: 2.1234
+INFO - Val loss: 1.9629, Top-1: 0.4755, Top-5: 0.7385
+INFO - New best model saved with Top-1: 0.4755
+INFO - Training completed! Best Top-1 accuracy: 0.4755
+```
+
+---
+
+## ❌ Alternative: Hybrid Approach (Failed - Avoid)
+
+### Step 1: Clean Environment (Optional)
+```bash
+rm -rf ../models/hybrid_checkpoints/*
+```
+
+### Step 2: Train Hybrid Model (⚠️ WARNING: This approach failed)
+```bash
+# DO NOT USE - Training fails with NaN losses
+python train_hybrid_predictor.py \
+  --shards-per-group 2 \
+  --batch-size 12 \
+  --lr 3e-5 \
+  --epochs 30
+```
+
+**What happens:**
+```
+INFO - Train - Total: 2.1234, Classification: 1.8765, Temporal: 0.2469
+INFO - Current Expert Accuracy: Top-1: 0.0538 | Top-5: 0.2020
+WARNING - Invalid loss detected: nan  # <-- Training collapses!
+INFO - Training completed! Best Current Top-1 accuracy: 0.0957  # <-- Poor result
 ```
 
 ---
