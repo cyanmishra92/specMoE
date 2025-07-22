@@ -281,41 +281,67 @@ class QwenTopKStrategy(QwenPrefetchingStrategy):
         return 4.0  # Medium-high complexity
 
 class QwenIntelligentStrategy(QwenPrefetchingStrategy):
-    """Intelligent adaptive prefetching with learning"""
+    """FIXED: Intelligent adaptive prefetching with learning"""
     
     def __init__(self, config: QwenExperimentConfig):
         super().__init__("Intelligent", config)
         self.transition_matrix = np.zeros((config.num_experts, config.num_experts))
-        self.recency_weights = np.ones(config.num_experts)
+        self.expert_frequency = np.zeros(config.num_experts)
+        self.expert_recency = np.zeros(config.num_experts)
         self.adaptation_rate = 0.1
+        self.decay_rate = 0.99
+        self.time_step = 0
         
     def predict_experts(self, routing_history: List[List[int]], 
                        current_token: int) -> List[int]:
-        if len(routing_history) < 2:
-            return []
+        if len(routing_history) < 1:
+            # Cold start: predict most frequent experts from global distribution
+            return list(range(min(32, self.config.num_experts)))
             
-        # Update transition probabilities
-        self._update_transitions(routing_history[-10:])
+        self.time_step += 1
         
-        # Predict based on current experts and transitions
-        current_experts = routing_history[-1] if routing_history else []
+        # Update learning from recent history
+        self._update_learning(routing_history[-10:])  # Use last 10 tokens
+        
+        # Multi-strategy prediction
         predicted = set()
         
-        for expert_id in current_experts:
-            # Add experts with high transition probability
-            transitions = self.transition_matrix[expert_id]
-            top_transitions = np.argpartition(transitions, -4)[-4:]
-            predicted.update(top_transitions.tolist())
-            
-        # Add recency-based predictions
-        recent_scores = self.recency_weights * np.exp(-np.arange(self.config.num_experts) * 0.1)
-        top_recent = np.argpartition(recent_scores, -8)[-8:]
+        # 1. Transition-based prediction
+        if len(routing_history) >= 2:
+            current_experts = routing_history[-1]
+            for expert_id in current_experts:
+                # Get top transitions for this expert
+                transitions = self.transition_matrix[expert_id]
+                if transitions.sum() > 0:
+                    # Normalize and get top predictions
+                    normalized = transitions / transitions.sum()
+                    top_indices = np.argsort(normalized)[-6:]  # Top 6 transitions
+                    predicted.update(top_indices.tolist())
+        
+        # 2. Frequency-based prediction (recently popular experts)
+        freq_scores = self.expert_frequency.copy()
+        top_frequent = np.argsort(freq_scores)[-12:]  # Top 12 frequent
+        predicted.update(top_frequent.tolist())
+        
+        # 3. Recency-based prediction (recently used experts)
+        recency_scores = self.expert_recency.copy()
+        top_recent = np.argsort(recency_scores)[-8:]  # Top 8 recent
         predicted.update(top_recent.tolist())
         
-        return list(predicted)[:24]  # Limit predictions
+        # 4. Pattern continuation (if we see repeating patterns)
+        if len(routing_history) >= 3:
+            pattern_experts = self._predict_from_pattern(routing_history[-3:])
+            predicted.update(pattern_experts)
         
-    def _update_transitions(self, recent_history: List[List[int]]):
-        """Update expert transition probabilities"""
+        # Convert to list and limit size (Qwen uses top-8, so cache more for safety)
+        predicted_list = list(predicted)[:32]  # Cache 32 experts (4x the routing requirement)
+        
+        return predicted_list
+        
+    def _update_learning(self, recent_history: List[List[int]]):
+        """Update learning models from recent routing history"""
+        
+        # Update transition matrix
         for i in range(len(recent_history) - 1):
             current_experts = recent_history[i]
             next_experts = recent_history[i + 1]
@@ -323,14 +349,42 @@ class QwenIntelligentStrategy(QwenPrefetchingStrategy):
             for curr_expert in current_experts:
                 for next_expert in next_experts:
                     self.transition_matrix[curr_expert][next_expert] += self.adaptation_rate
-                    
-        # Update recency weights
+        
+        # Update frequency tracking
+        for token_experts in recent_history:
+            for expert_id in token_experts:
+                self.expert_frequency[expert_id] += 1.0
+        
+        # Update recency with time decay (FIXED: prevent overflow)
+        self.expert_recency *= self.decay_rate  # Decay all
         if recent_history:
-            for expert_id in recent_history[-1]:
-                self.recency_weights[expert_id] *= 1.1
+            for expert_id in recent_history[-1]:  # Boost recent
+                self.expert_recency[expert_id] = self.time_step
                 
-        # Decay weights
-        self.recency_weights *= 0.95
+        # Apply decay to prevent unlimited growth (FIXED: prevent overflow)
+        self.transition_matrix *= self.decay_rate
+        self.expert_frequency *= self.decay_rate
+        
+    def _predict_from_pattern(self, recent_tokens: List[List[int]]) -> List[int]:
+        """Simple pattern-based prediction"""
+        if len(recent_tokens) < 2:
+            return []
+            
+        # Find experts that often appear together
+        co_occurring = set()
+        current_experts = set(recent_tokens[-1])
+        
+        # Simple co-occurrence: if expert A is active and expert B often follows A
+        for expert_a in current_experts:
+            # Find experts that have high transition probability from expert_a
+            transitions = self.transition_matrix[expert_a]
+            if transitions.sum() > 0:
+                normalized = transitions / transitions.sum()
+                # Add experts with >10% transition probability
+                high_prob = np.where(normalized > 0.1)[0]
+                co_occurring.update(high_prob.tolist())
+        
+        return list(co_occurring)[:8]
         
     def get_complexity_score(self) -> float:
         return 7.0  # High complexity

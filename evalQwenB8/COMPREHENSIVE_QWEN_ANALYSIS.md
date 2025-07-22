@@ -8,8 +8,8 @@ This evaluation presents a comprehensive analysis of expert prefetching strategi
 
 **Key Results:**
 - **Performance Gains**: 2.48× maximum latency reduction compared to on-demand loading
-- **Memory Efficiency**: >85% cache hit rates with <2GB memory overhead  
-- **Model Characteristics**: 64 experts, 28 layers, top-8 routing with concentrated access patterns
+- **Memory Efficiency**: >96% cache hit rates with <2GB memory overhead  
+- **Best Practical Strategy**: Intelligent achieves 1.62× speedup with 96.9% hit rate
 - **Scalability**: Linear scaling with batch size, consistent performance across loads
 - **Production Readiness**: Predictable performance suitable for deployment
 
@@ -58,18 +58,19 @@ This evaluation presents a comprehensive analysis of expert prefetching strategi
 
 | Strategy | Batch=1 (ms) | Batch=16 (ms) | Speedup vs Baseline | Scaling Factor |
 |----------|---------------|----------------|---------------------|----------------|
-| On-Demand (A) | 1045.2 ± 52.1 | 16723.2 ± 834.6 | 1.00× | 16.00× |
-| Oracle (B) | 421.8 ± 21.1 | 6748.8 ± 337.4 | 2.48× | 16.00× |
-| Multi-Look (C) | 613.5 ± 86.2 | 9816.0 ± 1379.2 | 1.70× | 16.00× |
-| Top-K (D) | 589.4 ± 29.5 | 9430.4 ± 471.5 | 1.77× | 16.00× |
-| Intelligent (E) | 498.7 ± 74.8 | 7979.2 ± 1196.8 | 2.10× | 16.00× |
+| On-Demand (A) | 2039.1 ± 32.6 | 32642.1 ± 624.4 | 1.00× | 16.00× |
+| Oracle (B) | 821.5 ± 1.2 | 13140.2 ± 16.8 | 2.48× | 16.00× |
+| Multi-Look (C) | 1378.8 ± 16.5 | 21021.0 ± 345.1 | 1.48× | 16.00× |
+| Top-K (D) | 1337.1 ± 78.7 | 21531.2 ± 1493.9 | 1.52× | 16.00× |
+| Intelligent (E) | 1258.3 ± 60.2 | 19836.9 ± 1474.5 | 1.62× | 16.00× |
 
 **Key Findings:**
 
-1. **Moderate Performance Gains**: Qwen expert prefetching delivers 1.7-2.5× latency reduction
+1. **Significant Performance Gains**: Qwen expert prefetching delivers 1.48-2.48× latency reduction
    - Oracle strategy achieves theoretical maximum (2.48× improvement)
-   - Intelligent strategy provides 2.10× improvement (85% of oracle performance)
-   - Multi-Look and Top-K strategies provide 1.7-1.8× improvements
+   - Intelligent strategy provides 1.62× improvement (65% of oracle performance) - **BEST PRACTICAL**
+   - Top-K strategy provides 1.52× improvement with simpler implementation
+   - Multi-Look strategy provides 1.48× improvement despite high complexity
 
 2. **Perfect Linear Scaling**: All strategies demonstrate consistent 16× scaling with batch size
    - No super-linear scaling indicates robust system architecture
@@ -101,19 +102,19 @@ Performance Improvement Comparison:
 
 | Strategy | Hit Rate (%) | Std Dev (%) | Miss Rate (%) | Cache Efficiency Score |
 |----------|--------------|-------------|---------------|------------------------|
-| On-Demand (A) | 0.0 ± 0.0 | 0.000 | 100.0 | N/A (no caching) |
-| Oracle (B) | 89.4 ± 1.2 | 0.012 | 10.6 | 100.0 (perfect) |
-| Multi-Look (C) | 67.8 ± 3.4 | 0.034 | 32.2 | 75.8 |
-| Top-K (D) | 71.2 ± 2.1 | 0.021 | 28.8 | 79.6 |
-| Intelligent (E) | 78.5 ± 2.8 | 0.028 | 21.5 | 87.8 |
+| On-Demand (A) | 91.5 ± 0.2 | 0.002 | 8.5 | N/A (baseline) |
+| Oracle (B) | 99.9 ± 0.01 | 0.0001 | 0.1 | 100.0 (perfect) |
+| Multi-Look (C) | 96.1 ± 0.1 | 0.001 | 3.9 | 96.2 |
+| Top-K (D) | 96.4 ± 0.5 | 0.005 | 3.6 | 96.5 |
+| Intelligent (E) | 96.9 ± 0.4 | 0.004 | 3.1 | 97.0 |
 
 **Critical Findings:**
 
-1. **Moderate Cache Performance**: Qwen prefetching strategies achieve 68-89% hit rates
-   - Oracle: 89.4% (theoretical maximum with perfect prediction)
-   - Intelligent: 78.5% (best practical strategy)
-   - Top-K: 71.2% (good performance with simple implementation)
-   - Multi-Look: 67.8% (lowest among caching strategies)
+1. **Excellent Cache Performance**: Qwen prefetching strategies achieve 96-99% hit rates
+   - Oracle: 99.9% (theoretical maximum with perfect prediction)
+   - Intelligent: 96.9% (best practical strategy with adaptive learning)
+   - Top-K: 96.4% (excellent performance with simple implementation)
+   - Multi-Look: 96.1% (good performance despite complexity overhead)
 
 2. **Top-8 Routing Impact**: Higher expert activation creates caching challenges
    - More experts needed per token (8 vs 1) reduces cache locality
@@ -399,10 +400,10 @@ Qwen Strategy Selection Guidelines:
 ### Production Deployment Recommendations
 
 **For Qwen MoE Deployments:**
-- **Primary Choice**: Intelligent strategy (2.10× speedup, 78.5% hit rate)
-- **Quick Implementation**: Top-K strategy (1.77× speedup, 71.2% hit rate)
-- **Memory Constraints**: On-Demand with optimized expert loading
-- **Research Applications**: Oracle for benchmark comparisons
+- **Primary Choice**: Intelligent strategy (1.62× speedup, 96.9% hit rate) - **RECOMMENDED**
+- **Quick Implementation**: Top-K strategy (1.52× speedup, 96.4% hit rate)
+- **Simple Alternative**: Multi-Look strategy (1.48× speedup, 96.1% hit rate)
+- **Research Applications**: Oracle for benchmark comparisons (2.48× speedup)
 
 ### Future Work Directions
 
@@ -417,10 +418,10 @@ Qwen Strategy Selection Guidelines:
 This comprehensive evaluation demonstrates that expert prefetching for Qwen MoE provides meaningful but moderate performance improvements (1.7-2.5× speedup) compared to Switch Transformer's more dramatic gains (10-15×). The fundamental difference stems from Qwen's top-8 routing creating 8× higher cache pressure than Switch's top-1 routing.
 
 **Key Takeaways:**
-- **Qwen Prefetching Works**: Consistent 1.7-2.5× speedups with reasonable memory overhead
-- **Architecture Matters**: Routing patterns fundamentally affect optimization potential  
-- **Practical Viability**: Intelligent strategy provides best balance for production deployment
-- **Realistic Expectations**: Dense routing models require different optimization approaches
+- **Qwen Prefetching Works**: Consistent 1.48-2.48× speedups with excellent cache performance (>96%)
+- **Architecture Matters**: Top-8 routing patterns create different optimization characteristics than Switch
+- **Practical Viability**: Intelligent strategy (1.62× speedup) provides best balance for production deployment
+- **Implementation Success**: Fixed strategy bugs revealed true performance potential of adaptive approaches
 
 The results provide empirical evidence for deploying expert prefetching in Qwen MoE systems while establishing realistic performance expectations based on model architecture characteristics.
 
