@@ -557,6 +557,170 @@ Statistical Evidence Summary:
 - **Cost Modeling**: Predictable performance-cost relationships
 - **System Sizing**: Clear scaling relationships guide system sizing decisions
 
+## 6. Multi-Objective Optimization: Pareto Frontier Analysis
+
+### 6.1 Strategic Decision-Making Through Pareto Optimization
+
+The following three Pareto frontier analyses provide critical decision-making frameworks for system architects and engineers, revealing optimal trade-offs between competing objectives in expert prefetching system design.
+
+### 6.2 Pareto Frontier 1: Performance vs Memory Trade-off
+
+![Pareto Performance vs Memory](results/pareto_analysis/07_pareto_performance_vs_memory.png)
+
+*Figure 7: Pareto frontier analysis for performance vs memory trade-offs. Square markers indicate Pareto-optimal strategies that are not dominated by any other approach. The red shaded region represents dominated combinations that should be avoided in system design.*
+
+**Strategic Insights:**
+
+**Pareto-Optimal Strategies Identified:**
+- **On-Demand (28 MB, 1.0× speedup)**: Minimal memory, baseline performance
+- **Oracle (3584 MB, 15.85× speedup)**: Maximum performance at full memory cost
+- **Intelligent (3584 MB, 13.07× speedup)**: Near-optimal performance with practical implementation
+
+**Dominated Strategies:**
+- **Multi-Look & Top-K**: Inferior performance despite identical memory usage to optimal strategies
+- These strategies use the same memory allocation but deliver 18-27% lower performance
+
+**Decision Framework:**
+```
+Memory Budget Decision Tree:
+├── Budget < 100 MB → On-Demand (forced choice)
+├── Budget 100-1000 MB → **Gap in Pareto frontier**
+│   └── Engineering Opportunity: Develop memory-constrained strategies  
+├── Budget > 1000 MB → Intelligent or Oracle
+│   ├── Research Environment → Oracle (15.85× speedup)
+│   └── Production Environment → Intelligent (13.07× speedup)
+```
+
+**Engineering Implications:**
+1. **Memory Investment Justification**: The 128× memory increase (28→3584 MB) delivers 13-16× performance improvement
+2. **No Intermediate Solutions**: Pareto gap between 28MB and 3584MB reveals engineering opportunity
+3. **Strategy Selection**: At full memory budget, choose Intelligent over Multi-Look/Top-K for superior performance
+4. **ROI Analysis**: Memory cost of $180 delivers 13-16× performance improvement (ROI: 62-88×)
+
+### 6.3 Pareto Frontier 2: Performance vs Implementation Complexity
+
+![Pareto Performance vs Complexity](results/pareto_analysis/08_pareto_performance_vs_complexity.png)
+
+*Figure 8: Pareto frontier for performance vs implementation complexity trade-offs. Complexity scores (1-10) reflect algorithm sophistication, development effort, and maintenance overhead. This analysis guides engineering resource allocation decisions.*
+
+**Implementation Complexity Scoring:**
+- **On-Demand (1.0)**: Trivial implementation, no prefetching logic
+- **Oracle (3.0)**: Medium complexity, requires perfect prediction oracle (research tool)
+- **Top-K (4.0)**: Medium-high complexity, static routing analysis with k-selection
+- **Intelligent (7.0)**: High complexity, adaptive learning with feedback loops  
+- **Multi-Look (8.5)**: Very high complexity, multi-step prediction with state tracking
+
+**Pareto-Optimal Implementation Strategies:**
+- **On-Demand (1.0 complexity, 1.0× speedup)**: Minimal engineering effort
+- **Oracle (3.0 complexity, 15.85× speedup)**: Research/benchmark standard
+- **Top-K (4.0 complexity, 11.09× speedup)**: Sweet spot for production deployment
+
+**Strategic Engineering Analysis:**
+
+**Dominated Strategies:**
+- **Multi-Look (8.5 complexity, 10.61× speedup)**: Inferior performance despite highest complexity
+- **Intelligent (7.0 complexity, 13.07× speedup)**: Better performance than Multi-Look with lower complexity
+
+**Engineering Decision Matrix:**
+```
+Development Resource Allocation:
+├── Minimal Resources (< 2 engineer-months)
+│   └── On-Demand or Oracle (if oracle available)
+├── Moderate Resources (2-6 engineer-months)  
+│   └── Top-K: Optimal complexity/performance ratio (11.09× speedup)
+├── High Resources (6+ engineer-months)
+│   └── Intelligent: Advanced performance (13.07× speedup)
+└── Avoid: Multi-Look (high complexity, suboptimal performance)
+```
+
+**Production Deployment Recommendations:**
+1. **Startup/Quick Implementation**: Top-K provides 11× speedup with manageable complexity
+2. **Enterprise/Long-term**: Intelligent delivers 18% better performance, justifies additional complexity  
+3. **Research Benchmark**: Oracle provides theoretical performance ceiling
+4. **Never Choose**: Multi-Look - dominated by both Intelligent (performance) and Top-K (complexity)
+
+### 6.4 Pareto Frontier 3: Memory Efficiency vs Cache Effectiveness
+
+![Pareto Memory Efficiency vs Cache](results/pareto_analysis/09_pareto_memory_efficiency_vs_cache.png)
+
+*Figure 9: Pareto frontier for memory efficiency vs cache effectiveness trade-offs. Memory efficiency measured as MB per expert cached; cache effectiveness as hit rate percentage. On-Demand shown separately as reference point (triangle marker) since it employs no caching.*
+
+**Memory Efficiency Metrics:**
+- **Memory Efficiency**: MB of RAM per expert cached (lower is better)
+- **Cache Effectiveness**: Cache hit rate percentage (higher is better)
+
+**Quantitative Efficiency Analysis:**
+
+| Strategy | Memory/Expert (MB) | Cache Hit Rate (%) | Efficiency Score | Pareto Status |
+|----------|-------------------|-------------------|------------------|---------------|
+| Oracle | 26.0 | 99.8 | 100.0 (reference) | ✅ Optimal |
+| Intelligent | 23.6 | 99.4 | 96.8 | ✅ Optimal |
+| Top-K | 22.6 | 99.4 | 95.2 | ⚠️ Dominated |
+| Multi-Look | 19.1 | 99.0 | 89.4 | ✅ Optimal |
+| On-Demand | 28.0 | 0.0 | N/A | Reference |
+
+**Pareto-Optimal Memory Strategies:**
+1. **Oracle (26.0 MB/expert, 99.8% hit rate)**: Maximum cache effectiveness
+2. **Intelligent (23.6 MB/expert, 99.4% hit rate)**: Balanced efficiency with high effectiveness  
+3. **Multi-Look (19.1 MB/expert, 99.0% hit rate)**: Maximum memory efficiency among caching strategies
+
+**Cache Design Insights:**
+
+**Dominated Strategy Analysis:**
+- **Top-K**: Uses 22.6 MB/expert for 99.4% hit rate
+- **Intelligent**: Uses 23.6 MB/expert for identical 99.4% hit rate  
+- **Verdict**: Top-K is dominated (worse memory efficiency, identical performance)
+
+**Memory Allocation Optimization:**
+```
+Cache Memory Design Guidelines:
+├── Maximum Hit Rate Priority → Oracle (26.0 MB/expert, 99.8%)
+├── Balanced Design → Intelligent (23.6 MB/expert, 99.4%)  
+├── Memory-Constrained → Multi-Look (19.1 MB/expert, 99.0%)
+└── Avoid → Top-K (inefficient memory usage)
+```
+
+**Engineering Trade-off Analysis:**
+1. **Oracle vs Intelligent**: 10% more memory for 0.4% hit rate improvement
+2. **Intelligent vs Multi-Look**: 24% more memory for 0.4% hit rate improvement
+3. **Efficiency Sweet Spot**: Intelligent provides best balance of memory efficiency and cache effectiveness
+
+**Production Cache Sizing Recommendations:**
+- **Memory-Abundant Systems**: Oracle for maximum hit rate
+- **Balanced Production**: Intelligent for optimal efficiency/effectiveness ratio
+- **Memory-Constrained**: Multi-Look achieves 99% hit rate with 27% less memory per expert
+- **Never Choose**: Top-K - inferior memory efficiency with no performance benefit
+
+### 6.5 Multi-Objective Strategy Selection Framework
+
+**Integrated Decision Matrix:**
+
+Based on the three Pareto analyses, the following framework guides optimal strategy selection:
+
+```
+Strategy Selection Decision Tree:
+┌─────────────────────────────────────────────────────────────┐
+│ Constraint Priority        │ Recommended Strategy           │
+├─────────────────────────────────────────────────────────────┤
+│ Memory Budget < 1GB        │ On-Demand (forced choice)      │
+│ Development Time < 3 months│ Top-K (complexity optimized)   │
+│ Maximum Performance        │ Oracle (research) / Intelligent│
+│ Memory Efficiency Priority │ Multi-Look (cache optimized)   │
+│ Production Deployment      │ Intelligent (best overall)     │
+│ Quick Prototyping         │ Top-K (balanced trade-offs)    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Pareto-Dominated Strategies to Avoid:**
+- **Multi-Look**: Dominated on performance vs complexity frontier
+- **Top-K**: Dominated on memory efficiency vs cache effectiveness frontier
+
+**Pareto-Optimal Strategies by Use Case:**
+- **Research/Benchmarking**: Oracle (maximum performance, acceptable complexity)
+- **Production Systems**: Intelligent (near-optimal across all frontiers)  
+- **Resource-Constrained**: On-Demand (forced by budget) or Multi-Look (memory-efficient caching)
+- **Quick Implementation**: Top-K (good performance/complexity ratio despite memory inefficiency)
+
 ## Cross-Graph Synthesis
 
 ### Performance Hierarchy
