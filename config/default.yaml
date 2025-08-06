@@ -1,0 +1,158 @@
+# SpecMoE Default Configuration
+# This file contains default settings for all experiments and evaluations
+
+# Model Architectures
+architectures:
+  switch_transformer:
+    num_experts: 128
+    num_layers: 12
+    routing_type: "top_1"
+    expert_size_mb: 2.5
+    default_cache_size_mb: 50.0
+    
+  qwen_moe:
+    num_experts: 64
+    num_layers: 28
+    routing_type: "top_8"
+    expert_size_mb: 5.0
+    default_cache_size_mb: 160.0
+    
+  mixtral:
+    num_experts: 8
+    num_layers: 32
+    routing_type: "top_2"
+    expert_size_mb: 1.75
+    default_cache_size_mb: 25.0
+
+# Expert Prefetching Strategies
+strategies:
+  on_demand:
+    description: "Baseline reactive loading"
+    cache_enabled: false
+    
+  oracle:
+    description: "Perfect future knowledge (theoretical upper bound)"
+    cache_enabled: true
+    prefetch_accuracy: 1.0
+    
+  topk:
+    description: "Frequency-based caching"
+    cache_enabled: true
+    top_k_size: 20
+    
+  multilook:
+    description: "Pattern recognition with multi-step prediction"
+    cache_enabled: true
+    pattern_window: 5
+    prediction_horizon: 2
+    
+  intelligent:
+    description: "Neural prediction with adaptive learning"
+    cache_enabled: true
+    model_path: "models/dense_transformer_8.4M.pth"
+    context_length: 3
+    prediction_horizon: 2
+    
+  intelligent_dedup:
+    description: "Intelligent + expert deduplication"
+    cache_enabled: true
+    model_path: "models/dense_transformer_8.4M.pth"
+    enable_deduplication: true
+
+# Hardware Cost Models
+hardware:
+  rtx_4090:
+    memory_gb: 24
+    bandwidth_gb_s: 1000
+    pcie_bandwidth_gb_s: 32
+    transfer_cost_ms_gb: 31.25
+    
+  a100_80gb:
+    memory_gb: 80
+    bandwidth_gb_s: 2000
+    pcie_bandwidth_gb_s: 42
+    transfer_cost_ms_gb: 23.81
+    
+  h100_80gb:
+    memory_gb: 80
+    bandwidth_gb_s: 3000
+    pcie_bandwidth_gb_s: 52
+    transfer_cost_ms_gb: 19.23
+    
+  jetson_agx_orin:
+    memory_gb: 32
+    bandwidth_gb_s: 200
+    pcie_bandwidth_gb_s: 8
+    transfer_cost_ms_gb: 125.0
+
+# Evaluation Settings
+evaluation:
+  default_batch_sizes: [1, 8, 16, 32]
+  statistical_runs: 10
+  confidence_interval: 0.95
+  
+  iso_cache:
+    l1_allocation: 0.4  # 40% for immediate expert reuse
+    l2_allocation: 0.4  # 40% for predicted expert sequences
+    l3_allocation: 0.2  # 20% for background prefetching
+    
+  metrics:
+    - latency_ms
+    - cache_hit_rate
+    - memory_efficiency
+    - throughput_tokens_s
+    - expert_loading_overhead
+
+# Training Configuration
+training:
+  neural_predictor:
+    model_dim: 320
+    num_heads: 10
+    ff_dim: 1280
+    num_attention_layers: 5
+    dropout: 0.12
+    context_length: 3
+    prediction_horizon: 2
+    
+    # Training parameters
+    batch_size: 28
+    learning_rate: 6e-5
+    num_epochs: 120
+    warmup_steps: 800
+    weight_decay: 0.012
+    gradient_clip: 0.8
+    label_smoothing: 0.06
+    patience: 25
+
+# Data Processing
+data:
+  routing_traces:
+    min_sequence_length: 32
+    min_expert_diversity: 8
+    max_sequence_length: 2048
+    
+  preprocessing:
+    normalize_expert_ids: true
+    add_positional_encoding: true
+    enable_data_augmentation: false
+
+# Visualization
+visualization:
+  output_formats: ["png", "pdf"]
+  figure_size: [12, 8]
+  dpi: 300
+  style: "seaborn-v0_8"
+  
+  plot_types:
+    - performance_comparison
+    - batch_size_scaling
+    - memory_efficiency
+    - pareto_frontier
+    - statistical_significance
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/specmoe.log"
+  console: true

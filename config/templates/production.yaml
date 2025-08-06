@@ -1,0 +1,275 @@
+# SpecMoE Production Configuration Template
+# Optimized for production deployment with reliability and performance
+
+# Production-optimized architectures
+architectures:
+  switch_transformer:
+    num_experts: 128
+    num_layers: 12
+    routing_type: "top_1"
+    expert_size_mb: 2.5
+    default_cache_size_mb: 100.0  # Larger cache for production
+    
+  qwen_moe:
+    num_experts: 64
+    num_layers: 28
+    routing_type: "top_8"
+    expert_size_mb: 5.0
+    default_cache_size_mb: 200.0  # Larger cache for production
+
+# Production-ready strategies (focus on reliability)
+strategies:
+  topk_production:
+    description: "Production-optimized frequency-based caching"
+    cache_enabled: true
+    top_k_size: 32  # Larger for production stability
+    update_frequency: 1000  # Less frequent updates for stability
+    fallback_strategy: "on_demand"  # Fallback for safety
+    
+  intelligent_production:
+    description: "Production neural prediction with fallbacks"
+    cache_enabled: true
+    model_path: "models/production_model.pth"
+    context_length: 3
+    prediction_horizon: 2
+    confidence_threshold: 0.8  # Higher threshold for production
+    fallback_strategy: "topk_production"  # Safe fallback
+    enable_model_validation: true
+    
+  intelligent_dedup_production:
+    description: "Production intelligent + deduplication"
+    cache_enabled: true
+    model_path: "models/production_model.pth"
+    enable_deduplication: true
+    dedup_strategy: "conservative"  # Conservative for production
+    max_batch_size: 64  # Limit batch size
+    fallback_strategy: "topk_production"
+
+# Production hardware (focus on common deployment targets)
+hardware:
+  rtx_4090:
+    memory_gb: 24
+    bandwidth_gb_s: 1000
+    pcie_bandwidth_gb_s: 32
+    transfer_cost_ms_gb: 31.25
+    production_mode: true
+    
+  a100_80gb:
+    memory_gb: 80
+    bandwidth_gb_s: 2000
+    pcie_bandwidth_gb_s: 42
+    transfer_cost_ms_gb: 23.81
+    production_mode: true
+    
+  # Cloud instances
+  aws_p3_2xlarge:
+    memory_gb: 16  # Tesla V100
+    bandwidth_gb_s: 900
+    pcie_bandwidth_gb_s: 25
+    transfer_cost_ms_gb: 40.0
+    production_mode: true
+    
+  gcp_a2_highgpu_1g:
+    memory_gb: 40  # A100 40GB
+    bandwidth_gb_s: 1555
+    pcie_bandwidth_gb_s: 32
+    transfer_cost_ms_gb: 31.25
+    production_mode: true
+
+# Production evaluation settings (fast and reliable)
+evaluation:
+  # Production batch sizes
+  default_batch_sizes: [1, 8, 16, 32]
+  
+  # Balanced statistical rigor vs speed
+  statistical_runs: 10
+  confidence_interval: 0.95
+  
+  # Production cache configuration
+  iso_cache:
+    l1_allocation: 0.5  # More L1 for production
+    l2_allocation: 0.3
+    l3_allocation: 0.2
+    
+  # Essential metrics only
+  metrics:
+    - latency_ms
+    - cache_hit_rate
+    - memory_efficiency
+    - throughput_tokens_s
+    - error_rate
+    - availability
+    
+  # Production options
+  timeout_seconds: 300  # Prevent hanging
+  retry_failed_runs: 3
+  enable_health_checks: true
+  monitor_resource_usage: true
+
+# Production training (minimal, focus on deployment)
+training:
+  neural_predictor:
+    # Optimized for inference speed
+    model_dim: 256  # Smaller for speed
+    num_heads: 8
+    ff_dim: 1024
+    num_attention_layers: 4
+    dropout: 0.1
+    context_length: 3
+    prediction_horizon: 1  # Shorter for speed
+    
+    # Production training parameters
+    batch_size: 64
+    learning_rate: 1e-4
+    num_epochs: 50  # Fewer epochs
+    warmup_steps: 500
+    weight_decay: 0.01
+    gradient_clip: 1.0
+    patience: 15  # Less patience
+    
+    # Production options
+    use_mixed_precision: true  # Speed optimization
+    compile_model: true
+    enable_checkpointing: false  # Save space
+    validate_every_n_epochs: 5
+
+# Production data processing (efficient)
+data:
+  routing_traces:
+    min_sequence_length: 32
+    min_expert_diversity: 8
+    max_sequence_length: 1024  # Reasonable limit
+    cache_processed_data: true  # Production optimization
+    
+  preprocessing:
+    normalize_expert_ids: true
+    add_positional_encoding: true
+    enable_data_augmentation: false  # Disable for speed
+    num_workers: 4  # Parallel processing
+    prefetch_factor: 2
+
+# Production visualization (minimal)
+visualization:
+  output_formats: ["png"]  # PNG only for speed
+  figure_size: [10, 6]
+  dpi: 150  # Lower DPI for speed
+  style: "default"
+  
+  plot_types:
+    - performance_comparison
+    - batch_size_scaling
+    - memory_efficiency
+    
+  # Production options
+  enable_statistical_plots: false
+  save_intermediate_plots: false
+  use_vector_graphics: false
+
+# Production logging (balanced)
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/production_specmoe.log"
+  console: true
+  
+  # Log rotation
+  max_file_size_mb: 100
+  backup_count: 5
+  
+  # Production logging
+  log_performance_metrics: true
+  log_errors_only: false
+  enable_structured_logging: true
+
+# Production monitoring
+monitoring:
+  enabled: true
+  
+  # Health checks
+  health_check_interval_s: 30
+  health_check_timeout_s: 5
+  
+  # Metrics collection
+  collect_system_metrics: true
+  collect_model_metrics: true
+  metrics_interval_s: 60
+  
+  # Alerting
+  enable_alerting: true
+  alert_on_errors: true
+  alert_on_performance_degradation: true
+  performance_threshold_degradation: 0.2  # 20% degradation
+
+# Production deployment
+deployment:
+  # Resource limits
+  max_memory_gb: 32
+  max_cpu_cores: 16
+  max_gpu_memory_gb: 24
+  
+  # Scaling
+  min_replicas: 2
+  max_replicas: 10
+  target_cpu_utilization: 70
+  target_memory_utilization: 80
+  
+  # Reliability
+  health_check_path: "/health"
+  readiness_check_path: "/ready"
+  liveness_check_path: "/alive"
+  
+  # Performance
+  request_timeout_s: 30
+  max_concurrent_requests: 100
+  enable_request_batching: true
+  max_batch_size: 32
+  batch_timeout_ms: 50
+
+# Production security
+security:
+  enable_authentication: true
+  enable_rate_limiting: true
+  rate_limit_requests_per_minute: 1000
+  
+  # Model security
+  validate_model_checksums: true
+  encrypt_model_files: false  # Set to true if needed
+  
+  # API security
+  enable_cors: false
+  allowed_origins: []
+  enable_request_logging: true
+
+# Production optimization
+optimization:
+  # Model optimization
+  enable_model_quantization: false  # Enable if needed
+  enable_model_pruning: false
+  use_tensorrt: false  # Enable for NVIDIA GPUs
+  
+  # Runtime optimization
+  enable_jit_compilation: true
+  optimize_memory_usage: true
+  enable_gradient_checkpointing: false  # Inference only
+  
+  # Caching optimization
+  enable_result_caching: true
+  cache_ttl_seconds: 3600
+  max_cache_size_mb: 1024
+
+# Production backup and recovery
+backup:
+  enabled: true
+  
+  # Model backups
+  backup_models: true
+  backup_frequency_hours: 24
+  backup_retention_days: 30
+  
+  # Configuration backups
+  backup_configs: true
+  backup_location: "s3://specmoe-backups/"
+  
+  # Recovery
+  enable_auto_recovery: true
+  recovery_timeout_minutes: 5

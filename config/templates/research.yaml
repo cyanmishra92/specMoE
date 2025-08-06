@@ -1,0 +1,230 @@
+# SpecMoE Research Configuration Template
+# Optimized for academic research with comprehensive evaluation
+
+# Research-focused architecture configurations
+architectures:
+  switch_transformer:
+    num_experts: 128
+    num_layers: 12
+    routing_type: "top_1"
+    expert_size_mb: 2.5
+    default_cache_size_mb: 50.0
+    
+  qwen_moe:
+    num_experts: 64
+    num_layers: 28
+    routing_type: "top_8"
+    expert_size_mb: 5.0
+    default_cache_size_mb: 160.0
+    
+  # Additional research architectures
+  switch_large:
+    num_experts: 256
+    num_layers: 24
+    routing_type: "top_1"
+    expert_size_mb: 5.0
+    default_cache_size_mb: 100.0
+
+# Research-grade prefetching strategies
+strategies:
+  on_demand:
+    description: "Baseline reactive loading"
+    cache_enabled: false
+    
+  oracle:
+    description: "Perfect future knowledge (theoretical upper bound)"
+    cache_enabled: true
+    prefetch_accuracy: 1.0
+    
+  topk:
+    description: "Frequency-based caching"
+    cache_enabled: true
+    top_k_size: 20
+    update_frequency: 100  # Research: more frequent updates
+    
+  multilook:
+    description: "Pattern recognition with multi-step prediction"
+    cache_enabled: true
+    pattern_window: 5
+    prediction_horizon: 2
+    learning_rate: 0.001  # Research: adaptive learning
+    
+  intelligent:
+    description: "Neural prediction with adaptive learning"
+    cache_enabled: true
+    model_path: "models/research_dense_transformer.pth"
+    context_length: 3
+    prediction_horizon: 2
+    confidence_threshold: 0.7  # Research: tunable threshold
+    
+  intelligent_dedup:
+    description: "Intelligent + expert deduplication"
+    cache_enabled: true
+    model_path: "models/research_dense_transformer.pth" 
+    enable_deduplication: true
+    dedup_strategy: "aggressive"  # Research: aggressive deduplication
+
+# Research hardware configurations
+hardware:
+  rtx_4090:
+    memory_gb: 24
+    bandwidth_gb_s: 1000
+    pcie_bandwidth_gb_s: 32
+    transfer_cost_ms_gb: 31.25
+    research_mode: true  # Enable detailed profiling
+    
+  a100_80gb:
+    memory_gb: 80
+    bandwidth_gb_s: 2000
+    pcie_bandwidth_gb_s: 42
+    transfer_cost_ms_gb: 23.81
+    research_mode: true
+    
+  h100_80gb:
+    memory_gb: 80
+    bandwidth_gb_s: 3000
+    pcie_bandwidth_gb_s: 52
+    transfer_cost_ms_gb: 19.23
+    research_mode: true
+
+# Research evaluation settings
+evaluation:
+  # Comprehensive batch sizes for scaling analysis
+  default_batch_sizes: [1, 2, 4, 8, 16, 32, 64, 128]
+  
+  # High statistical rigor
+  statistical_runs: 50  # More runs for publication
+  confidence_interval: 0.95
+  significance_level: 0.05
+  
+  # Research-grade cache configurations
+  iso_cache:
+    l1_allocation: 0.4
+    l2_allocation: 0.4  
+    l3_allocation: 0.2
+    
+  # Comprehensive metrics collection
+  metrics:
+    - latency_ms
+    - latency_std
+    - cache_hit_rate
+    - cache_miss_rate
+    - memory_efficiency
+    - throughput_tokens_s
+    - expert_loading_overhead
+    - prediction_accuracy
+    - confidence_scores
+    - deduplication_savings
+    - statistical_significance
+    
+  # Research-specific options
+  collect_detailed_traces: true
+  enable_profiling: true
+  measure_energy_consumption: true
+  record_memory_usage: true
+
+# Advanced training configuration for research
+training:
+  neural_predictor:
+    # Model architecture
+    model_dim: 320
+    num_heads: 10
+    ff_dim: 1280
+    num_attention_layers: 5
+    dropout: 0.12
+    context_length: 3
+    prediction_horizon: 2
+    
+    # Research training parameters
+    batch_size: 32  # Larger batch for stability
+    learning_rate: 5e-5  # Lower for better convergence
+    num_epochs: 150  # More epochs for research
+    warmup_steps: 1000
+    weight_decay: 0.01
+    gradient_clip: 1.0
+    label_smoothing: 0.08
+    patience: 35  # More patience for research
+    
+    # Research-specific options
+    use_lr_scheduling: true
+    save_all_checkpoints: true
+    compute_validation_metrics: true
+    enable_early_stopping: true
+    track_gradient_norms: true
+
+# Research data processing
+data:
+  routing_traces:
+    min_sequence_length: 64  # Longer sequences for research
+    min_expert_diversity: 12  # Higher diversity requirement
+    max_sequence_length: 4096  # Support longer contexts
+    
+  preprocessing:
+    normalize_expert_ids: true
+    add_positional_encoding: true
+    enable_data_augmentation: true  # Research: enable augmentation
+    augmentation_probability: 0.1
+    validation_split: 0.15  # Research: separate validation set
+    test_split: 0.15
+
+# Research visualization settings
+visualization:
+  output_formats: ["png", "pdf", "svg"]  # Multiple formats for publication
+  figure_size: [14, 10]  # Larger figures
+  dpi: 300
+  style: "seaborn-v0_8-paper"  # Publication style
+  
+  plot_types:
+    - performance_comparison
+    - batch_size_scaling
+    - memory_efficiency
+    - pareto_frontier
+    - statistical_significance
+    - confidence_intervals
+    - effect_size_analysis
+    - correlation_analysis
+    - ablation_study
+    
+  # Research-specific plots
+  enable_statistical_plots: true
+  show_confidence_intervals: true
+  include_effect_sizes: true
+  generate_latex_tables: true
+
+# Research logging configuration
+logging:
+  level: "DEBUG"  # Verbose logging for research
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
+  file: "logs/research_specmoe.log"
+  console: true
+  
+  # Research loggers
+  loggers:
+    training: "logs/training_research.log"
+    evaluation: "logs/evaluation_research.log"
+    analysis: "logs/analysis_research.log"
+    
+# Experiment tracking (research)
+experiment_tracking:
+  enabled: true
+  backend: "wandb"  # Weight & Biases for research
+  project: "specmoe-research"
+  entity: "research-team"
+  
+  # Track additional metrics
+  track_system_metrics: true
+  track_model_metrics: true
+  track_gradients: true
+  save_model_artifacts: true
+
+# Research reproducibility
+reproducibility:
+  set_random_seed: true
+  random_seed: 42
+  deterministic_algorithms: true
+  benchmark_mode: false  # Disable for reproducibility
+  
+  # Version tracking
+  track_git_commit: true
+  track_environment: true
+  save_configuration: true
