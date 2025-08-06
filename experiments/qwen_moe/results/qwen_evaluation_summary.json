@@ -1,0 +1,20 @@
+{
+  "experiment_config": {
+    "strategies": 5,
+    "batch_sizes": 5,
+    "runs_per_config": 10,
+    "total_experiments": 250
+  },
+  "model_config": {
+    "num_experts": 64,
+    "num_layers": 28,
+    "expert_size_mb": 28.5,
+    "experts_per_token": 8
+  },
+  "performance_summary": {
+    "best_strategy": "Oracle",
+    "max_speedup": "2.48\u00d7",
+    "avg_cache_hit_rate": "96.3%"
+  },
+  "timestamp": "2025-07-21T21:45:48.722004"
+}
